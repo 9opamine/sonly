@@ -18,7 +18,7 @@
   const copy = (a) => ({ ...a, days: [...a.days], opts: JSON.parse(JSON.stringify(a.opts || {})) });
   const day0 = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const code4 = () => Array.from({ length: 4 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
-  /** Личный код для друзей: создаётся один раз и дальше не меняется. */
+  /** Личный промокод автора: создаётся один раз, потом его можно сменить в «Партнёрам». */
   const refOf = (s) => s.ref || (s.ref = 'SUN' + code4());
   const WD = ['в понедельник', 'во вторник', 'в среду', 'в четверг', 'в пятницу', 'в субботу', 'в воскресенье'];
   const CATS = [['all', 'Все', 'layout-grid'], ['camera', 'Камера', 'camera'], ['move', 'Движение', 'activity'], ['mind', 'Голова', 'brain'], ['voice', 'Голос', 'mic']];
@@ -351,7 +351,7 @@
   const check = (state, label, note) => `<div class="ap-row${note ? ' tall' : ''}"><i class="ap-ck ${state}">${ic(state === 'ok' ? 'check' : state === 'warn' ? 'triangle-alert' : 'info', 15, state === 'ok' ? 3.2 : 2.3)}</i><span>${label}${note ? `<small>${note}</small>` : ''}</span></div>`;
   const MSG = { support: ['Написать в поддержку', 'Опиши, что случилось, — ответим на почту.'], idea: ['Предложить идею', 'Чего тебе не хватает в приложении?'], bug: ['Сообщить об ошибке', 'Что пошло не так и что было перед этим?'] };
   const DOCS = { terms: 'Условия использования', privacy: 'Политика конфиденциальности' };
-  const PROMO_MSG = { ok: '−25 % на следующий год', bad: 'Такого кода нет', own: 'Это твой код — его вводят друзья.' };
+  const PROMO_MSG = { ok: '−25 % на следующий год', bad: 'Такого кода нет', own: 'Это твой код — его вводят твои зрители.' };
   const WIDGET_STEPS = ['Зажми пустое место на экране «Домой».', 'Нажми «Изменить» вверху и выбери «Добавить виджет».', 'Найди sonly и добавь виджет.'];
 
   /** Раздел настроек: заголовок, содержимое и кнопки внизу (если нужны). */
@@ -555,8 +555,9 @@
         case 'set-snd': s.sndDef = arg; Sonly.sound.setVolume(s.volume); Sonly.sound.play(arg); openPage(flow, 'sound'); return true;
         case 'vol-test': Sonly.sound.setVolume(s.volume); Sonly.sound.play(s.sndDef); return true;
         case 'promo-go': {
-          const v = (flow.sheets.querySelector('.js-promo').value || '').trim().toUpperCase();
-          if (!v) return true;
+          const field = flow.sheets.querySelector('.js-promo'), v = (field.value || '').trim().toUpperCase();
+          /* Пустое поле: не ругаем, а показываем, куда вводить. */
+          if (!v) { Sonly.nudge(field); return true; }
           s.promoCode = v;
           s.promo = v === refOf(s) ? 'own' : Sonly.isPromo(v) ? 'ok' : 'bad';
           openPage(flow, 'promo');

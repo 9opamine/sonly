@@ -16,7 +16,7 @@
   /* Ближайший день звонка. «Завтра» пишем только тогда, когда будильник правда зазвонит завтра. */
   const WD = ['в понедельник', 'во вторник', 'в среду', 'в четверг', 'в пятницу', 'в субботу', 'в воскресенье'];
   const WD_NAME = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
-  const WD_TILL = ['До понедельника.', 'До вторника.', 'До среды.', 'До четверга.', 'До пятницы.', 'До субботы.', 'До воскресенья.'];
+  const WD_TILL = ['До понедельника.', 'До вторника.', 'До среды.', 'До четверга.', 'До пятницы.', 'До субботы.', 'До воскресенья.'];
   /** Ближайший день звонка. Если будильник зазвонит ещё сегодня (ночь, время не прошло) — это «сегодня», а не «завтра». */
   function nextRing(days, time) {
     const now = new Date(), t = (now.getDay() + 6) % 7;
@@ -600,7 +600,7 @@
       render: (c) => {
         const t = taskOf(c.s), n = nextRing(c.s.days, c.s.time);
         return `<div class="a-done"><div class="a-sun"></div><span class="a-res-badge" data-in>${ic('check', 26, 3)}</span>
-            <h1><span data-in style="--i:1">Готово.</span><span data-in style="--i:2">${n.today ? 'До утра.' : n.tomorrow ? 'До завтра.' : WD_TILL[n.d]}</span></h1>
+            <h1><span data-in style="--i:1">Готово.</span>${((t) => `<span data-in style="--i:2"${t.length > 12 ? ' class="sm"' : ''}>${t}</span>`)(n.today ? 'До утра.' : n.tomorrow ? 'До завтра.' : WD_TILL[n.d])}</h1>
             <p data-in style="--i:4">Выключить можно только заданием.</p>
             <div class="m-done-tile" data-in style="--i:5"><div class="m-atile"><div class="m-atile-top"><small>${daysText(c.s.days)}</small><i class="m-tg js-tg"></i></div><b>${tStr(c.s)}</b><em>${tic(t, 16)}${t.name}</em></div><div class="m-party">${bits()}</div></div>
             <span class="m-done-chip" data-in style="--i:6">${ic('flame', 16, 2.2)}Серия начнётся ${when(c.s)}</span></div>

@@ -22,6 +22,16 @@ window.Sonly = (() => {
   /** Залитая иконка Material Symbols по имени вида "fitness_center". */
   const ms = (name, cls = '') => `<span class="ms ${cls}" aria-hidden="true">${name}</span>`;
   /* Эмодзи — только картинками Apple (img/emoji/<кодовые точки>.png), чтобы на любом телефоне и компьютере они выглядели одинаково. */
+  /** Мягкий отклик «введи сюда»: поле получает фокус, его рамка коротко вздрагивает. */
+  function nudge(input) {
+    if (!input) return;
+    const box = input.parentElement;
+    input.focus({ preventScroll: true });
+    box.classList.remove('nudge');
+    void box.offsetWidth;
+    box.classList.add('nudge');
+    setTimeout(() => box.classList.remove('nudge'), 450);
+  }
   const emoCode = (ch) => [...ch].map((c) => c.codePointAt(0).toString(16)).join('-');
   const emoSrc = (ch) => `img/emoji/${emoCode(ch)}.png`;
   const emo = (ch, cls = '', alt = '') => `<img class="emj${cls ? ' ' + cls : ''}" src="${emoSrc(ch)}" alt="${alt}" draggable="false">`;
@@ -397,7 +407,7 @@ window.Sonly = (() => {
           const input = $('.js-code', this.cur);
           const code = (input ? input.value : '').trim().toUpperCase();
           s._code = code;
-          if (!code) break;
+          if (!code) { nudge(input); break; }
           if (isPromo(code)) { s.discount = 'code'; s._promoErr = false; } else s._promoErr = true;
           this.rerender();
           break;
@@ -436,5 +446,5 @@ window.Sonly = (() => {
       <button class="pay-ok" data-act="pay-ok">Подтвердить</button>`;
   }
 
-  return { $, $$, esc, pad, range, ic, ms, emo, emoSrc, SB_ICONS, CATS, TASKS, DAYS, PRICE, isPromo, SIGN_DEMO, eur, tStr, taskOf, today, daysText, offer, wheel, signPad, odo, concepts, register, Flow, REDUCE };
+  return { $, $$, esc, pad, range, ic, ms, emo, emoSrc, nudge, SB_ICONS, CATS, TASKS, DAYS, PRICE, isPromo, SIGN_DEMO, eur, tStr, taskOf, today, daysText, offer, wheel, signPad, odo, concepts, register, Flow, REDUCE };
 })();

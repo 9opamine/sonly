@@ -171,3 +171,5 @@ body.shot .phone{border-radius:0;box-shadow:none}
 .phone.instant button,.phone.instant [role="button"]{scale:none}
 /* Эмодзи Apple картинками: по умолчанию — размером с букву; где нужно крупнее, размер задаёт своё правило. */
 .emj{display:inline-block;width:1.25em;height:1.25em;object-fit:contain;vertical-align:-.25em}
+/* Пустое поле промокода: рамка коротко вздрагивает и подсвечивается. */
+.nudge{animation:tk-shake .4s ease;box-shadow:inset 0 0 0 2px #FFC700!important}

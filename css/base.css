@@ -284,4 +284,6 @@
 .va .a-done .a-res-badge{width:56px;height:56px;position:relative}
 .va .a-done h1{position:relative;margin-top:26px;font-size:50px;font-weight:700;letter-spacing:-2.1px;line-height:1.02}
 .va .a-done h1 span{display:block}
+/* Длинный день недели («До понедельника.») — чуть мельче, чтобы встал в одну строку. */
+.va .a-done h1 span.sm{font-size:41px;letter-spacing:-1.7px}
 .va .a-done p{position:relative;margin-top:18px;font-size:18px;line-height:1.42;color:#4A4A51}
