@@ -48,14 +48,25 @@
   }
   /** Выключает камеру совсем (уходя с экрана задания). */
   function stop() {
+    shownIn = null;
     if (stream) stream.getTracks().forEach((t) => t.stop());
     stream = null;
     facing = null;
     if (video) { video.srcObject = null; video.remove(); }
   }
+  /* Свернули приложение — телефон забирает камеру. Вернулись на то же задание — включаем её снова, видео не замирает. */
+  let shownIn = null;
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || !shownIn || !shownIn.isConnected || !facing) return;
+    if (stream && stream.active && stream.getVideoTracks().some((t) => t.readyState === 'live')) { if (video.paused) video.play().catch(() => {}); return; }
+    const want = facing, box = shownIn;
+    stream = null;
+    camera(want).then(() => attach(box), () => {});
+  });
   /** Ставит видео первым слоем в контейнер экрана задания. */
   function attach(box) {
     if (!video || !box) return null;
+    shownIn = box;
     if (video.parentNode !== box) box.insertBefore(video, box.firstChild);
     if (video.paused) video.play().catch(() => {});
     return video;

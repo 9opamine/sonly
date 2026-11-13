@@ -106,6 +106,22 @@
     else Object.assign(k, { phase: 'aim', target: SHOT[t.id] });
     r.k = k;
   }
+  /* Ритм слушают, скороговорку говорят: пока идёт такое задание, звонок молчит (и «Заглушить» не глушит удары).
+     Вернулся на экран звонка — звонит снова, с той же громкостью и тем же «заглушено». */
+  const QUIET = { voice: 1, rhythm: 1 };
+  function hush(flow, r) {
+    if (!r || r.hushed || flow.shot) return;
+    r.hushed = true;
+    sound.stop();
+    sound.mute(false);
+  }
+  function unhush(flow, r) {
+    if (!r || !r.hushed) return;
+    r.hushed = false;
+    if (r.direct || flow.shot) return;
+    sound.play(r.a.sound, { loop: true });
+    if (r.mute) sound.mute(true);
+  }
   /** iPhone даёт датчики движения только после разрешения, и спросить можно лишь по нажатию — оно здесь и есть. */
   function askMotion(k) {
     const D = window.DeviceMotionEvent;
@@ -127,7 +143,7 @@
     flow.closeSheet(true);
     if (o.direct) { begin(s._ring); askMotion(s._ring.k); sound.unlock(); s._ring.t1 = Date.now(); flow.go('task', 1); return; }
     flow.go('ring', 1);
-    if (!flow.still) { sound.setVolume(s.volume); sound.play(alarm.sound, { loop: true, rise: alarm.rise }); }
+    if (!flow.shot) { sound.setVolume(s.volume); sound.play(alarm.sound, { loop: true, rise: alarm.rise }); }
   }
   /** Выход со звонка или проверки: туда, откуда пришли. Из редактора и выбора задания — обратно в них. */
   function exit(flow) {
@@ -144,7 +160,7 @@
     s._check = { a: K.copy(alarm), t0: Date.now() };
     flow.closeSheet(true);
     flow.go('check', 1);
-    if (!flow.still) sound.tick(988);
+    if (!flow.shot) sound.tick(988);
   }
   /** Задание выполнено: звонок замолкает, настоящий подъём попадает в историю. */
   function finish(flow) {
@@ -157,9 +173,9 @@
       s.log = (s.log || []).filter((x) => x.t !== day).concat({ t: day, wake: now.getHours() * 60 + now.getMinutes(), secs: r.secs, task: r.a.task });
       const a = s.alarms.find((x) => x.id === r.a.id);
       if (a && a.once) a.on = false;
-      if (r.a.check && !flow.still) { const again = K.copy(r.a); flow._chk = setTimeout(() => checkNow(flow, again), r.a.check * 60000); }
+      if (r.a.check && !flow.shot) { const again = K.copy(r.a); flow._chk = setTimeout(() => checkNow(flow, again), r.a.check * 60000); }
     }
-    if (!flow.still) { sound.tick(784); setTimeout(() => sound.tick(1175), 140); }
+    if (!flow.shot) { sound.tick(784); setTimeout(() => sound.tick(1175), 140); }
     sunrise(flow);
   }
   /**
@@ -661,6 +677,7 @@
         if (k.kind === 'memory' && k.phase === 'show') c.wait(k.showMs, () => { k.phase = 'input'; again(); });
         if (k.kind === 'memory' && k.phase === 'bad') c.wait(1100, () => { pattern(k); again(); });
         if (k.kind === 'pairs' && k.wait) c.wait(800, () => { k.cards.forEach((x) => { if (!x.done) x.open = false; }); k.wait = false; k.just = -1; again(); });
+        if (QUIET[k.kind]) hush(c.flow, c.s._ring);
         if (k.kind === 'voice') mountVoice(c, k);
         if (k.kind === 'rhythm') mountRhythm(c, k);
         if (k.kind === 'cam') {
@@ -809,7 +826,7 @@
       if (!r) return false;
       switch (act) {
         case 'ring-go': if (!r.k) begin(r); askMotion(r.k); sound.unlock(); r.t1 = r.t1 || Date.now(); flow.go('task', 1); return true;
-        case 'task-back': if (r.direct) exit(flow); else flow.go('ring', -1); return true;
+        case 'task-back': if (r.direct) exit(flow); else { unhush(flow, r); flow.go('ring', -1); } return true;
         case 'ring-mute': {
           r.mute = !r.mute;
           sound.mute(r.mute);

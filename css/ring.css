@@ -457,3 +457,14 @@
 .tk-again:disabled{opacity:0;pointer-events:none}
 .tk-st .tk-ear{width:20px;height:20px;vertical-align:-4px;margin-right:6px}
 .phone.instant .tk-membar{animation:none}
+/* Невысокий экран (iPhone SE и подобные): карточки вопросов ниже, строки ответов плотнее — всё помещается без прокрутки. */
+@media (max-height:720px){
+  body.full .tk-qcard{min-height:0;padding:14px;gap:10px}
+  body.full .tk-flag{width:104px;height:104px}
+  body.full .tk-qcard .tk-h{font-size:24px}
+  body.full .tk-ans{gap:7px}
+  body.full .tk-ans button{height:52px}
+  body.full .tk-q{min-height:150px}
+  body.full .tk-keys button{height:56px}
+}
+
