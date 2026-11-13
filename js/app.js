@@ -22,7 +22,11 @@
     const c = concepts[qs.get('shot')];
     document.body.classList.add('shot');
     /* На телефоне (или ?full=1) живое задание занимает весь экран: без нарисованной рамки и чужой строки состояния. */
-    if (qs.get('full') === '1' || (qs.get('live') === '1' && qs.get('full') !== '0' && matchMedia('(pointer: coarse)').matches)) document.body.classList.add('full');
+    if (qs.get('full') === '1' || (qs.get('live') === '1' && qs.get('full') !== '0' && matchMedia('(pointer: coarse)').matches)) {
+      document.body.classList.add('full');
+      /* Телефон лёг на бок: экраны рассчитаны на вертикальный — просим повернуть (кроме заданий с камерой, им так даже удобнее). */
+      document.body.insertAdjacentHTML('beforeend', `<div class="turn" role="status"><i>${Sonly.ic('smartphone', 44, 1.8)}</i><b>Поверни телефон</b><small>sonly работает вертикально</small></div>`);
+    }
     app.innerHTML = '<div class="phone-host"></div>';
     const state = c.demo();
     ['theme', 'data'].forEach((k) => { if (qs.get(k)) state[k] = qs.get(k); });

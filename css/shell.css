@@ -177,4 +177,15 @@ body.shot .phone{border-radius:0;box-shadow:none}
 body.full{background:#000;overflow:hidden;height:100vh;height:100dvh}
 body.full .phone{width:100vw;height:100vh;height:100dvh;border-radius:0;box-shadow:none;transform:none}
 body.full .phone>.statusbar,body.full .phone>.homebar{visibility:hidden}
+/* Повёрнутый телефон: подсказка поверх всего, пока экран не вернут вертикально. У заданий с работающей камерой её нет — видео на весь экран. */
+.turn{display:none}
+@media (orientation:landscape) and (max-height:540px){
+  body.full .turn{position:fixed;inset:0;z-index:100;display:grid;place-content:center;justify-items:center;gap:10px;background:#050507;color:#fff;font-family:'Inter',system-ui,sans-serif;text-align:center}
+  body.full:has(.phone .screen:last-child .cam.live) .turn{display:none}
+}
+.turn i{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:#16161A;color:#FFC700;margin-bottom:6px;animation:turn-it 2.4s ease-in-out infinite}
+.turn b{font-size:22px;font-weight:700;letter-spacing:-.3px}
+.turn small{font-size:15px;color:#8C8C96}
+@keyframes turn-it{0%,35%{transform:rotate(90deg)}55%,100%{transform:rotate(0)}}
+@media (prefers-reduced-motion:reduce){.turn i{animation:none}}
 
