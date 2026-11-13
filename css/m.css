@@ -1,0 +1,644 @@
+/* Итоговая версия: основа — концепция A (её стили действуют через класс .va). Здесь — значки в ответах, жёлтый акцент и сцены, перенесённые из B и C. */
+.vm{--y:#FFD12E;--y-soft:#FFF3C4;--y-deep:#FFC62B}
+.vm .a-foot{margin-top:auto}
+.vm .a-cta{height:58px;border-radius:29px;font-family:'Roboto Flex','Inter',sans-serif;font-stretch:125%;font-variation-settings:'wdth' 125;font-weight:780;font-size:17.5px;letter-spacing:-.012em}
+.vm .a-prog i{background:var(--y-deep)}
+.vm .a-wel-p{font-size:19px;max-width:270px;text-wrap:balance}
+
+/* Ответы со значком: строки. Выбранная строка чёрная, значок и галочка жёлтые. */
+.vm .m-rows{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;padding:8px 24px 0}
+.vm .m-row{display:flex;align-items:center;gap:12px;height:64px;padding:0 16px 0 11px;border-radius:18px;background:var(--fill);text-align:left;transition:background .16s,color .16s,transform .16s}
+.vm .m-row:active{transform:scale(.985)}
+.vm .m-row-i{width:38px;height:38px;border-radius:50%;background:#fff;display:grid;place-items:center;flex:none;color:var(--ink);transition:background .16s,box-shadow .16s}
+.vm .m-row-i.brand{border-radius:12px;color:#fff}
+.vm .m-row b{flex:1;font-size:16px;font-weight:600;letter-spacing:-.2px}
+.vm .m-row em,.vm .m-tile em{width:24px;height:24px;border-radius:50%;background:var(--y);color:var(--ink);display:grid;place-items:center;flex:none;transform:scale(0);transition:transform .3s cubic-bezier(.3,1.7,.5,1)}
+.vm .m-row.on{background:var(--ink);color:#fff}
+.vm .m-row.on .m-row-i:not(.brand){background:var(--y)}
+.vm .m-row.on .m-row-i.brand{box-shadow:0 0 0 1.5px rgba(255,255,255,.3)}
+.vm .m-row.on em,.vm .m-tile.on em{transform:none}
+.vm .m-rows.dense{gap:8px}
+.vm .m-rows.dense .m-row{height:54px}
+.vm .m-rows.dense .m-row-i{width:34px;height:34px}
+.vm .m-rows.dense .m-row-i.brand{border-radius:10px}
+
+/* Ответы-карточки 2×2: сверху картинка по смыслу ответа, под ней сам ответ. Занимают всю высоту между заголовком и кнопкой. */
+.vm .m-cards{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,minmax(0,198px));align-content:center;gap:10px;padding:14px 24px 0}
+.vm .m-card{position:relative;min-height:0;border-radius:26px;background:var(--fill);padding:14px 12px 18px;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;transition:background .18s,color .18s,transform .16s}
+.vm .m-card:active{transform:scale(.975)}
+.vm .m-card-v{flex:1;display:grid;place-items:center;width:100%;min-height:0;margin-bottom:6px}
+.vm .m-card b{font-size:17px;font-weight:600;letter-spacing:-.25px;line-height:1.2}
+.vm .m-card small{font-size:13px;line-height:1.3;min-height:34px;color:var(--mut);transition:color .18s}
+.vm .m-card em{position:absolute;right:12px;top:12px;width:24px;height:24px;border-radius:50%;background:var(--y);color:var(--ink);display:grid;place-items:center;transform:scale(0);transition:transform .3s cubic-bezier(.3,1.7,.5,1)}
+.vm .m-card.on{background:var(--ink);color:#fff}
+.vm .m-card.on small{color:#A9A9B2}
+.vm .m-card.on em{transform:none}
+.vm .m-bub{width:70px;height:70px;border-radius:50%;background:#fff;display:grid;place-items:center;color:var(--ink);transition:background .18s}
+.vm .m-card.on .m-bub{background:var(--y)}
+.vm .m-stack{display:grid;gap:4px;font-style:normal}
+.vm .m-stack u{display:flex;align-items:center;justify-content:space-between;width:92px;height:17px;padding:0 4px 0 9px;border-radius:9px;background:#fff;font-size:10.5px;font-weight:700;letter-spacing:.1px;font-variant-numeric:tabular-nums;text-decoration:none;color:var(--ink);transition:background .18s,color .18s}
+.vm .m-stack u::after{content:'';width:16px;height:10px;border-radius:5px;background:var(--y-deep)}
+.vm .m-stack.more u:nth-child(5){opacity:.62}
+.vm .m-stack.more u:nth-child(6){opacity:.3}
+.vm .m-card.on .m-stack u{background:#2B2B30;color:#fff}
+.vm .m-dial{position:relative;width:86px;height:86px;display:grid;place-items:center}
+.vm .m-dial svg:first-child{position:absolute;inset:0;width:100%;height:100%}
+.vm .m-dial svg:first-child circle{fill:none;stroke:#fff;stroke-width:9;transition:stroke .18s}
+.vm .m-dial svg:first-child circle.z{stroke:var(--ink)}
+.vm .m-card.on .m-dial svg:first-child circle{stroke:#2F2F34}
+.vm .m-card.on .m-dial svg:first-child circle.z{stroke:var(--y)}
+
+/* «Пять минут ещё»: карточка звонящего будильника, на которой трижды жмут «Отложить». */
+.vm .m-five,.vm .m-will{flex:1;padding:0 24px 8px;display:flex;flex-direction:column;justify-content:center}
+.vm .m-five .a-eyebrow,.vm .m-will .a-eyebrow{margin-bottom:14px}
+.vm .m-rc{margin-top:24px;padding:18px 20px 20px;border-radius:30px;background:#0D0D0F;color:#fff;display:grid;gap:14px;box-shadow:0 24px 40px -26px rgba(13,13,15,.6)}
+.vm .m-rc-top{display:flex;justify-content:space-between;align-items:center;height:24px}
+.vm .m-rc-top span{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:#A2A2AB}
+.vm .m-rc-top em{font-style:normal;height:24px;padding:0 10px;border-radius:12px;background:#33240F;color:#FFB340;font-size:12.5px;font-weight:700;display:flex;align-items:center;opacity:0;transform:scale(.6);transition:opacity .25s,transform .4s cubic-bezier(.3,1.6,.5,1);font-variant-numeric:tabular-nums}
+.vm .m-rc-top em.in{opacity:1;transform:none}
+.vm .m-rc-time{font-size:68px;font-weight:700;letter-spacing:-3px;line-height:1;height:68px;margin-top:-4px}
+.vm .m-rc-morn{display:grid;gap:8px}
+.vm .m-rc-bar{display:flex;gap:4px}
+.vm .m-rc-bar i{flex:1;height:14px;border-radius:5px;background:var(--y);transition:background .35s,transform .4s cubic-bezier(.3,1.5,.5,1)}
+.vm .m-rc-bar i.cut{background:#3A3A41;transform:scaleY(.6)}
+.vm .m-rc-cap{display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:#A2A2AB;height:17px}
+.vm .m-rc-cap b{color:#FF7A6B;font-weight:700;font-variant-numeric:tabular-nums}
+.vm .m-rc-btn{position:relative;height:54px;border-radius:27px;background:#26262B;display:grid;place-items:center;font-size:17px;font-weight:600;margin-top:4px}
+.vm .m-rc-btn::after{content:'';position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px;border-radius:50%;background:rgba(255,255,255,.22);opacity:0;transform:scale(.4)}
+.vm .m-rc-btn.tap{animation:m-press .36s ease}
+.vm .m-rc-btn.tap::after{animation:m-touch .5s ease-out}
+@keyframes m-press{40%{transform:scale(.955);background:#34343B}}
+@keyframes m-touch{0%{opacity:.9;transform:scale(.4)}100%{opacity:0;transform:scale(1.5)}}
+.vm .m-five-t{margin-top:22px;font-size:17.5px;line-height:1.42;color:var(--mut2)}
+.vm .m-five-t.b{margin-top:8px;color:var(--ink);font-weight:600}
+
+/* «Не сила воли»: что происходит и что мы с этим делаем — двумя карточками. */
+.vm .m-wcard{margin-top:24px;display:flex;gap:14px;padding:18px;border-radius:24px;background:#F6F6F8}
+.vm .m-wcard+.m-wcard{margin-top:10px}
+.vm .m-wcard>span{width:44px;height:44px;border-radius:50%;background:#fff;display:grid;place-items:center;flex:none}
+.vm .m-wcard>div{flex:1;min-width:0;display:grid;gap:14px;align-content:center}
+.vm .m-wcard p{font-size:16.5px;line-height:1.44;color:var(--mut2);text-wrap:pretty}
+.vm .m-wcard b{font-size:17.5px;line-height:1.34;font-weight:600;letter-spacing:-.2px;text-wrap:balance}
+.vm .m-wcard.y{background:var(--y-soft)}
+.vm .m-boot{display:grid;gap:7px}
+.vm .m-boot i{height:6px;border-radius:3px;background:#E4E4EA;overflow:hidden}
+.vm .m-boot u{display:block;height:100%;width:6%;border-radius:3px;background:var(--y-deep);transition:width 3.2s cubic-bezier(.2,.6,.3,1)}
+.vm .m-boot u.go{width:38%}
+.vm .m-boot small{font-size:12.5px;font-weight:500;color:var(--mut)}
+
+/* Сравнение: два телефона проживают одно и то же утро одновременно. */
+.vm .m-duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 22px 0}
+.vm .m-duo-col{display:grid;gap:8px;justify-items:center;min-width:0}
+.vm .m-duo-col>b{font-size:13.5px;font-weight:700;letter-spacing:-.1px;display:flex;align-items:center;gap:6px;height:18px}
+.vm .m-duo-col>b .logo{height:18px;width:auto}
+.vm .m-ph{position:relative;width:100%;border-radius:34px;background:#060607;padding:6px;box-shadow:inset 0 0 0 1.2px #8E8E96,inset 0 0 0 2.6px #3A3A40,0 18px 26px -20px rgba(13,13,15,.55);transition:opacity .5s,transform .55s cubic-bezier(.2,.8,.2,1),box-shadow .4s}
+.vm .m-ph::before{content:'';position:absolute;left:-1.5px;top:62px;width:2px;height:44px;border-radius:1px 0 0 1px;background:linear-gradient(#55555C 0 12px,transparent 12px 20px,#55555C 20px 44px)}
+.vm .m-ph::after{content:'';position:absolute;right:-1.5px;top:84px;width:2px;height:30px;border-radius:0 1px 1px 0;background:#55555C}
+.vm .m-ph.buzz{animation:m-buzz .5s ease-in-out}
+@keyframes m-buzz{20%{transform:rotate(-1.6deg)}40%{transform:rotate(1.4deg)}60%{transform:rotate(-1deg)}80%{transform:rotate(.6deg)}}
+.vm .m-ph.lose{opacity:.7;transform:scale(.965)}
+.vm .m-ph.win{box-shadow:inset 0 0 0 1.2px #8E8E96,inset 0 0 0 2.6px #3A3A40,0 0 0 3.5px var(--y),0 20px 28px -18px rgba(255,180,0,.6)}
+.vm .m-ph-scr{position:relative;border-radius:28px;background:#fff;height:318px;padding:28px 9px 9px;overflow:hidden;display:flex;flex-direction:column;gap:6px}
+.vm .m-ph-scr::before{content:'';position:absolute;left:50%;top:7px;width:44px;height:13px;margin-left:-22px;border-radius:7px;background:#060607}
+.vm .m-ph-now{display:grid;justify-items:center;gap:2px;padding:0 0 5px;flex:none}
+.vm .m-ph-now small{font-size:9px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:var(--mut)}
+.vm .m-ph-now b{font-size:27px;font-weight:700;letter-spacing:-1px;line-height:1;height:27px;transition:color .3s}
+.vm .m-ph.late .m-ph-now b{color:var(--red)}
+.vm .m-ph.win .m-ph-now b{color:var(--green)}
+.vm .m-al{display:flex;align-items:center;justify-content:space-between;height:47px;padding:0 8px 0 10px;border-radius:14px;background:var(--fill);opacity:0;transform:translateY(8px);transition:opacity .3s,transform .4s cubic-bezier(.3,1.4,.5,1),background .25s;flex:none}
+.vm .m-al.in{opacity:1;transform:none}
+.vm .m-al.ring{background:var(--y-soft)}
+.vm .m-al.snz{background:var(--orange-bg)}
+.vm .m-al.bad{background:var(--red-bg)}
+.vm .m-al.ok{background:var(--green-bg)}
+.vm .m-al small{display:block;font-size:10px;font-weight:600;color:var(--mut);white-space:nowrap;transition:color .2s}
+.vm .m-al.snz small{color:var(--orange)}
+.vm .m-al.bad small{color:var(--red)}
+.vm .m-al.ok small{color:var(--green)}
+.vm .m-al b{display:block;font-size:18px;font-weight:700;letter-spacing:-.6px;line-height:1.15;font-variant-numeric:tabular-nums}
+.vm .m-al.ring b{animation:m-shake .45s ease-in-out 2}
+@keyframes m-shake{25%{transform:translateX(-2px) rotate(-2deg)}75%{transform:translateX(2px) rotate(2deg)}}
+.vm .m-tg{position:relative;width:34px;height:20px;border-radius:10px;background:#D6D6DC;flex:none;transition:background .3s}
+.vm .m-tg::after{content:'';position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .35s cubic-bezier(.3,1.5,.5,1),background .3s}
+.vm .m-tg.on::after{transform:translateX(14px)}
+.vm .m-tg.red.on{background:#EE5F5B}
+.vm .m-tg.green.on{background:#34B36A}
+.vm .m-tg.yellow.on{background:var(--y)}
+.vm .m-ph-task{display:flex;align-items:center;gap:8px;padding:9px 9px 14px;border-radius:14px;background:var(--fill);position:relative;opacity:0;transform:translateY(12px) scale(.96);transition:opacity .35s,transform .5s cubic-bezier(.3,1.4,.5,1);flex:none}
+.vm .m-ph-task.in{opacity:1;transform:none}
+.vm .m-ph-task span{width:30px;height:30px;border-radius:50%;background:var(--y);display:grid;place-items:center;flex:none}
+.vm .m-ph-task b{font-size:13px;font-weight:700;flex:1}
+.vm .m-ph-task i{position:absolute;left:9px;right:9px;bottom:6px;height:3px;border-radius:2px;background:#E2E2E8;overflow:hidden}
+.vm .m-ph-task i u{display:block;height:100%;width:0;background:var(--y-deep);transition:width 1s cubic-bezier(.4,0,.2,1),background .3s}
+.vm .m-ph-task.go i u{width:100%}
+.vm .m-ph-task.done i u{background:#34B36A}
+.vm .m-party{position:relative;flex:1;display:grid;place-items:center}
+.vm .m-party-c{width:58px;height:58px;border-radius:50%;background:var(--green-bg);color:var(--green);display:grid;place-items:center;opacity:0;transform:scale(.3);transition:opacity .3s,transform .55s cubic-bezier(.3,1.6,.5,1)}
+.vm .m-party.go .m-party-c{opacity:1;transform:none}
+.vm .m-party i{position:absolute;left:50%;top:50%;border-radius:2px;opacity:0;transition:transform .9s cubic-bezier(.15,.8,.3,1),opacity .3s}
+.vm .m-party.go i{opacity:1;transform:translate(var(--dx),var(--dy)) rotate(var(--dr))}
+.vm .m-duo-cap{height:26px;padding:0 10px 0 8px;border-radius:13px;display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;opacity:0;transform:translateY(6px);transition:opacity .4s,transform .4s;white-space:nowrap}
+.vm .m-duo-cap.in{opacity:1;transform:none}
+.vm .m-duo-cap.r{background:var(--red-bg);color:var(--red)}
+.vm .m-duo-cap.g{background:var(--green-bg);color:var(--green)}
+.vm .m-duo-t{margin:14px 30px 0;text-align:center;font-size:15px;line-height:1.36;color:var(--mut2);opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;text-wrap:balance}
+.vm .m-duo-t.in{opacity:1;transform:none}
+.vm .m-duo-t b{display:block;color:var(--ink);font-weight:700;font-size:16px;margin-bottom:3px}
+
+/* График: крупный, по центру, без текста поверх линий. */
+.vm .m-graph{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 22px 6px}
+.vm .m-graph-card{padding:22px 16px 18px;border-radius:28px;background:#F6F6F8}
+.vm .m-graph-h{display:flex;justify-content:space-between;align-items:baseline;padding:0 4px 8px}
+.vm .m-graph-h b{font-size:17px;font-weight:600;letter-spacing:-.2px}
+.vm .m-graph-h span{font-size:12px;color:var(--mut)}
+.vm .m-legend{display:flex;justify-content:center;gap:10px;margin-top:10px}
+.vm .m-legend span{display:flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:16px;background:#fff;font-size:13.5px;font-weight:600;opacity:.35;transition:opacity .4s}
+.vm .m-legend i{width:16px;height:4px;border-radius:2px}
+.vm .chart-wrap.s1~.m-legend .l1,.vm .chart-wrap.s2~.m-legend .l2{opacity:1}
+.vm .m-graph-t{margin:16px 8px 0;font-size:15.5px;line-height:1.4;color:var(--mut2);text-align:center;text-wrap:balance}
+
+/* Как звонит sonly: подпись дня, жёлтый звонок, значки в шагах. */
+.vm .a-how{padding-top:18px}
+.vm .m-how-cap{align-self:center;height:26px;padding:0 11px 0 9px;border-radius:13px;background:#fff;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--mut2);margin-bottom:16px}
+.vm .rs:is([data-step="1"],[data-step="2"],[data-step="3"],[data-step="4"]) .rs-bell{background:var(--y);box-shadow:0 6px 16px -6px rgba(255,180,0,.7)}
+.vm .rs-bar u{background:var(--y-deep)}
+.vm .rs-task-i{background:var(--y-soft)}
+.vm .a-how-steps span{display:flex;align-items:center;gap:5px}
+
+/* Каталог заданий: переключатель категорий и строки. */
+.vm .m-tabs{margin:16px 24px 0;display:flex;padding:3px;border-radius:14px;background:var(--fill);flex:none}
+.vm .m-tab{flex:1;height:34px;border-radius:11px;font-size:13px;font-weight:600;color:var(--mut2);white-space:nowrap;padding:0 2px}
+.vm .m-tab.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(13,13,15,.14)}
+.vm .m-list{flex:1;padding:12px 24px 0;display:flex;flex-direction:column;gap:8px;-webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(180deg,#000 calc(100% - 26px),transparent)}
+.vm .m-task{display:flex;align-items:center;gap:12px;min-height:68px;flex:none;width:100%;padding:9px 16px 9px 12px;border-radius:20px;background:var(--fill);text-align:left;outline:2px solid transparent;outline-offset:-2px;transition:outline-color .15s,background .15s}
+.vm .m-task.on{outline-color:var(--ink);background:#fff}
+.vm .m-task-i{width:42px;height:42px;border-radius:50%;background:#fff;display:grid;place-items:center;flex:none;transition:background .15s}
+.vm .m-task-i .ms{font-size:22px}
+.vm .m-task.on .m-task-i{background:var(--y)}
+.vm .m-task .t{flex:1;display:grid;gap:1px;min-width:0}
+.vm .m-task .t b{font-size:16.5px;font-weight:600;letter-spacing:-.2px}
+.vm .m-task .t small{font-size:13px;line-height:1.28;color:var(--mut)}
+.vm .m-task em{width:24px;height:24px;border-radius:50%;border:1.6px solid #CDCDD4;display:grid;place-items:center;flex:none;color:transparent;transition:all .15s}
+.vm .m-task.on em{background:var(--ink);border-color:var(--ink);color:var(--y)}
+.vm .m-list-end{flex:none;height:22px}
+
+/* Время: под барабаном — насколько это раньше, чем сейчас. */
+.vm .m-wheel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.vm .m-delta{height:34px;padding:0 14px 0 12px;border-radius:17px;background:var(--fill);display:flex;align-items:center;gap:6px;font-size:14.5px;font-weight:600;color:var(--mut2)}
+.vm .m-delta.up{background:var(--y-soft);color:#5C4A00}
+
+/* «Это реально». */
+.vm .m-real{flex:1;padding:22px 24px 0;display:flex;flex-direction:column}
+.vm .m-bar{position:relative;height:78px;flex:none}
+.vm .m-bar-track{position:absolute;left:0;right:0;top:44px;height:10px;border-radius:5px;background:var(--fill)}
+.vm .m-bar-fill{position:absolute;left:0;top:44px;height:10px;border-radius:5px;background:var(--y);width:0;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.vm .m-bar.go .m-bar-fill{width:100%}
+.vm .m-bar-l,.vm .m-bar-r{position:absolute;top:62px;font-size:13px;font-weight:600;color:var(--mut)}
+.vm .m-bar-l{left:0;color:var(--ink)}
+.vm .m-bar-r{right:0}
+.vm .m-bar-plus{position:absolute;left:50%;top:4px;transform:translateX(-50%) scale(.7);opacity:0;height:30px;padding:0 12px 0 10px;border-radius:15px;background:var(--ink);color:#fff;font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px;white-space:nowrap;transition:opacity .3s,transform .45s cubic-bezier(.3,1.6,.5,1)}
+.vm .m-bar-plus .ic{color:var(--y)}
+.vm .m-bar.done .m-bar-plus{opacity:1;transform:translateX(-50%)}
+.vm .m-real-n{position:relative;z-index:0;margin-top:34px;font-weight:700;font-size:76px;letter-spacing:-3.6px;line-height:1;display:flex;align-items:baseline;gap:12px;font-variant-numeric:tabular-nums}
+.vm .m-real-n small{font-size:25px;letter-spacing:-.7px;font-weight:600}
+.vm .m-real-t{margin-top:14px;font-size:17px;line-height:1.42;color:var(--mut2);text-wrap:pretty}
+.vm .m-real-note{margin-top:auto;display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:20px;background:var(--y-soft);font-size:15px;line-height:1.42;color:#4A3D05}
+.vm .m-real-note .ic{margin-top:1px}
+
+/* Дни: подпись выбранного — жёлтой плашкой со значком. */
+.vm .m-days-cap{display:flex;align-items:center;gap:7px;height:34px;padding:0 14px 0 11px;border-radius:17px;background:var(--y-soft);color:#5C4A00;font-size:14.5px;font-weight:600}
+.vm .m-days-cap.none{background:var(--fill);color:var(--mut2)}
+
+/* Уведомления: значки в жёлтых плитках. */
+.vm .a-perm-list>div>.ic{width:40px;height:40px;padding:9px;border-radius:12px;background:var(--y-soft)}
+
+/* Обещание: один лист — текст, условия и место для подписи. */
+.vm .m-pact{flex:1;display:flex;flex-direction:column;justify-content:center;padding:10px 24px 4px}
+.vm .m-pact-card{position:relative;border-radius:28px;background:#fff;padding:20px 20px 18px;box-shadow:inset 0 0 0 1px #ECECF1,0 26px 50px -32px rgba(13,13,15,.42)}
+.vm .m-pact-top{display:flex;justify-content:space-between;align-items:center}
+.vm .m-pact-top .logo{height:22px;width:auto}
+.vm .m-pact-top small{font-size:13px;color:var(--mut)}
+.vm .m-pact-text{margin-top:22px;font-size:26px;line-height:1.26;font-weight:650;letter-spacing:-.7px;text-wrap:balance}
+.vm .m-pact-t{display:inline-block;padding:0 9px;border-radius:11px;background:var(--y);font-weight:750;font-variant-numeric:tabular-nums}
+.vm .m-pact-sign{position:relative;margin-top:22px;height:150px;border-radius:20px;background:#F6F6F8}
+.vm .m-pact-sign svg.js-sign{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none}
+.vm .m-pact-sign .js-sign path{fill:none;stroke:var(--ink);stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.vm .m-pact-line{position:absolute;left:20px;right:20px;bottom:40px;height:1.5px;background:#D4D4DB;transition:background .3s}
+.vm .m-pact-hint{position:absolute;left:20px;bottom:50px;display:flex;align-items:center;gap:6px;font-size:14px;font-weight:500;color:#A6A6AF;pointer-events:none;transition:opacity .2s}
+.vm .m-pact-sign.draw .m-pact-hint{opacity:0}
+.vm .m-pact-sign.has .m-pact-line{background:var(--y-deep)}
+.vm .m-pact-clear{position:absolute;right:10px;top:10px;width:32px;height:32px;border-radius:50%;background:#fff;display:grid;place-items:center;color:var(--mut2);box-shadow:0 1px 3px rgba(13,13,15,.12);opacity:0;pointer-events:none;transition:opacity .2s}
+.vm .m-pact-sign.draw .m-pact-clear{opacity:1;pointer-events:auto}
+.vm .m-pact-seal{position:absolute;right:12px;bottom:10px;width:96px;height:96px;pointer-events:none;opacity:0;transform:rotate(-16deg) scale(.4);transition:transform .55s cubic-bezier(.3,1.6,.5,1),opacity .25s;filter:drop-shadow(0 10px 14px rgba(255,160,0,.45))}
+.vm .m-pact-seal svg{display:block;width:100%;height:100%}
+.vm .m-pact-seal .s-bg{fill:var(--y)}
+.vm .m-pact-seal .s-rg{fill:none;stroke:#0D0D0F;stroke-width:1.6}
+.vm .m-pact-seal .s-tx{font-family:'Inter',sans-serif;font-size:8.6px;font-weight:800;letter-spacing:.6px;fill:#0D0D0F}
+.vm .m-pact-seal .s-mk path{fill:#0D0D0F}
+.vm .m-pact-card.signed .m-pact-seal{opacity:1;transform:rotate(-16deg) scale(1)}
+
+/* Сборка плана: строки со значками, под заголовком — что делается прямо сейчас. */
+.vm .a-load-bar i{background:var(--y-deep)}
+.vm .a-load>p{min-height:22px}
+.vm .a-load-row .a-load-ic{margin-left:auto}
+.vm .m-load-i{width:36px;height:36px;border-radius:11px;background:var(--y-soft);display:grid;place-items:center;flex:none}
+
+/* Итог: крупное время и стрелка к плану. */
+.vm .m-res-lead{margin-top:14px;font-size:17px;color:var(--mut)}
+.vm .m-res-time{font-weight:700;font-size:84px;letter-spacing:-4px;line-height:1.02;height:86px}
+.vm .m-res-tag{margin-top:4px;font-size:16.5px;font-weight:500}
+.vm .m-res-arrow{width:44px;height:50px;margin:4px 0 -2px 70px;flex:none}
+.vm .m-res-arrow path{fill:none;stroke:#C68E12;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.vm .a-res .a-plan{margin-top:0}
+.vm .a-step:first-of-type i{background:var(--y);color:var(--ink)}
+.vm .a-step .ms{font-size:17px}
+.vm .m-res-every{margin-top:24px;font-size:20px;font-weight:700;letter-spacing:-.5px}
+.vm .a-res .a-res-days{margin-top:12px}
+.vm .a-res-days i.next{background:var(--y);color:var(--ink)}
+
+/* Промокод: само поле в виде купона, без цен. После верного кода — только размер скидки. */
+.vm .m-promo{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 24px 44px}
+.vm .m-coupon{position:relative;display:flex;align-items:center;gap:4px;height:68px;padding:0 9px 0 14px;border-radius:20px;background:var(--fill);border:1.5px solid transparent;transition:background .25s,border-color .25s}
+.vm .m-coupon::before,.vm .m-coupon::after{content:'';position:absolute;top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:#fff}
+.vm .m-coupon::before{left:-10px}
+.vm .m-coupon::after{right:-10px}
+.vm .m-coupon-i{width:40px;height:40px;border-radius:50%;background:#fff;display:grid;place-items:center;flex:none;transition:background .25s,color .25s}
+.vm .m-coupon input{flex:1;min-width:0;height:100%;border:0;background:none;outline:0;padding:0 10px;font:600 18px 'Inter',sans-serif;letter-spacing:1.2px;color:var(--ink);text-transform:uppercase}
+.vm .m-coupon input::placeholder{color:#A9A9B2;text-transform:none;letter-spacing:0;font-weight:500}
+.vm .m-coupon button{height:46px;padding:0 18px;border-radius:15px;background:#fff;font-size:15px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08);flex:none}
+.vm .m-coupon em{width:36px;height:36px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;flex:none;margin-right:6px}
+.vm .m-coupon.ok{background:var(--green-bg)}
+.vm .m-coupon.ok .m-coupon-i{color:var(--green)}
+.vm .m-coupon.ok input{color:#14673A;-webkit-text-fill-color:#14673A;opacity:1}
+.vm .m-coupon.err{border-color:var(--red)}
+.vm .a-promo-msg{margin:14px 4px 0;text-align:center;min-height:24px;font-size:14.5px;line-height:1.35}
+.vm .a-promo-msg.ok{font-size:18px;font-weight:700;letter-spacing:-.2px;color:var(--green)}
+.vm .a-promo-msg.err{color:var(--red)}
+
+/* Перед оплатой: в телефоне — настоящая главная приложения, уменьшенная целиком. */
+.vm .m-val{flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 24px 0;overflow:hidden}
+.vm .m-val h1{font-size:30px;font-weight:700;letter-spacing:-.9px;text-align:center}
+.vm .m-val>p{margin-top:6px;font-size:16px;line-height:1.4;color:var(--mut);text-align:center;text-wrap:balance}
+.vm .m-iphone{position:relative;width:236px;height:487px;border-radius:50px;padding:10px;margin-top:18px;flex:none;background:#060607;box-shadow:inset 0 0 0 1.5px #A5A5AD,inset 0 0 0 3.5px #45454B,0 0 0 1px #1D1D20,0 40px 46px -34px rgba(13,13,15,.6),0 12px 20px -14px rgba(13,13,15,.35);transform-origin:50% 100%;animation:m-phone 1.2s cubic-bezier(.2,.8,.2,1) both .08s}
+@keyframes m-phone{from{opacity:0;transform:translateY(56px) scale(.95)}to{opacity:1;transform:none}}
+.vm .m-iphone::before{content:'';position:absolute;left:-2.5px;top:92px;width:3px;height:132px;border-radius:2px 0 0 2px;background:linear-gradient(#6E6E76 0 20px,transparent 20px 40px,#6E6E76 40px 78px,transparent 78px 94px,#6E6E76 94px 132px)}
+.vm .m-iphone::after{content:'';position:absolute;right:-2.5px;top:150px;width:3px;height:62px;border-radius:0 2px 2px 0;background:#6E6E76}
+.vm .m-iphone-scr{position:relative;width:100%;height:100%;border-radius:40px;overflow:hidden;background:#F2F2F5}
+.vm .mi-real{position:absolute;left:0;top:0;width:390px;height:844px;zoom:.5539;pointer-events:none;text-align:left;font-size:16px;line-height:1.3}
+.vm .mi-real .ap{position:absolute;inset:0;overflow:hidden}
+
+/* Настройка задания: короткие настройки стоят по центру, длинный список предметов прокручивается. */
+.vm .m-setup{flex:1;padding:12px 24px 0;display:flex;flex-direction:column;-webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(180deg,#000 calc(100% - 26px),transparent)}
+.vm .m-setup-in{margin:auto 0;display:grid;gap:12px}
+.vm .m-setup-t{justify-self:start;display:flex;align-items:center;gap:7px;height:32px;padding:0 13px 0 9px;border-radius:16px;background:var(--y-soft);font-size:13.5px;font-weight:600;color:#4A3D05}
+.vm .m-setup-p{font-size:17px;line-height:1.44;color:var(--mut2)}
+.vm .m-setup .m-list-end{flex:none;height:22px}
+
+/* Подписка: строка «почему платить», карточка «твой будильник» и три причины со значками. */
+.vm .a-pw h1{font-size:28px}
+.vm .m-pw-sub{margin-top:8px;text-align:center;font-size:15px;line-height:1.4;color:var(--mut);text-wrap:balance}
+.vm .m-pw-you{margin-top:16px;display:flex;align-items:center;gap:12px;padding:12px 14px 12px 12px;border-radius:20px;background:#F6F6F8}
+.vm .m-pw-you>span{width:42px;height:42px;border-radius:50%;background:var(--y);display:grid;place-items:center;flex:none}
+.vm .m-pw-you div{flex:1;display:grid;gap:1px;min-width:0}
+.vm .m-pw-you b{font-size:15.5px;font-weight:600;letter-spacing:-.2px}
+.vm .m-pw-you small{font-size:13px;color:var(--mut)}
+.vm .m-pw-you em{width:24px;height:24px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;flex:none}
+.vm .m-pw-why{margin-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.vm .m-pw-why div{padding:13px 3px 12px;border-radius:18px;background:#F6F6F8;display:grid;justify-items:center;align-content:start;gap:8px;text-align:center}
+.vm .m-pw-why span{width:38px;height:38px;border-radius:50%;background:var(--y-soft);display:grid;place-items:center}
+.vm .m-pw-why b{font-size:12.5px;font-weight:600;line-height:1.2;letter-spacing:-.15px;white-space:nowrap}
+.vm .a-pay-note{text-wrap:balance}
+.vm .a-plan-c .pr .day{display:block;margin-top:2px;font-size:11.5px;font-weight:600;color:#8A6A00}
+
+/* После оплаты: будильник включается на глазах. */
+.vm .a-done{padding-top:86px}
+.vm .a-done p{margin-top:14px}
+.vm .m-done-tile{position:relative;margin-top:28px}
+.vm .m-atile{border-radius:28px;background:#0D0D0F;color:#fff;padding:18px 18px 18px 22px;display:grid;gap:6px;box-shadow:0 22px 36px -22px rgba(13,13,15,.6)}
+.vm .m-atile-top{display:flex;justify-content:space-between;align-items:center}
+.vm .m-atile small{font-size:11.5px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:#9B9BA3}
+.vm .m-atile .m-tg{width:54px;height:32px;border-radius:16px;background:#34343A}
+.vm .m-atile .m-tg::after{width:28px;height:28px}
+.vm .m-atile .m-tg.on{background:var(--y)}
+.vm .m-atile .m-tg.on::after{transform:translateX(22px);background:#0D0D0F}
+.vm .m-atile>b{font-size:54px;font-weight:700;letter-spacing:-2.4px;line-height:1.05}
+.vm .m-atile em{font-style:normal;justify-self:start;display:flex;align-items:center;gap:6px;height:28px;padding:0 11px 0 9px;border-radius:14px;background:#232327;font-size:13px;font-weight:600}
+.vm .m-atile em .ms,.vm .m-atile em .ic{color:var(--y)}
+.vm .m-done-tile .m-party{position:absolute;right:45px;top:34px;width:0;height:0;display:block}
+.vm .m-done-chip{position:relative;align-self:flex-start;margin-top:14px;display:flex;align-items:center;gap:6px;height:34px;padding:0 13px 0 10px;border-radius:17px;background:#fff;font-size:14px;font-weight:600;box-shadow:0 2px 8px -2px rgba(13,13,15,.15)}
+.vm .m-done-chip .ic{color:#E8760C}
+
+/* ── Правки 11.11: будильники без цифр, ответы на «первую мысль», мозг-персонаж ── */
+
+/* Сколько будильников: часики без цифр. Выбранная карточка — часики звенят. */
+.vm .m-clocks{position:relative;display:block;width:100%;height:98px}
+.vm .m-clocks span{position:absolute;color:var(--ink);transform:translateX(-50%) rotate(var(--r));transform-origin:50% 90%;transition:color .18s}
+.vm .m-clocks svg{display:block;width:100%;height:auto;overflow:visible}
+.vm .m-clocks .bd{fill:#fff;stroke:currentColor;stroke-width:3.2;transition:fill .18s}
+.vm .m-clocks .bl{fill:currentColor}
+.vm .m-clocks .hd,.vm .m-clocks .lgs{fill:none;stroke:currentColor;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.vm .m-clocks .main .bl{fill:var(--y-deep)}
+.vm .m-clocks .dim{opacity:.45}
+.vm .m-card.on .m-clocks span{color:#fff;animation:m-clk .42s ease-in-out var(--d) 2}
+.vm .m-card.on .m-clocks .bd{fill:#26262B}
+@keyframes m-clk{25%{transform:translateX(-50%) rotate(calc(var(--r) - 9deg))}75%{transform:translateX(-50%) rotate(calc(var(--r) + 9deg))}}
+
+/* ── Экраны-ответы: общий вид, полоса «сколько утра ушло», полный макет iPhone ── */
+.vm .m-th{flex:1;padding:0 24px 6px;display:flex;flex-direction:column;justify-content:center;gap:14px}
+.vm .m-th .a-big{font-size:36px}
+.vm .m-th-t{font-size:16.5px;line-height:1.36;font-weight:600;text-align:center;text-wrap:balance}
+.vm .m-lost{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:var(--mut)}
+.vm .m-lost i{height:8px;border-radius:4px;background:#ECECF1;overflow:hidden}
+.vm .m-lost u{display:block;height:100%;width:0;border-radius:4px;background:#E5484D;transition:width .8s cubic-bezier(.22,1,.36,1)}
+.vm .m-lost b{min-width:58px;text-align:right;color:#E5484D;font-variant-numeric:tabular-nums}
+.vm .m-dev{position:relative;align-self:center;flex:none;width:186px;height:384px;border-radius:44px;padding:7px;background:#0A0A0C;box-shadow:inset 0 0 0 1.5px #A5A5AD,inset 0 0 0 3.2px #45454B,0 0 0 1px #1D1D20,0 30px 40px -30px rgba(13,13,15,.6),0 10px 18px -12px rgba(13,13,15,.35)}
+.vm .m-dev-b{position:absolute;width:3px;border-radius:2px;background:#6E6E76}
+.vm .m-dev-b.l{left:-2.5px;top:76px;height:96px;background:linear-gradient(#6E6E76 0 18px,transparent 18px 32px,#6E6E76 32px 58px,transparent 58px 70px,#6E6E76 70px 96px)}
+.vm .m-dev-b.r{right:-2.5px;top:118px;height:52px}
+.vm .m-dev-scr{position:relative;width:100%;height:100%;border-radius:37px;overflow:hidden;background:#000;isolation:isolate}
+.vm .m-dev-isl{position:absolute;left:50%;top:9px;width:52px;height:16px;margin-left:-26px;border-radius:8px;background:#000;z-index:6}
+.vm .m-dev.buzz{animation:m-buzz .55s ease-in-out}
+@keyframes m-buzz{10%,50%,90%{transform:translateX(-2.5px) rotate(-.7deg)}30%,70%{transform:translateX(2.5px) rotate(.7deg)}}
+
+/* «Ещё пять минут»: экран звонящего будильника. Палец жмёт «Отложить» — телефон гаснет на пять минут. */
+.vm .m-alr{position:absolute;inset:0;color:#fff;text-align:center;background:radial-gradient(130% 62% at 50% 104%,#4A3414 0%,#1A1510 46%,#0B0B0E 78%)}
+.vm .alr-x{position:absolute;left:0;right:0;top:40px;font-style:normal;font-size:11px;font-weight:700;color:#FFB340;opacity:0;transform:translateY(4px);transition:opacity .3s,transform .3s}
+.vm .alr-x.in{opacity:1;transform:none}
+.vm .alr-t{margin-top:64px;height:50px;display:flex;justify-content:center;font-family:"Roboto Flex","Inter",sans-serif;font-stretch:116%;font-variation-settings:"wdth" 116;font-weight:780;font-size:50px;letter-spacing:-1.6px;line-height:1}
+.vm .alr-l{margin-top:8px;display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.72)}
+.vm .alr-snz{position:absolute;left:21px;right:21px;bottom:92px;height:46px;border-radius:23px;background:#FF9F0A;color:#1A1204;display:grid;place-items:center;font-size:15.5px;font-weight:700;transition:transform .16s,filter .16s}
+.vm .alr-stop{position:absolute;left:50%;bottom:36px;width:76px;height:32px;margin-left:-38px;border-radius:16px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.85)}
+.vm .alr-touch{position:absolute;left:50%;bottom:98px;width:34px;height:34px;margin-left:-17px;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:0 0 0 1.5px rgba(255,255,255,.8);opacity:0;transform:scale(1.5);transition:opacity .16s,transform .22s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+.vm .m-alr.tap .alr-touch{opacity:1;transform:scale(1)}
+.vm .m-alr.tap .alr-snz{transform:scale(.95);filter:brightness(.82)}
+.vm .alr-dim{position:absolute;inset:0;z-index:4;background:#060608;display:grid;place-content:center;justify-items:center;gap:8px;color:rgba(255,255,255,.5);opacity:0;transition:opacity .4s}
+.vm .alr-dim b{font-size:12.5px;font-weight:600}
+.vm .m-alr.dim .alr-dim{opacity:1}
+
+/* «Сначала телефон»: лента листается рывками пальца, время в углу убегает. */
+.vm .m-fd{position:absolute;inset:0;background:#F2F2F6}
+.vm .fd-t{position:absolute;left:19px;top:10px;z-index:6;font-size:11.5px;font-weight:700;color:#0D0D0F;font-variant-numeric:tabular-nums;transition:color .3s}
+.vm .m-fd.late .fd-t{color:#E5484D}
+.vm .m-fd::before{content:"";position:absolute;left:0;right:0;top:0;height:34px;background:#F2F2F6;z-index:5}
+.vm .fd-in{display:grid;gap:7px;padding:38px 7px 0}
+.vm .m-fd.go .fd-in{animation:m-fd 4.4s cubic-bezier(.2,.8,.2,1) infinite}
+@keyframes m-fd{18%,25%{transform:translateY(-125px)}43%,50%{transform:translateY(-250px)}68%,75%{transform:translateY(-375px)}93%,100%{transform:translateY(-500px)}}
+.vm .m-post{display:grid;grid-template-columns:20px 1fr;gap:6px 7px;padding:7px;border-radius:15px;background:#fff}
+.vm .m-post i{width:20px;height:20px;border-radius:50%}
+.vm .m-post span{display:grid;gap:4px;align-content:center}
+.vm .m-post u{display:block;width:78%;height:5px;border-radius:3px;background:#E2E2E9}
+.vm .m-post u.s{width:46%}
+.vm .m-post b{grid-column:1/-1;height:78px;border-radius:10px}
+.vm .fd-thumb{position:absolute;left:56%;top:72%;z-index:7;width:30px;height:30px;border-radius:50%;background:rgba(13,13,15,.2);box-shadow:0 0 0 1.5px rgba(255,255,255,.75);opacity:0;pointer-events:none}
+.vm .m-fd.go .fd-thumb{animation:m-thumb 1.1s cubic-bezier(.2,.8,.2,1) infinite}
+@keyframes m-thumb{0%{opacity:0;transform:none}12%{opacity:1;transform:none}58%{opacity:1;transform:translateY(-92px)}78%,100%{opacity:0;transform:translateY(-100px)}}
+
+/* «Полежу немного»: взгляд самого человека. Веки закрываются; открываются — на часах позже, за окном уже светло. */
+.vm .m-eye{position:relative;height:246px;border-radius:30px;overflow:hidden;background:#262C4E;isolation:isolate}
+.vm .eye-room{position:absolute;inset:0;transition:filter .5s}
+.vm .m-eye[data-lid="half"] .eye-room,.vm .m-eye[data-lid="shut"] .eye-room{filter:blur(3px)}
+.vm .eye-day{position:absolute;inset:0;background:linear-gradient(180deg,#F7EBCB,#FFE7A3);opacity:0;transition:opacity 1.1s}
+.vm .m-eye[data-day="1"] .eye-day{opacity:.42}
+.vm .m-eye[data-day="2"] .eye-day{opacity:1}
+.vm .eye-win{position:absolute;left:26px;top:28px;width:112px;height:126px;border-radius:16px;overflow:hidden;background:#11163A;box-shadow:0 0 0 5px #FFFFFF,0 10px 22px -10px rgba(0,0,0,.5)}
+.vm .eye-sky{position:absolute;inset:0;background:linear-gradient(180deg,#8EC5F4,#FFE9AE);opacity:0;transition:opacity 1.1s}
+.vm .m-eye[data-day="1"] .eye-sky{opacity:.5}
+.vm .m-eye[data-day="2"] .eye-sky{opacity:1}
+.vm .eye-sun{position:absolute;left:50%;bottom:-52px;width:78px;margin-left:-39px;transition:transform 1.1s cubic-bezier(.22,1,.36,1)}
+.vm .eye-sun .mark{display:block;width:100%;height:auto}
+.vm .m-eye[data-day="1"] .eye-sun{transform:translateY(-44px)}
+.vm .m-eye[data-day="2"] .eye-sun{transform:translateY(-96px)}
+.vm .eye-win u{position:absolute;left:0;right:0;top:50%;height:4px;margin-top:-2px;background:#fff}
+.vm .eye-win u.v{left:50%;right:auto;top:0;bottom:0;width:4px;height:auto;margin:0 0 0 -2px}
+.vm .eye-desk{position:absolute;left:0;right:0;bottom:0;height:52px;background:#3A3F66;transition:background 1.1s}
+.vm .m-eye[data-day="1"] .eye-desk{background:#8A7C80}
+.vm .m-eye[data-day="2"] .eye-desk{background:#D9B98C}
+.vm .eye-clk{position:absolute;right:22px;bottom:34px;z-index:1;height:66px;padding:0 18px;border-radius:20px;background:#0D0D0F;color:#fff;display:flex;align-items:center;font-family:"Roboto Flex","Inter",sans-serif;font-stretch:116%;font-variation-settings:"wdth" 116;font-weight:800;font-size:42px;letter-spacing:-1.2px;box-shadow:0 14px 22px -12px rgba(0,0,0,.6);transition:color .3s}
+.vm .m-eye.late .eye-clk{color:#FF6B6B;animation:m-buzz .55s ease-in-out}
+.vm .eye-lid{position:absolute;left:50%;top:50%;z-index:3;width:150%;height:200%;transform:translate(-50%,-50%);border-radius:50%;box-shadow:0 0 0 440px #08080A,inset 0 0 30px 14px #08080A;transition:height .6s cubic-bezier(.45,0,.25,1);pointer-events:none}
+.vm .m-eye[data-lid="half"] .eye-lid{height:44%}
+.vm .m-eye[data-lid="shut"] .eye-lid{height:0%}
+
+/* «Встаю сразу»: серия растёт день за днём. */
+.vm .m-strk{display:grid;justify-items:center;padding:26px 14px 22px;border-radius:30px;background:#F6F6F8}
+.vm .strk-n{display:flex;align-items:center;gap:10px}
+.vm .strk-n .ap-flame{width:54px;height:68px}
+.vm .strk-n b{min-width:56px;font-family:"Roboto Flex","Inter",sans-serif;font-stretch:118%;font-variation-settings:"wdth" 118;font-weight:850;font-size:86px;letter-spacing:-3px;line-height:1;font-variant-numeric:tabular-nums}
+.vm .strk-n b.pop{animation:strk-pop .36s cubic-bezier(.3,1.6,.5,1)}
+@keyframes strk-pop{from{transform:scale(.7);opacity:.3}}
+.vm .m-strk>small{margin-top:2px;font-size:16px;font-weight:600;color:var(--mut2)}
+.vm .strk-week{margin-top:20px;display:flex;gap:6px}
+.vm .strk-week span{display:grid;justify-items:center;gap:5px}
+.vm .strk-week i{width:38px;height:38px;border-radius:50%;background:#fff;display:grid;place-items:center;transition:background .3s,transform .45s cubic-bezier(.3,1.7,.5,1)}
+.vm .strk-week .mark{width:22px;height:auto;display:block}
+.vm .strk-week i:not(.on) .mark path{fill:#D4D4DB}
+.vm .strk-week i.on{background:#0D0D0F;transform:scale(1.08)}
+.vm .strk-week small{font-size:11px;font-weight:600;color:var(--mut)}
+
+/* ── Мозг-персонаж и сцены по самочувствию ── */
+.vm .m-will{gap:14px}
+.vm .m-will .m-wcard{margin-top:0}
+.vm .m-brain{position:relative;align-self:center;width:232px;height:215px}
+.vm .m-br{position:relative;z-index:1;display:block;width:100%;height:100%;overflow:visible}
+.vm .m-boot{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px}
+.vm .m-boot i{height:8px;border-radius:4px;background:#ECECF1;overflow:hidden}
+.vm .m-boot u{display:block;width:4%;height:100%;border-radius:4px;background:var(--y-deep);transition:width var(--t,2400ms) cubic-bezier(.45,.05,.3,1)}
+.vm .m-boot u.go{width:100%}
+.vm .m-boot small{font-size:13px;font-weight:600;color:var(--mut)}
+.vm .br-sh{fill:rgba(13,13,15,.09)}
+.vm .br-out circle{fill:#E66C92}
+.vm .br-line{fill:none;stroke:#E66C92;stroke-width:3.4;stroke-linecap:round}
+.vm .br-shine{fill:#fff;opacity:.6}
+.vm .br-eye{fill:#fff}
+.vm .br-pup{fill:#2A1620}
+.vm .br-gl{fill:#fff}
+.vm .br-lid{fill:#FFB8CB;transform:translateY(-29px);transition:transform .45s cubic-bezier(.3,1.4,.5,1);animation:br-blink 3.8s ease-in-out infinite}
+.vm .br-lash{fill:#7C2D4A}
+.vm .br-ck{fill:#FF6F93;opacity:.42}
+.vm .br-legs path{fill:none;stroke:#E66C92;stroke-width:7.5;stroke-linecap:round}
+.vm .br-legs .br-shoe{fill:#2B2B31;stroke:none}
+.vm .br-arm path{fill:none;stroke:#E66C92;stroke-width:7.5;stroke-linecap:round}
+.vm .br-arm circle{fill:#FFC4D3;stroke:#E66C92;stroke-width:3}
+.vm .br-arm,.vm .br-m,.vm .br-brow,.vm .br-drop{opacity:0;transition:opacity .3s}
+.vm .br-m.yawn,.vm .br-m.grin{fill:#8E2F4E}
+.vm .br-m.smile,.vm .br-m.wavy,.vm .br-brow{fill:none;stroke:#8E2F4E;stroke-width:3.2;stroke-linecap:round}
+.vm .br-drop{fill:#8FD3FF}
+@keyframes br-blink{0%,84%,100%{transform:translateY(-29px)}90%,93%{transform:translateY(0)}}
+.vm .br-bob{transform-origin:110px 190px;animation:br-bob 2.8s ease-in-out infinite}
+@keyframes br-bob{50%{transform:translateY(3px) scale(1.012,.988)}}
+/* Разбито: веки полуопущены, зевает, руки висят. Проснулся — руки вверх, улыбка, солнце. */
+.vm .m-brain.sleepy:not(.awake) .br-lid{transform:translateY(-11px);animation:none}
+.vm .m-brain.sleepy:not(.awake) .br-arm.dn,.vm .m-brain.sleepy:not(.awake) .br-m.yawn{opacity:1}
+.vm .m-brain.sleepy:not(.awake) .br-m.yawn{transform-box:fill-box;transform-origin:50% 50%;animation:br-yawn 3s ease-in-out infinite}
+@keyframes br-yawn{0%,55%,100%{transform:scale(.6,.45)}70%,88%{transform:scale(1.15,1.2)}}
+/* Нормально: потягивается одной рукой, веки чуть опущены. */
+.vm .m-brain.ok:not(.awake) .br-lid{transform:translateY(-18px);animation:none}
+.vm .m-brain.ok:not(.awake) .br-arm.up.l,.vm .m-brain.ok:not(.awake) .br-arm.dn.r,.vm .m-brain.ok:not(.awake) .br-m.smile{opacity:1}
+.vm .m-brain.ok:not(.awake) .br-arm.up.l{transform-box:fill-box;transform-origin:100% 100%;animation:br-stretch 2.2s ease-in-out infinite}
+@keyframes br-stretch{50%{transform:rotate(-9deg)}}
+/* Бодро: руки вверх, широкая улыбка, подпрыгивает. */
+.vm .m-brain.fresh .br-arm.up,.vm .m-brain.fresh .br-m.grin{opacity:1}
+.vm .m-brain.fresh .br-bob{animation:br-jump .52s cubic-bezier(.3,0,.5,1) infinite alternate}
+@keyframes br-jump{to{transform:translateY(-11px)}}
+/* Тревожно: держится за голову, брови домиком, капля пота, вокруг — дела. Успокоился — одно дело, улыбка. */
+.vm .m-brain.anx:not(.awake) .br-arm.hd,.vm .m-brain.anx:not(.awake) .br-m.wavy,.vm .m-brain.anx:not(.awake) .br-brow,.vm .m-brain.anx:not(.awake) .br-drop{opacity:1}
+.vm .m-brain.anx:not(.awake) .br-lid{animation:none}
+.vm .m-brain.anx:not(.awake) .br-bob{animation:br-shiver .26s linear infinite}
+@keyframes br-shiver{25%{transform:translateX(-1.3px)}75%{transform:translateX(1.3px)}}
+.vm .m-brain.anx.awake .br-arm.dn{opacity:1}
+/* Общее для «включился»: улыбка, руки вверх у сонного и обычного. */
+.vm .m-brain.awake:not(.fresh) .br-m.smile{opacity:1}
+.vm .m-brain.sleepy.awake .br-arm.up,.vm .m-brain.ok.awake .br-arm.up{opacity:1}
+.vm .m-brain.awake:not(.fresh):not(.anx) .br-bob{animation:br-hop .6s cubic-bezier(.3,1.5,.5,1) 1,br-bob 1.8s ease-in-out .6s infinite}
+@keyframes br-hop{40%{transform:translateY(-12px) scale(.98,1.03)}}
+/* Солнце за плечом — когда мозг в строю. */
+.vm .br-sunb{position:absolute;right:2px;top:-4px;z-index:0;width:76px;opacity:0;transform:translateY(34px) scale(.7);transition:opacity .5s,transform .8s cubic-bezier(.3,1.5,.5,1)}
+.vm .br-sunb .mark{display:block;width:100%;height:auto}
+.vm .m-brain.awake:not(.anx) .br-sunb{opacity:1;transform:none}
+/* Буквы сна. */
+.vm .br-z{position:absolute;right:20px;top:-2px;z-index:2;width:50px;height:50px;transition:opacity .3s}
+.vm .br-z b{position:absolute;font-family:"Roboto Flex","Inter",sans-serif;font-weight:800;color:#9A9AA6;opacity:0;animation:br-z 2.4s ease-in-out infinite}
+.vm .br-z b:nth-child(1){left:0;bottom:0;font-size:15px}
+.vm .br-z b:nth-child(2){left:14px;bottom:13px;font-size:19px;animation-delay:.45s}
+.vm .br-z b:nth-child(3){left:30px;bottom:29px;font-size:24px;animation-delay:.9s}
+@keyframes br-z{0%{opacity:0;transform:translate(0,6px)}30%{opacity:1}100%{opacity:0;transform:translate(6px,-10px)}}
+.vm .m-brain.awake .br-z{opacity:0}
+.phone.instant .br-z b{opacity:1;animation:none}
+/* Искры у бодрого. */
+.vm .br-sp{position:absolute;z-index:2;width:18px;height:18px;background:#FFC62B;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation:br-tw 1.4s ease-in-out infinite}
+.vm .br-sp.s1{left:8px;top:22px}
+.vm .br-sp.s2{left:40px;top:-8px;width:12px;height:12px;animation-delay:.35s}
+.vm .br-sp.s3{right:44px;top:-10px;width:14px;height:14px;animation-delay:.7s}
+.vm .br-sp.s4{left:-2px;top:86px;width:11px;height:11px;animation-delay:1.05s}
+@keyframes br-tw{0%,100%{transform:scale(.3) rotate(0);opacity:0}50%{transform:scale(1) rotate(45deg);opacity:1}}
+.phone.instant .br-sp{animation:none}
+/* Дела вокруг головы у тревожного. */
+.vm .br-chip{position:absolute;z-index:2;width:34px;height:34px;border-radius:11px;background:#fff;color:#0D0D0F;display:grid;place-items:center;box-shadow:0 6px 14px -6px rgba(13,13,15,.35),inset 0 0 0 1px #ECECF1;animation:br-orb 2.6s ease-in-out infinite;transition:transform .6s cubic-bezier(.5,0,.3,1),opacity .45s}
+.vm .br-chip.c1{left:-12px;top:34px}
+.vm .br-chip.c2{left:30px;top:-24px;animation-delay:-.6s}
+.vm .br-chip.c3{right:30px;top:-26px;animation-delay:-1.3s}
+.vm .br-chip.c4{right:-12px;top:32px;animation-delay:-1.9s}
+@keyframes br-orb{0%,100%{translate:0 0;rotate:-5deg}50%{translate:0 -8px;rotate:6deg}}
+.vm .m-brain.awake .br-chip{opacity:0;animation:none}
+.vm .m-brain.awake .br-chip.c1{transform:translate(110px,-44px) scale(.3)}
+.vm .m-brain.awake .br-chip.c2{transform:translate(70px,12px) scale(.3)}
+.vm .m-brain.awake .br-chip.c3{transform:translate(-70px,12px) scale(.3)}
+.vm .m-brain.awake .br-chip.c4{transform:translate(-110px,-44px) scale(.3)}
+.vm .br-one{position:absolute;left:50%;top:-30px;z-index:2;width:44px;height:44px;margin-left:-22px;border-radius:50%;background:var(--y);color:#0D0D0F;display:grid;place-items:center;box-shadow:0 10px 18px -10px rgba(255,160,0,.9);opacity:0;transform:scale(.3);transition:opacity .3s .35s,transform .55s cubic-bezier(.3,1.7,.5,1) .35s}
+.vm .m-brain.awake .br-one{opacity:1;transform:none}
+.phone.instant .br-chip{animation:none}
+
+.vm .m-brain.anx{margin-top:30px}
+
+/* Мозг в карточках ответа про самочувствие. */
+.vm .m-brain.mini{display:block;width:108px;height:100px;margin:0}
+
+/* ── Как звонит sonly: три экрана приложения по очереди в телефоне ── */
+.vm .m-howd{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:8px 24px 0}
+.vm .hw{position:absolute;inset:0;background:#050507;color:#fff;text-align:center}
+.vm .hw-s{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;opacity:0;transform:scale(.96);transition:opacity .45s,transform .55s cubic-bezier(.22,1,.36,1);pointer-events:none}
+.vm .hw[data-step="1"] .s1,.vm .hw[data-step="2"] .s2,.vm .hw[data-step="3"] .s3{opacity:1;transform:none}
+.vm .hw-logo{margin-top:36px;height:13px}
+.vm .hw-logo .logo{height:13px;width:auto;color:#fff;display:block}
+.vm .hw-s.s1{background:radial-gradient(120% 50% at 50% 108%,rgba(255,190,60,.5),rgba(255,160,60,0) 70%)}
+.vm .hw-bell{position:relative;width:74px;margin-top:38px;transform-origin:50% 100%;animation:rg-ring 1.15s ease-in-out infinite}
+.vm .hw-bell .mark{position:relative;display:block;width:100%;height:auto}
+.vm .hw-bell u{position:absolute;left:50%;bottom:0;width:84px;height:84px;margin:0 0 -42px -42px;border-radius:50%;border:1.6px solid rgba(255,199,0,.6);clip-path:inset(0 0 50% 0);opacity:0;animation:rg-wave 1.9s ease-out infinite}
+.vm .hw-bell u.w2{animation-delay:.95s}
+.vm .hw-t{margin-top:12px;font-family:"Roboto Flex","Inter",sans-serif;font-stretch:118%;font-variation-settings:"wdth" 118;font-weight:840;font-size:46px;letter-spacing:-1.6px;line-height:1}
+.vm .hw-btn{margin-top:auto;width:138px;height:36px;border-radius:18px;background:#FFC700;color:#0D0D0F;display:grid;place-items:center;font-size:12px;font-weight:700}
+.vm .hw-s.s1 small{margin:8px 0 26px;display:flex;align-items:center;gap:3px;font-size:8.5px;font-weight:600;color:#8C8C96}
+.vm .hw-s.s2{background:linear-gradient(180deg,#141416 0%,#1c1713 46%,#3a2a1e 47%,#17110d 100%)}
+.vm .hw-find{margin-top:42px;font-style:normal;font-family:"Roboto Flex","Inter",sans-serif;font-stretch:118%;font-variation-settings:"wdth" 118;font-weight:850;font-size:15px;letter-spacing:.5px;text-transform:uppercase}
+.vm .hw-frame{position:relative;width:92px;height:92px;margin-top:14px;border-radius:22px;box-shadow:inset 0 0 0 2.5px #FFC700,0 0 18px rgba(255,199,0,.3);display:grid;place-items:center;transition:box-shadow .3s}
+.vm .hw-frame img{width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5))}
+.vm .hw-frame u{display:none}
+.vm .hw-frame b{position:absolute;right:-9px;top:-9px;width:28px;height:28px;border-radius:50%;background:#1FA055;color:#fff;display:grid;place-items:center;opacity:0;transform:scale(.3);transition:opacity .2s,transform .45s cubic-bezier(.3,1.8,.5,1)}
+.vm .hw.found .hw-frame{box-shadow:inset 0 0 0 2.5px #2ED573,0 0 22px rgba(46,213,115,.45)}
+.vm .hw.found .hw-frame b{opacity:1;transform:none}
+.vm .hw-shot{margin:auto 0 30px;width:42px;height:42px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px #1c1713,0 0 0 5.5px #fff}
+.vm .hw.found .hw-shot{animation:hw-press .4s ease}
+@keyframes hw-press{40%{transform:scale(.86)}}
+.vm .hw-s.s3{background:radial-gradient(90% 40% at 50% 34%,rgba(255,204,51,.28),rgba(255,204,51,0) 70%)}
+.vm .hw-sun{width:78px;margin-top:44px}
+.vm .hw-sun .mark{display:block;width:100%;height:auto}
+.vm .hw[data-step="3"] .hw-sun{animation:wk-rise 1.1s cubic-bezier(.2,.8,.2,1) both}
+.vm .hw-gm{margin-top:10px;font-family:"Roboto Flex","Inter",sans-serif;font-stretch:118%;font-variation-settings:"wdth" 118;font-weight:850;font-size:20px;letter-spacing:-.5px}
+.vm .hw-row{margin-top:14px;width:138px;height:44px;border-radius:14px;background:#17171B;display:grid;grid-template-columns:repeat(3,1fr);align-items:center;justify-items:center}
+.vm .hw-row u{width:24px;height:8px;border-radius:4px;background:#3A3A42}
+.vm .hw-row u:first-child{background:#FFC700}
+.vm .m-hsteps{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#B4B4BD}
+.vm .m-hsteps span{display:flex;align-items:center;gap:5px;height:32px;padding:0 12px 0 10px;border-radius:16px;background:#F3F3F6;transition:background .35s,color .35s}
+.vm .m-hsteps i{width:12px;height:1.5px;background:#DCDCE2}
+.vm .m-hsteps[data-step="1"] span:nth-of-type(1),.vm .m-hsteps[data-step="2"] span:nth-of-type(2),.vm .m-hsteps[data-step="3"] span:nth-of-type(3){background:#0D0D0F;color:#FFD12E}
+
+/* ── «Это реально»: дуга утра ── */
+.vm .rl{position:relative;border-radius:28px;background:linear-gradient(180deg,#EAF1FB 0%,#FBF3DD 100%);padding:14px 14px 12px;overflow:hidden}
+.vm .rl>svg{display:block;width:100%;height:auto;overflow:visible}
+.vm .rl-arc{fill:none;stroke:#fff;stroke-width:8;stroke-linecap:round}
+.vm .rl-gain{fill:none;stroke:#FFC62B;stroke-width:8;stroke-linecap:round}
+.vm .rl-ground{stroke:#D9DEE8;stroke-width:2;stroke-linecap:round}
+.vm .rl-now{fill:#fff;stroke:#A6ACB8;stroke-width:3}
+.vm .rl-goal{fill:#0D0D0F}
+.vm .rl-sun circle{fill:#0D0D0F}
+.vm .rl-plus{position:absolute;left:50%;top:44%;z-index:1;transform:translate(-50%,-50%) scale(.7);opacity:0;height:32px;padding:0 13px 0 10px;border-radius:16px;background:#0D0D0F;color:#fff;display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;white-space:nowrap;transition:opacity .3s,transform .5s cubic-bezier(.3,1.6,.5,1)}
+.vm .rl-plus .ic{color:#FFD12E}
+.vm .rl.done .rl-plus{opacity:1;transform:translate(-50%,-50%)}
+.vm .rl-cap{margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;color:#7A8090}
+.vm .rl-cap b{display:flex;align-items:center;gap:5px;color:#0D0D0F;font-weight:700}
+.vm .rl-cap span{display:flex;align-items:center;gap:6px}
+.vm .rl-cap span i{width:9px;height:9px;border-radius:50%;box-shadow:inset 0 0 0 2.2px #A6ACB8}
+.vm .m-real .m-real-n{margin-top:20px}
+.vm .rl-days{margin-top:12px;display:grid;gap:8px}
+.vm .rl-days>div{display:flex;flex-wrap:wrap;gap:5px}
+.vm .rl-days i{width:19px;display:block;opacity:.22;transform:scale(.7);transition:opacity .3s,transform .45s cubic-bezier(.3,1.8,.5,1)}
+.vm .rl-days i.on{opacity:1;transform:none}
+.vm .rl-days .mark{display:block;width:100%;height:auto}
+.vm .rl-days small{font-size:15px;font-weight:600;color:var(--mut2)}
+
+/* ── Сборка будильника: процент в кольце и список, как было, без лишнего ── */
+.vm .a-load{padding-top:54px}
+.vm .m-ring{position:relative;width:150px;height:150px;flex:none}
+.vm .m-ring svg{display:block;width:100%;height:100%;transform:rotate(-90deg)}
+.vm .m-ring circle{fill:none;stroke-width:10}
+.vm .m-ring .bg{stroke:#F0F0F4}
+.vm .m-ring .fg{stroke:var(--y-deep);stroke-linecap:round}
+.vm .m-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:46px;letter-spacing:-1.8px;line-height:1;font-variant-numeric:tabular-nums}
+.vm .m-ring b small{align-self:center;margin:8px 0 0 2px;font-size:20px;font-weight:600;letter-spacing:0;color:var(--mut)}
+.vm .m-ring.done{animation:m-ring-ok .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes m-ring-ok{40%{transform:scale(1.05)}}
+.vm .a-load h1{margin-top:20px}
+.vm .a-load-list{margin-top:22px}
+
+/* ── Промокод: билет ── */
+.vm .m-promo{padding-bottom:20px}
+.vm .m-tkt{position:relative;border-radius:30px;background:#F6F6F8;filter:drop-shadow(0 22px 22px rgba(13,13,15,.1))}
+.vm .tkt-top{position:relative;overflow:hidden;display:grid;justify-items:center;gap:2px;padding:26px 18px 22px;border-radius:30px 30px 0 0;background:linear-gradient(160deg,#FFF3C7,#FFDB63);text-align:center;transition:background .4s}
+.vm .tkt-sun{width:58px;margin-bottom:8px}
+.vm .tkt-sun .mark{display:block;width:100%;height:auto}
+.vm .tkt-sun path{fill:#0D0D0F}
+.vm .tkt-h{font-size:23px;font-weight:700;letter-spacing:-.5px}
+.vm .tkt-top span{font-size:15px;color:#6B5200}
+.vm .tkt-big{font-family:"Roboto Flex","Inter",sans-serif;font-stretch:118%;font-variation-settings:"wdth" 118;font-weight:850;font-size:62px;letter-spacing:-2.4px;line-height:1;animation:cam-in .55s cubic-bezier(.3,1.6,.5,1) both}
+.vm .tkt-top em{margin-top:10px;display:flex;align-items:center;gap:6px;height:34px;padding:0 14px 0 11px;border-radius:17px;background:#0D0D0F;color:#FFD12E;font-style:normal;font-size:14px;font-weight:700;animation:cam-in .55s cubic-bezier(.3,1.6,.5,1) .15s both}
+.vm .m-tkt.ok .tkt-top{background:linear-gradient(160deg,#FFE27A,#FFC421)}
+.vm .tkt-cut{position:relative;display:block;height:0;border-top:2px dashed #D9D9E0;margin:0 18px}
+.vm .tkt-cut::before,.vm .tkt-cut::after{content:"";position:absolute;top:-12px;width:22px;height:22px;border-radius:50%;background:#fff}
+.vm .tkt-cut::before{left:-29px}
+.vm .tkt-cut::after{right:-29px}
+.vm .tkt-bot{padding:14px 12px 12px}
+.vm .tkt-bot .m-coupon{background:#fff;height:62px}
+.vm .tkt-bot .m-coupon::before,.vm .tkt-bot .m-coupon::after{display:none}
+.vm .tkt-bot .m-coupon .m-coupon-i{background:#F6F6F8}
+.vm .tkt-bot .m-coupon button{background:#0D0D0F;color:#fff;box-shadow:none}
+.vm .tkt-bot .m-coupon.ok{background:var(--green-bg)}
+
+/* Кнопка «Открыть sonly» — с логотипом. */
+.vm .m-open{display:flex;align-items:center;justify-content:center;gap:9px}
+.vm .m-open .logo{height:19px;width:auto;color:#fff;margin-top:-3px}
+
+.vm .ld-tile .m-tg{flex:none}
+.vm .ld-tile .m-tg{width:50px;height:30px;border-radius:15px;background:#34343A}
+.vm .ld-tile .m-tg::after{width:26px;height:26px}
+.vm .ld-tile .m-tg.on{background:var(--y)}
+.vm .ld-tile .m-tg.on::after{transform:translateX(20px)}

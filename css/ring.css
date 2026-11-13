@@ -1,0 +1,353 @@
+/* Звонок, задание, подъём и проверка подъёма.
+   Звонок, задания и проверка подъёма всегда тёмные и одной семьи: логотип сверху, солнце из логотипа, жёлтая кнопка.
+   Подъём («Доброе утро») следует теме приложения. */
+.ap[data-screen="ring"] .dock,.ap[data-screen="task"] .dock,.ap[data-screen="woke"] .dock,.ap[data-screen="check"] .dock{display:none}
+.ap .screen.s-ring,.ap .screen.s-task,.ap .screen.s-check{padding-top:0;background:#050507}
+
+/* ── Звонок: солнце из логотипа «звенит», от него расходятся дуги, снизу — рассвет ── */
+.rg{position:relative;flex:1;display:flex;flex-direction:column;padding:54px 20px 34px;overflow:hidden;color:#fff;background:#050507}
+.rg>*:not(.tk-dawn){position:relative}
+.rg-top{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;height:56px}
+.rg-logo{justify-self:center;display:flex}
+.rg-logo .logo{height:28px;width:auto;color:#fff}
+.rg-x{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:none}
+.rg-x.ghost{visibility:hidden}
+.rg-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding-bottom:10px;text-align:center}
+.rg-bell{position:relative;width:172px;margin-bottom:14px;transform-origin:50% 100%;animation:rg-ring 1.15s ease-in-out infinite}
+.rg-bell .mark{position:relative;display:block;width:100%;height:auto}
+.rg-halo{position:absolute;left:50%;top:64%;width:340px;height:340px;margin:-170px 0 0 -170px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,204,51,.4),rgba(255,170,40,.12) 55%,rgba(255,170,40,0) 75%);pointer-events:none}
+.rg-wave{position:absolute;left:50%;bottom:0;width:190px;height:190px;margin:0 0 -95px -95px;border-radius:50%;border:2.5px solid rgba(255,199,0,.6);clip-path:inset(0 0 50% 0);opacity:0;animation:rg-wave 1.9s ease-out infinite;pointer-events:none}
+.rg-wave.w2{animation-delay:.95s}
+@keyframes rg-wave{0%{opacity:.75;transform:scale(.9)}100%{opacity:0;transform:scale(2.05)}}
+@keyframes rg-ring{0%,70%,100%{transform:rotate(0)}10%{transform:rotate(-5deg)}22%{transform:rotate(5deg)}34%{transform:rotate(-3.5deg)}46%{transform:rotate(3deg)}58%{transform:rotate(-1.5deg)}}
+.rg-time{font-family:var(--disp);font-stretch:118%;font-variation-settings:'wdth' 118;font-weight:840;font-size:104px;letter-spacing:-3.6px;line-height:1.02;font-variant-numeric:tabular-nums}
+.rg-mid small{font-size:16px;font-weight:600;color:#8C8C96}
+.rg-snd{margin-top:16px;display:flex;align-items:center;gap:8px;height:36px;padding:0 15px 0 12px;border-radius:18px;background:#16161A;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);font-size:14px;font-weight:600;color:#D6D6DC;max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rg-eq{display:flex;align-items:flex-end;gap:2.5px;height:14px;flex:none}
+.rg-eq u{width:3px;height:100%;border-radius:2px;background:#FFC700;transform-origin:50% 100%;animation:rg-eq .7s ease-in-out infinite alternate}
+.rg-eq u:nth-child(2){animation-delay:-.25s}
+.rg-eq u:nth-child(3){animation-delay:-.5s}
+.rg-eq u:nth-child(4){animation-delay:-.12s}
+@keyframes rg-eq{from{transform:scaleY(.25)}to{transform:scaleY(1)}}
+.rg.mute .rg-eq u{animation:none;transform:scaleY(.25);background:#5A5A63}
+.rg.mute .rg-bell{animation:none}
+.rg.mute .rg-wave{animation:none}
+.rg-card{border-radius:30px;padding:16px 16px 14px;background:rgba(22,22,26,.78);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);display:grid;gap:14px}
+.rg-card>small{display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;color:#FFD86A}
+.rg-task{display:flex;align-items:center;gap:14px}
+.rg-task i{width:54px;height:54px;border-radius:17px;display:grid;place-items:center;flex:none}
+.rg .tb{background:#232328;color:#FFC700}
+.rg-task span{display:grid;gap:2px;min-width:0;text-align:left}
+.rg-task b{font-size:19px;font-weight:700;letter-spacing:-.3px}
+.rg-task em{font-style:normal;font-size:14px;color:#8C8C96}
+.rg .ap-btn{background:#FFC700;color:#0D0D0F}
+.rg-card p{display:flex;justify-content:center;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#8C8C96;margin:0}
+.phone.instant .rg-bell,.phone.instant .rg-wave{animation:none}
+
+/* ── Задание: тёмный экран, логотип сверху, снизу встаёт солнце ── */
+.tk,.cam{--bg:#050507;--card:#16161A;--card2:#222227;--ink:#F5F5F7;--mut:#8C8C96;--mut2:#B5B5BD;--line:#2A2A30;--elev:inset 0 0 0 1px rgba(255,255,255,.05);--btn:#FFFFFF;--btn-ink:#0D0D0F;color:var(--ink)}
+.tk{position:relative;flex:1;display:flex;flex-direction:column;padding:54px 20px 34px;overflow:hidden;background:#050507}
+.tk-dawn{position:absolute;left:50%;bottom:-300px;width:660px;height:560px;margin-left:-330px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,206,72,.55),rgba(255,150,60,.22) 48%,rgba(255,140,60,0) 72%);transform:translateY(calc((1 - var(--p)) * 42%));opacity:calc(.35 + var(--p) * .65);transition:transform 1s cubic-bezier(.2,.8,.2,1),opacity 1s;pointer-events:none}
+.tk>*:not(.tk-dawn){position:relative}
+.tk-top{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;height:56px;flex:none}
+.tk-x{width:44px;height:44px;border-radius:50%;color:#fff;display:grid;place-items:center}
+.tk-logo{justify-self:center;display:flex}
+.tk-logo .logo{height:28px;width:auto;color:#fff}
+.tk-n{justify-self:end;font-size:14px;font-weight:700;color:var(--mut2);font-variant-numeric:tabular-nums}
+.tk-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center}
+.tk-top-al{justify-content:flex-start;padding-top:44px}
+.tk-h{margin:0;font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:820;font-size:30px;letter-spacing:-.6px;line-height:1.12;text-wrap:balance;color:#fff}
+.tk-st{margin:0;font-size:15px;font-weight:600;color:var(--mut)}
+
+/* Примеры. */
+.tk-body.tk-math{justify-content:flex-end;gap:16px}
+.tk-body.tk-math .tk-h{margin-bottom:auto;margin-top:26px}
+.tk-q{width:100%;flex:1;max-height:220px;border-radius:30px;background:var(--card);box-shadow:var(--elev);display:grid;place-content:center;gap:12px}
+.tk-q span{font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:820;font-size:52px;letter-spacing:-1.4px;line-height:1;font-variant-numeric:tabular-nums}
+.tk-q b{justify-self:center;min-width:120px;height:56px;padding:0 18px;border-radius:18px;background:var(--card2);display:grid;place-items:center;font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:820;font-size:34px;font-variant-numeric:tabular-nums}
+.tk-q b i{width:3px;height:30px;border-radius:2px;background:#FFC700;animation:tk-caret 1s steps(1) infinite}
+@keyframes tk-caret{50%{opacity:0}}
+.phone.instant .tk-q b i{animation:none}
+.tk-q.bad{box-shadow:inset 0 0 0 2px #E5484D;animation:tk-shake .4s ease}
+@keyframes tk-shake{20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+.tk-keys{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tk-keys button{height:62px;border-radius:20px;background:var(--card);box-shadow:var(--elev);display:grid;place-items:center;font-family:var(--disp);font-stretch:112%;font-variation-settings:'wdth' 112;font-weight:700;font-size:27px;color:var(--ink);transition:transform .1s,opacity .2s}
+.tk-keys button:active{transform:scale(.95)}
+.tk-keys .ok{background:#FFC700;color:#0D0D0F;box-shadow:none}
+.tk-keys .ok:disabled{opacity:.3}
+
+/* Память. */
+.tk-grid{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:8px;width:min(100%,318px)}
+.tk-grid button{aspect-ratio:1;border-radius:calc(54px / var(--n) + 6px);background:var(--card);box-shadow:var(--elev);transition:background .2s,transform .2s,box-shadow .2s}
+.tk-grid button.lit{background:#FFC700;box-shadow:0 0 0 4px rgba(255,199,0,.25),0 0 24px rgba(255,199,0,.35);transform:scale(1.04)}
+.tk-grid button.hit{background:#FFC700;box-shadow:none}
+.tk-grid button.miss{background:#E5484D;animation:tk-shake .4s ease}
+.tk-grid button:disabled{cursor:default}
+
+/* Пары: объёмные предметы на карточках. */
+.tk-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%}
+.tk-cardx{position:relative;aspect-ratio:3/4;border-radius:18px;background:var(--card2);display:grid;place-items:center;overflow:hidden;transition:background .2s,box-shadow .2s}
+.tk-back{position:absolute;inset:0;display:grid;place-items:center;transition:opacity .2s}
+.tk-back .mark{width:44%;height:auto;opacity:.85}
+.tk-cardx .obj,.tk-cardx .emo{position:absolute;inset:12%;width:76%;height:76%;object-fit:contain;display:grid;place-items:center;font-size:40px;opacity:0;transform:scale(.6);transition:opacity .2s,transform .3s cubic-bezier(.3,1.5,.5,1);filter:drop-shadow(0 6px 8px rgba(0,0,0,.4))}
+.tk-cardx.open{background:var(--card);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12)}
+.tk-cardx.open .tk-back{opacity:0}
+.tk-cardx.open .obj,.tk-cardx.open .emo{opacity:1;transform:none}
+.tk-cardx.done{box-shadow:inset 0 0 0 2px #FFC700;background:#1E1A0E}
+.tk-cardx.flip{animation:tk-flip .3s ease}
+@keyframes tk-flip{from{transform:rotateY(80deg)}}
+
+/* Фраза. */
+.tk-text{width:100%;padding:22px 20px;border-radius:26px;background:var(--card);box-shadow:var(--elev);font-size:23px;line-height:1.4;font-weight:600;letter-spacing:-.3px;text-align:left;color:var(--mut)}
+.tk-text .ok{color:#fff}
+.tk-text .no{color:#FF6B6B;background:rgba(229,72,77,.18);border-radius:3px}
+.tk-input{width:100%;height:58px;border:0;border-radius:20px;background:var(--card2);padding:0 18px;font:500 17px 'Inter',sans-serif;color:var(--ink);outline:0}
+.tk-input::placeholder{color:var(--mut)}
+.tk-input:focus{box-shadow:inset 0 0 0 2px #FFC700}
+
+/* Повторы без камеры (шаги, встряска, ритм): солнце из логотипа растёт снизу — от маленького серого до большого жёлтого. */
+.tk-body.tk-count{gap:6px}
+.tk-count .tk-h{margin-bottom:26px}
+.tk-grow{position:relative;z-index:3;width:230px;height:190px;display:grid;place-items:end center}
+.tk-grow .mark{position:relative;display:block;width:230px;height:auto;transform:scale(calc(.3 + var(--g) * .7));transform-origin:50% 100%;transition:transform .7s cubic-bezier(.3,1.25,.5,1)}
+.tk-grow .mark path{fill:color-mix(in oklch,#FEC704 calc(var(--g) * 100%),#56565F);transition:fill .7s ease}
+.tk-glow{position:absolute;left:50%;bottom:-110px;width:360px;height:360px;margin-left:-180px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,204,51,.52),rgba(255,170,40,.16) 55%,rgba(255,170,40,0) 75%);opacity:var(--g);transform:scale(calc(.35 + var(--g) * .75));transition:opacity .7s,transform .7s cubic-bezier(.22,1,.36,1);pointer-events:none}
+.tk-grow.final .mark{transform:scale(1.04)}
+.tk-grow.final .tk-glow{opacity:1;transform:scale(1.3)}
+.tk-cnt{margin:14px 0 0;display:flex;align-items:baseline;gap:8px}
+.tk-cnt b{font-family:var(--disp);font-stretch:118%;font-variation-settings:'wdth' 118;font-weight:850;font-size:54px;letter-spacing:-1.6px;line-height:1;font-variant-numeric:tabular-nums}
+.tk-cnt b.pop{animation:tk-num .34s cubic-bezier(.3,1.5,.5,1)}
+@keyframes tk-num{from{transform:translateY(9px) scale(.88);opacity:.35}}
+.tk-cnt span{font-size:18px;font-weight:600;color:var(--mut)}
+.tk-live{margin:18px 0 0;display:inline-flex;align-items:center;gap:9px;height:46px;padding:0 20px 0 15px;border-radius:23px;background:var(--card);box-shadow:var(--elev);font-size:15px;font-weight:600;color:var(--mut2)}
+.tk-live .ti{color:#FFC700}
+.tk-live.shake .ti{animation:tk-wig .36s ease-in-out infinite}
+.tk-live.steps .ti{animation:tk-walk .52s ease-in-out infinite alternate}
+@keyframes tk-wig{25%{transform:rotate(-14deg)}75%{transform:rotate(14deg)}}
+@keyframes tk-walk{to{transform:translateY(-4px)}}
+.tk-count .tk-tap{margin-top:16px}
+.tk-tap{display:flex;align-items:center;gap:10px;height:66px;padding:0 30px 0 22px;border-radius:33px;background:#FFC700;color:#0D0D0F;font-size:18px;font-weight:700;box-shadow:0 14px 26px -16px rgba(255,170,0,.9);transition:transform .1s}
+.tk-tap .ti{color:#0D0D0F}
+.tk-tap:active{transform:scale(.95)}
+
+/* Голос. */
+.tk-say{width:100%;padding:26px 22px;border-radius:28px;background:var(--card);box-shadow:var(--elev);font-family:var(--disp);font-stretch:108%;font-variation-settings:'wdth' 108;font-weight:750;font-size:27px;line-height:1.25;letter-spacing:-.5px;text-wrap:balance}
+.tk-mic{position:relative;width:96px;height:96px;border-radius:50%;background:#FFC700;color:#0D0D0F;display:grid;place-items:center;flex:none}
+.tk-mic::before,.tk-mic::after{content:'';position:absolute;inset:0;border-radius:50%;border:3px solid #FFC700;opacity:0}
+.tk-mic.rec::before{animation:tk-wave 1.2s ease-out infinite}
+.tk-mic.rec::after{animation:tk-wave 1.2s ease-out .6s infinite}
+@keyframes tk-wave{from{opacity:.8;transform:scale(1)}to{opacity:0;transform:scale(1.7)}}
+
+/* Викторина. */
+.tk-body.tk-quiz{justify-content:flex-end;padding-top:14px;gap:14px}
+.tk-qcard{width:100%;flex:1;max-height:330px;border-radius:30px;background:var(--card);box-shadow:var(--elev);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px}
+.tk-flag{font-family:'Apple Color Emoji','Noto Color Emoji','Segoe UI Emoji',sans-serif;font-size:110px;line-height:1;filter:drop-shadow(0 14px 20px rgba(0,0,0,.5))}
+.tk-qcard.new .tk-flag{animation:cam-in .5s cubic-bezier(.3,1.5,.5,1) both}
+.tk-ans{width:100%;display:grid;gap:10px}
+.tk-ans button{display:flex;align-items:center;gap:12px;height:60px;padding:0 16px 0 10px;border-radius:20px;background:var(--card);box-shadow:var(--elev);color:var(--ink);font-size:16.5px;font-weight:600;text-align:left;transition:background .2s,box-shadow .2s}
+.tk-ans button i{width:36px;height:36px;border-radius:12px;background:var(--card2);display:grid;place-items:center;font-style:normal;font-size:14px;font-weight:800;color:var(--mut2);flex:none}
+.tk-ans button span{flex:1}
+.tk-ans button.ok{background:#0F2A1B;box-shadow:inset 0 0 0 2px #1FA055}
+.tk-ans button.ok i{background:#1FA055;color:#fff}
+.tk-ans button.no{background:#2A1214;box-shadow:inset 0 0 0 2px #E5484D;animation:tk-shake .4s ease}
+.tk-ans button.no i{background:#E5484D;color:#fff}
+
+/* ── Камера: всё прозрачное поверх изображения ───────────── */
+.cam{position:relative;flex:1;display:flex;flex-direction:column;overflow:hidden;color:#fff;background:#0c0a09}
+.cam-feed{position:absolute;inset:0;overflow:hidden;isolation:isolate;background:linear-gradient(180deg,#121214 0%,#1b1714 52%,#15110e 100%);transition:filter .3s}
+.cf-wall{position:absolute;left:0;right:0;top:0;height:42%;background:linear-gradient(180deg,#1A1A1E 0%,#17151A 100%)}
+.cf-desk{position:absolute;left:-25%;right:-25%;top:44%;height:80%;background:linear-gradient(174deg,#4A3627 0%,#2E2219 34%,#1A140F 70%,#120E0B 100%);transform:rotate(-6deg);transform-origin:50% 0;filter:blur(1.5px)}
+.cf-light{position:absolute;left:-12%;right:-12%;top:19%;height:42px;border-radius:50%;background:linear-gradient(90deg,rgba(255,120,70,0),rgba(255,128,78,.8) 28%,rgba(255,160,100,.55) 62%,rgba(255,120,70,0));filter:blur(13px);transform:rotate(-7deg)}
+.cf-bokeh{position:absolute;border-radius:50%;filter:blur(20px);opacity:.55;animation:cf-drift 9s ease-in-out infinite alternate}
+.cf-bokeh.b1{width:130px;height:130px;left:-36px;top:24%;background:rgba(255,150,90,.5)}
+.cf-bokeh.b2{width:96px;height:96px;right:-18px;top:56%;background:rgba(120,140,210,.28);animation-delay:-3s}
+.cf-bokeh.b3{width:180px;height:180px;left:34%;bottom:-70px;background:rgba(255,180,120,.2);animation-delay:-6s}
+@keyframes cf-drift{to{transform:translate(14px,-10px) scale(1.08)}}
+.cam.flash .cam-feed{filter:brightness(1.8) saturate(1.1)}
+.cam.flip .cam-feed{transform:scaleX(-1)}
+.cam.snap .cam-feed::after{content:'';position:absolute;inset:0;background:#fff;animation:cam-snap .5s ease-out both}
+@keyframes cam-snap{from{opacity:.9}to{opacity:0}}
+.cam>.tk-top,.cam>.cam-bar{position:relative}
+.cam .tk-top{margin:54px 20px 0}
+.cam-pill{align-self:center;margin-top:16px;max-width:calc(100% - 32px);padding:12px 18px 13px;border-radius:22px;text-align:center;font-size:15.5px;font-weight:700;line-height:1.3;display:grid;justify-items:center;gap:9px;animation:cam-in .45s cubic-bezier(.3,1.4,.5,1) both}
+.cam-pill button{display:flex;align-items:center;gap:6px;height:30px;padding:0 13px 0 11px;border-radius:15px;background:rgba(255,255,255,.16);font-size:13px;font-weight:700;color:#fff}
+.cam-pill.scan,.cam-pill.done{animation:none}
+.cam-pill>b{white-space:nowrap}
+.cam-pill.done b{color:#7CF0A8}
+/* Во время крутки — только слово «Найди:» над квадратом. */
+.cam-find{position:absolute;left:0;right:0;top:calc(50% - 170px);margin:0;text-align:center;font-family:var(--disp);font-stretch:118%;font-variation-settings:'wdth' 118;font-weight:850;font-size:30px;letter-spacing:.6px;text-transform:uppercase;text-shadow:0 2px 14px rgba(0,0,0,.6);animation:cam-in .45s cubic-bezier(.3,1.4,.5,1) both}
+.spin{position:absolute;left:0;right:0;top:50%;height:170px;margin-top:-110px;-webkit-mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.45) 18%,#000 38%,#000 62%,rgba(0,0,0,.45) 82%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.45) 18%,#000 38%,#000 62%,rgba(0,0,0,.45) 82%,transparent 100%)}
+.spin-frame{position:absolute;left:50%;top:50%;width:150px;height:150px;margin:-75px 0 0 -75px;border-radius:32px;box-shadow:inset 0 0 0 3.5px #FFC700,0 0 26px rgba(255,199,0,.3);z-index:2;transition:transform .4s cubic-bezier(.3,1.6,.5,1),box-shadow .3s}
+.spin.stop .spin-frame{transform:scale(1.07);box-shadow:inset 0 0 0 4px #FFC700,0 0 44px rgba(255,199,0,.6)}
+.spin-track{position:absolute;left:0;top:50%;display:flex;margin-top:-60px;will-change:transform}
+.spin-i{flex:none;width:150px;height:120px;display:grid;place-items:center;transition:transform .4s cubic-bezier(.3,1.6,.5,1),opacity .3s}
+.spin-i .obj{width:104px;height:104px;object-fit:contain;filter:drop-shadow(0 10px 14px rgba(0,0,0,.45))}
+.spin-i .emo{font-size:76px;line-height:1}
+.spin.stop .spin-i{opacity:.25}
+.spin.stop .spin-i.hit{opacity:1;transform:scale(1.14)}
+.cam-obj{position:absolute;left:50%;top:50%;width:200px;height:200px;margin:-120px 0 0 -100px;display:grid;place-items:center;animation:cam-in .6s cubic-bezier(.3,1.5,.5,1) both}
+.cam-obj .obj,.cam-obj .emo{width:100%;height:100%;object-fit:contain;display:grid;place-items:center;font-size:150px;line-height:1;filter:drop-shadow(0 18px 24px rgba(0,0,0,.5));animation:cam-float 3.2s ease-in-out infinite}
+@keyframes cam-in{from{transform:scale(.55);opacity:0}}
+@keyframes cam-float{50%{transform:translateY(-8px)}}
+/* Проверка снимка: кадр замирает, уголки сходятся на предмете, по нему проходит блик. Узнали — уголки зеленеют. */
+.cam.held .cf-bokeh{animation-play-state:paused}
+.cam.held .cam-feed{filter:brightness(.7)}
+.cam-obj.scan,.cam-obj.done,.cam-obj.scan .obj,.cam-obj.done .obj,.cam-obj.scan .emo,.cam-obj.done .emo{animation:none}
+.cam-lk{position:absolute;inset:-12px;pointer-events:none}
+.cam-obj.scan .cam-lk{animation:cam-lk .8s cubic-bezier(.22,1,.36,1) both}
+@keyframes cam-lk{from{inset:-74px;opacity:0}}
+.cam-lk u{position:absolute;width:36px;height:36px;border:4px solid #fff}
+.cam-lk u:nth-child(1){left:0;top:0;border-right:0;border-bottom:0;border-radius:18px 0 0 0}
+.cam-lk u:nth-child(2){right:0;top:0;border-left:0;border-bottom:0;border-radius:0 18px 0 0}
+.cam-lk u:nth-child(3){left:0;bottom:0;border-right:0;border-top:0;border-radius:0 0 0 18px}
+.cam-lk u:nth-child(4){right:0;bottom:0;border-left:0;border-top:0;border-radius:0 0 18px 0}
+.cam-obj.done .cam-lk{animation:cam-lkok .5s cubic-bezier(.3,1.6,.5,1)}
+.cam-obj.done .cam-lk u{border-color:#2ED573}
+@keyframes cam-lkok{35%{transform:scale(.93)}}
+.cam-sweep{position:absolute;inset:0;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat;background:linear-gradient(115deg,rgba(255,255,255,0) 38%,rgba(255,255,255,.92) 50%,rgba(255,255,255,0) 62%) no-repeat;background-size:260% 100%;animation:cam-sweep 1.15s ease-in-out .25s both;pointer-events:none}
+@keyframes cam-sweep{from{background-position:140% 0}to{background-position:-40% 0}}
+.cam-ok{position:absolute;right:4px;top:4px;width:58px;height:58px;border-radius:50%;background:#1FA055;color:#fff;display:grid;place-items:center;box-shadow:0 10px 20px -8px rgba(0,0,0,.6);animation:cam-in .5s cubic-bezier(.3,1.7,.5,1) both}
+.cam-qr{position:absolute;left:50%;top:50%;width:230px;height:230px;margin:-130px 0 0 -115px;box-shadow:0 0 0 999px rgba(0,0,0,.28);border-radius:30px}
+.cam-qr i{position:absolute;width:54px;height:54px;border:5px solid #FFC700}
+.cam-qr i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0;border-radius:30px 0 0 0}
+.cam-qr i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0;border-radius:0 30px 0 0}
+.cam-qr i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0;border-radius:0 0 0 30px}
+.cam-qr i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0;border-radius:0 0 30px 0}
+.cam-qr u{position:absolute;left:18px;right:18px;top:20px;height:3px;border-radius:2px;background:#FFC700;box-shadow:0 0 16px 4px rgba(255,199,0,.55);animation:cam-scan 1.4s ease-in-out infinite alternate}
+@keyframes cam-scan{to{top:calc(100% - 23px)}}
+.cam-qr.done i{border-color:#2ED573}
+.cam-qr.done u{display:none}
+.cam-qr .cam-ok{right:50%;top:50%;margin:-29px -29px 0 0}
+.cam-bar{margin-top:auto;display:flex;align-items:center;justify-content:space-between;padding:0 44px 44px}
+.cam-b{width:54px;height:54px;border-radius:50%;color:#fff;display:grid;place-items:center;transition:opacity .2s,background .2s}
+.cam-b.on{background:#FFC700;color:#0D0D0F;box-shadow:none}
+.cam-b:disabled{opacity:.3}
+.cam .tk-shot{width:82px;height:82px;border-radius:50%;box-shadow:inset 0 0 0 4px #fff;display:grid;place-items:center;transition:opacity .2s}
+.cam .tk-shot i{width:66px;height:66px;border-radius:50%;background:#fff;transition:transform .15s}
+.cam .tk-shot:active i{transform:scale(.9)}
+.cam .tk-shot:disabled{opacity:.35}
+
+/* ── Подъём ──────────────────────────────────────────────── */
+.wk{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;padding:62px 22px 38px;text-align:center;overflow:hidden}
+.wk-logo{display:flex;justify-content:center}
+.wk-logo .logo{height:24px;width:auto;color:var(--ink)}
+.wk-sun{position:relative;isolation:isolate;width:150px;margin-top:40px;animation:wk-rise 1.4s cubic-bezier(.2,.8,.2,1) both .1s}
+.wk-sun::before{content:'';position:absolute;left:50%;top:60%;width:300px;height:300px;margin:-150px 0 0 -150px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,210,80,.38),rgba(255,210,80,0) 72%);z-index:-1}
+.wk-sun .mark{width:100%;height:auto;display:block}
+@keyframes wk-rise{from{transform:translateY(70px);opacity:0}}
+.wk h1{margin-top:18px;font-family:var(--disp);font-stretch:118%;font-variation-settings:'wdth' 118;font-weight:850;font-size:40px;letter-spacing:-1.2px;line-height:1.05}
+.wk-row{margin-top:24px;width:100%;display:grid;grid-template-columns:repeat(3,1fr);border-radius:26px;background:var(--card);box-shadow:var(--elev);padding:16px 6px}
+.wk-row div{display:grid;gap:3px}
+.wk-row div+div{box-shadow:-1px 0 0 var(--line)}
+.wk-row b{font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:820;font-size:28px;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
+.wk-row small{font-size:12.5px;font-weight:500;color:var(--mut)}
+.wk>p.wk-chk,.wk>p.wk-note{margin:14px 0 0;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px 0 11px;border-radius:16px;background:var(--card);box-shadow:var(--elev);font-size:13.5px;font-weight:600;color:var(--mut2)}
+.wk-brief{width:100%;margin-top:12px;text-align:left}
+.wk-brief .br-head{padding:8px 0}
+.wk-brief .br-in{padding-bottom:11px}
+.wk:has(.wk-brief) .wk-sun{width:110px;margin-top:22px}
+.wk:has(.wk-brief) h1{margin-top:12px;font-size:34px}
+.wk:has(.wk-brief) .wk-row{margin-top:16px;padding:12px 6px}
+.wk .ap-btn{margin-top:auto;flex:none}
+
+/* ── Повторы через камеру: человек в кадре, скелет поверх, счёт идёт сам ── */
+.ps .cam-pill{gap:6px}
+.ps-live{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.72)}
+.ps-live i{width:7px;height:7px;border-radius:50%;background:#2ED573;animation:ps-dot 1.4s ease-out infinite}
+@keyframes ps-dot{from{box-shadow:0 0 0 0 rgba(46,213,115,.65)}to{box-shadow:0 0 0 8px rgba(46,213,115,0)}}
+.ps-stage{position:absolute;left:50%;top:204px;width:288px;height:360px;margin-left:-144px;animation:cam-in .5s cubic-bezier(.3,1.3,.5,1) both}
+.ps-fig{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.ps-body polygon,.ps-body circle{fill:#5B5560}
+.ps-body line{stroke:#5B5560;stroke-width:24;stroke-linecap:round}
+.ps-floor{stroke:rgba(255,255,255,.16);stroke-width:2;stroke-dasharray:3 8;stroke-linecap:round}
+.ps-skel line{stroke:#FFC700;stroke-width:3;stroke-linecap:round}
+.ps-skel .j{fill:#fff;stroke:#FFC700;stroke-width:2.4}
+.ps-skel .h{fill:none;stroke:#FFC700;stroke-width:3}
+.ps-skel{filter:drop-shadow(0 0 5px rgba(255,199,0,.5))}
+.ps-box{position:absolute;inset:-8px -12px}
+.ps-box u{position:absolute;width:28px;height:28px;border:3px solid rgba(255,255,255,.7)}
+.ps-box u:nth-child(1){left:0;top:0;border-right:0;border-bottom:0;border-radius:14px 0 0 0}
+.ps-box u:nth-child(2){right:0;top:0;border-left:0;border-bottom:0;border-radius:0 14px 0 0}
+.ps-box u:nth-child(3){left:0;bottom:0;border-right:0;border-top:0;border-radius:0 0 0 14px}
+.ps-box u:nth-child(4){right:0;bottom:0;border-left:0;border-top:0;border-radius:0 0 14px 0}
+.ps-hud{position:absolute;left:0;right:0;bottom:38px;z-index:3;display:grid;justify-items:center}
+.ps .tk-grow{width:150px;height:124px;transition:transform 1.2s cubic-bezier(.22,1,.36,1)}
+.ps .tk-grow .mark{width:150px}
+.ps .tk-glow{width:250px;height:250px;margin-left:-125px;bottom:-76px}
+.ps .tk-cnt{margin-top:8px;transition:opacity .35s}
+.ps .tk-cnt b{font-size:46px}
+.ps .tk-grow.final{transform:translateY(-262px) scale(1.5)}
+.ps.rising .ps-stage,.ps.rising .cam-pill,.ps.rising .tk-cnt{opacity:0;transition:opacity .4s}
+.phone.instant .ps-live i{animation:none}
+
+/* ── Проверка подъёма: тёмный экран, солнце садится, пока идёт минута ── */
+.ck{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;padding:62px 22px 38px;text-align:center;overflow:hidden;color:#fff;background:#050507}
+.ck>*:not(.tk-dawn){position:relative}
+.ck .wk-logo .logo{color:#fff}
+.ck-sky{width:270px;height:170px;margin-top:auto;overflow:hidden}
+.ck-sky u{position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:1px;background:rgba(255,255,255,.2)}
+.ck-sun{position:absolute;left:50%;bottom:2px;width:196px;margin-left:-98px;transform:translateY(calc((1 - var(--l)) * 80%));transition:transform .3s linear}
+.ck-sun .mark{display:block;width:100%;height:auto}
+.ck-sun .mark path{fill:color-mix(in oklch,#FEC704 calc(var(--l) * 100%),#6A6A74)}
+.ck-glow{position:absolute;left:50%;bottom:-170px;width:340px;height:340px;margin-left:-170px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,204,51,.5),rgba(255,170,40,0) 72%);opacity:var(--l);transition:opacity .3s linear}
+.ck h1{margin-top:30px;font-family:var(--disp);font-stretch:118%;font-variation-settings:'wdth' 118;font-weight:850;font-size:40px;letter-spacing:-1.2px;line-height:1.05}
+.ck-n{margin-top:16px;display:flex;align-items:baseline;gap:8px}
+.ck-n b{font-family:var(--disp);font-stretch:118%;font-variation-settings:'wdth' 118;font-weight:850;font-size:78px;letter-spacing:-2.4px;line-height:1;font-variant-numeric:tabular-nums}
+.ck-n small{font-size:19px;font-weight:600;color:#8C8C96}
+.ck-n{margin-bottom:auto}
+.ck .ap-btn{flex:none;background:#FFC700;color:#0D0D0F}
+
+/* ── Задание выполнено: восход и переход к «Доброе утро» ──── */
+.ap{--app-bg:var(--bg)}
+.tk>.sr,.cam>.sr,.sr{position:absolute;inset:0;z-index:2}
+.sr-sky{position:absolute;inset:0;background:var(--app-bg);opacity:0;transition:opacity 1.1s cubic-bezier(.45,.05,.55,.95) .2s}
+.sr.go .sr-sky{opacity:1}
+.sr-sun{position:absolute;left:50%;top:50%;width:210px;margin:-120px 0 0 -105px;transform:translateY(480px);transition:transform 1.05s cubic-bezier(.22,1,.36,1)}
+.sr.go .sr-sun{transform:none}
+.sr-sun .mark{position:relative;display:block;width:100%;height:auto}
+.sr-glow{position:absolute;left:50%;top:70%;width:440px;height:440px;margin:-220px 0 0 -220px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,206,72,.6),rgba(255,206,72,0) 70%)}
+.rising .tk-h,.rising .tk-cnt,.rising .tk-tap{opacity:0;transition:opacity .35s}
+.wk.morph .wk-sun{animation:none}
+.wk.morph .wk-sun::before{animation:wk-fade 1.8s ease .2s both}
+/* Яркое свечение приезжает вместе с солнцем и гаснет медленно — без резкого обрыва. */
+.wk-flare{position:absolute;left:50%;top:64%;width:300px;height:300px;margin:-150px 0 0 -150px;border-radius:50%;z-index:-1;pointer-events:none;background:radial-gradient(closest-side,rgba(255,204,51,.52),rgba(255,170,40,.16) 55%,rgba(255,170,40,0) 75%);animation:wk-flare 2.2s cubic-bezier(.4,0,.2,1) .35s both}
+@keyframes wk-flare{to{opacity:0}}
+.wk.morph>*:not(.wk-sun){animation:wk-in .7s cubic-bezier(.22,1,.36,1) both}
+.wk.morph>:nth-child(1){animation-delay:.2s}
+.wk.morph>:nth-child(3){animation-delay:.4s}
+.wk.morph>:nth-child(4){animation-delay:.5s}
+.wk.morph>:nth-child(5){animation-delay:.6s}
+.wk.morph>:nth-child(6){animation-delay:.7s}
+.wk.morph>:nth-child(7){animation-delay:.8s}
+@keyframes wk-in{from{opacity:0;transform:translateY(18px)}}
+@keyframes wk-fade{from{opacity:0}}
+
+/* ── Живая камера: видео телефона под всем, поверх — те же прозрачные элементы ── */
+.cam-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;background:#0c0a09}
+.cam-video.mirror{transform:scaleX(-1)}
+.cam.live::before,.cam.live::after{content:'';position:absolute;left:0;right:0;z-index:1;pointer-events:none}
+.cam.live::before{top:0;height:220px;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,0))}
+.cam.live::after{bottom:0;height:260px;background:linear-gradient(0deg,rgba(0,0,0,.55),rgba(0,0,0,0))}
+.cam.live>:not(.cam-video){z-index:2}
+.cam.live>.cam-obj,.cam.live>.ps-skel-live{position:absolute}
+.cam.live.flash .cam-video{filter:none}
+.cam.live.snap .cam-shot{animation:cam-snap-live .5s ease-out both}
+@keyframes cam-snap-live{from{filter:brightness(2.2)}}
+/* Видоискатель: пустой квадрат с белыми уголками, вокруг чуть темнее. */
+.cam-obj.live{border-radius:26px;animation:cam-in .5s cubic-bezier(.3,1.4,.5,1) both}
+.cam-obj.live .cam-lk u{filter:drop-shadow(0 1px 3px rgba(0,0,0,.45))}
+/* На живом видео стекло темнее: белый текст должен читаться и на белом чайнике. */
+.cam.live .lg{background:linear-gradient(180deg,rgba(28,28,32,.58),rgba(14,14,16,.5))}
+.cam-obj.live .cam-lk{inset:-6px}
+.cam-obj.live.miss .cam-lk u{border-color:#FF6B6B}
+.cam-obj.live.scan,.cam-obj.live.done{animation:none}
+.cam-obj.live.miss{animation:tk-shake .4s ease}
+.cam-pill.miss b{color:#FFB3B3}
+.cam-note{font-size:12.5px;font-weight:600;color:rgba(255,255,255,.72);white-space:nowrap}
+.ps-live.off i{background:#FFB020;animation:none}
+.ps-live .js-hint{white-space:nowrap}
+/* Скелет с камеры: те же жёлтые кости, в нижней точке повтора суставы заливаются жёлтым. */
+.ps-skel-live{inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.ps-skel-live line,.ps-skel-live circle{transition:opacity .2s}
+.ps-skel-live .ps-skel line{stroke-width:4}
+.ps-skel-live.dn .j{fill:#FFC700}

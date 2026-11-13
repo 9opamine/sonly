@@ -1,0 +1,287 @@
+/* Основа стилей онбординга (классы .va): белый фон, Inter, серые плашки ответов, чёрная кнопка. Поверх — css/m.css. */
+.va{--y:#FFD12E;--ink:#0D0D0F;--mut:#8E8E96;--mut2:#63636B;--fill:#F3F3F6;--line:#E8E8ED;--green:#1FA055;--green-bg:#E5F6EC;--red:#E5484D;--red-bg:#FDEBEC;--orange:#D97A08;--orange-bg:#FFF0DC;font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--ink);background:#fff}
+
+.va .a-top{display:flex;align-items:center;gap:14px;height:50px;padding:0 24px 0 18px}
+.va .a-back{width:32px;height:32px;border-radius:50%;background:var(--fill);display:grid;place-items:center;flex:none;transition:opacity .2s}
+.va .a-prog{flex:1;height:3px;border-radius:2px;background:var(--line);overflow:hidden}
+.va .a-prog i{display:block;height:100%;width:calc(var(--p,0)*100%);background:var(--ink);border-radius:2px;transition:width .55s cubic-bezier(.2,.7,.2,1)}
+
+/* Смена экранов — тихое растворение; текст внутри поднимается строками. */
+.va .screen.in-fwd,.va .screen.in-back{animation:a-in .34s ease both}
+.va .screen.out-fwd,.va .screen.out-back{animation:a-out .2s ease both}
+@keyframes a-in{from{opacity:0}to{opacity:1}}
+@keyframes a-out{to{opacity:0}}
+
+.va .a-head{padding:14px 24px 0}
+.va .a-head h1{font-weight:600;font-size:30px;line-height:1.17;letter-spacing:-.7px;text-wrap:balance}
+.va .a-head p{margin-top:10px;font-size:16px;line-height:1.4;color:var(--mut);text-wrap:pretty}
+.va .a-opts{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;padding:8px 24px 0}
+.va .a-opt{height:58px;border-radius:14px;background:var(--fill);font-size:17px;font-weight:500;letter-spacing:-.2px;color:var(--ink);transition:background .16s,color .16s,transform .16s}
+.va .a-opt:active{transform:scale(.985)}
+.va .a-opt.on{background:var(--ink);color:#fff}
+.va .a-opts.dense{gap:9px}
+.va .a-opts.dense .a-opt{height:52px;font-size:16.5px}
+.va .a-foot{padding:14px 24px 42px;display:grid;grid-template-columns:minmax(0,1fr);gap:10px;position:relative;z-index:2}
+.va .a-foot.float{position:absolute;left:0;right:0;bottom:0;padding-top:34px;background:linear-gradient(180deg,rgba(255,255,255,0),#fff 36%)}
+.va .a-cta{height:56px;border-radius:28px;background:#121214;color:#fff;font-size:17px;font-weight:600;letter-spacing:-.2px;transition:background .2s,color .2s,transform .15s}
+.va .a-cta:active{transform:scale(.985)}
+.va .a-cta:disabled{background:var(--fill);color:#C3C3CA;cursor:default}
+.va .a-link{height:34px;font-size:15px;font-weight:500;color:#3C3C43}
+.va .a-cap{font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--mut)}
+.va .a-card{background:#F6F6F8;border-radius:22px}
+
+/* Старт: рассвет снизу, крупный заголовок. */
+.va .a-wel{flex:1;position:relative;padding:22px 28px 0;display:flex;flex-direction:column}
+.va .a-sun{position:absolute;left:-70px;right:-70px;bottom:-480px;height:780px;border-radius:50%;background:radial-gradient(closest-side,#FFC62B 0%,#FFD65A 30%,#FFE99C 54%,#FFF6D6 76%,rgba(255,255,255,0) 100%);animation:a-sunrise 1.9s cubic-bezier(.2,.7,.2,1) both;pointer-events:none}
+@keyframes a-sunrise{from{transform:translateY(220px);opacity:.1}to{transform:none;opacity:1}}
+.va .a-brand{position:relative;display:flex;align-items:center;gap:8px;font-weight:700;font-size:19px;letter-spacing:-.3px}
+.va .a-brand .logo{height:34px;width:auto}
+.va .a-wel-h{position:relative;margin-top:92px;font-weight:700;font-size:54px;line-height:1;letter-spacing:-2.4px}
+.va .a-wel-h span{display:block}
+.va .a-wel-p{position:relative;margin-top:22px;font-size:18px;line-height:1.42;color:#4A4A51;max-width:310px}
+.va .a-wel-foot{padding-bottom:30px}
+.va .a-legal{font-size:12px;line-height:1.4;text-align:center;color:rgba(13,13,15,.58);padding:0 18px}
+.va .a-legal button{font-size:12px;text-decoration:underline;color:inherit}
+
+/* Мотивация: большой набор слева, маркер, одна маленькая сцена. */
+.va .a-mot{flex:1;padding:0 26px 34px;display:flex;flex-direction:column;justify-content:center}
+.va .a-eyebrow{font-size:13px;font-weight:600;letter-spacing:.9px;text-transform:uppercase;color:var(--mut);margin-bottom:16px}
+.va .a-big{font-weight:700;font-size:42px;line-height:1.06;letter-spacing:-1.6px;position:relative;z-index:0;text-wrap:balance}
+.va .a-big span{display:block}
+.va mark{background:none;color:inherit;position:relative;white-space:nowrap}
+.va mark::after{content:'';position:absolute;left:-5px;right:-5px;bottom:.05em;height:.46em;background:var(--y);border-radius:4px;z-index:-1;transform:scaleX(0);transform-origin:0 50%;transition:transform .7s cubic-bezier(.2,.7,.2,1)}
+.va mark.on::after{transform:scaleX(1)}
+.va .a-body{margin-top:26px;font-size:18px;line-height:1.44;color:var(--mut2);text-wrap:pretty}
+.va .a-body.b{margin-top:14px;color:var(--ink);font-weight:600}
+.va .a-snz{margin-top:44px;display:flex;align-items:center;gap:18px;opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s}
+.va .a-snz.show{opacity:1;transform:none}
+.va .a-snz-btn{position:relative;height:56px;padding:0 28px;border-radius:28px;background:var(--orange-bg);color:var(--orange);font-weight:600;font-size:18px;display:flex;align-items:center;transition:background .4s,color .4s}
+.va .a-snz-btn.tap{animation:a-tap .34s ease}
+@keyframes a-tap{40%{transform:scale(.92)}}
+.va .a-snz-btn::after{content:'';position:absolute;left:16px;right:16px;top:50%;height:2.5px;margin-top:-1px;border-radius:2px;background:currentColor;transform:scaleX(0);transform-origin:0 50%;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.va .a-snz.gone .a-snz-btn{background:var(--fill);color:#B4B4BC}
+.va .a-snz.gone .a-snz-btn::after{transform:scaleX(1)}
+.va .a-snz-sum{display:grid;gap:2px}
+.va .a-snz-x{font-weight:700;font-size:24px;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.va .a-snz-t{font-size:14px;color:var(--mut)}
+.va .a-fade{opacity:0;transform:translateY(8px);transition:opacity .5s,transform .5s}
+.va .a-fade.show{opacity:1;transform:none}
+
+/* Сравнение: обычное утро против одного будильника. */
+.va .a-cmp{padding:20px 24px 0;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.va .a-cmp-card{background:#F6F6F8;border-radius:22px;padding:18px 20px;display:grid}
+.va .a-cmp-row{display:flex;align-items:center;justify-content:space-between;height:40px;opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s}
+.va .a-cmp-row.in{opacity:1;transform:none}
+.va .a-cmp-row b{font-weight:700;font-size:25px;letter-spacing:-.8px;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:8px;position:relative;transition:color .3s}
+.va .a-cmp-row b::after{content:'';position:absolute;left:-2px;right:-2px;top:52%;height:2px;background:currentColor;transform:scaleX(0);transform-origin:0 50%;transition:transform .3s}
+.va .a-cmp-row.st b{color:#B9B9C1}
+.va .a-cmp-row.st b::after{transform:scaleX(1)}
+.va .a-cmp-row em{font-style:normal;font-size:12.5px;font-weight:600;padding:5px 9px;border-radius:8px;opacity:0;transform:scale(.7);transition:opacity .25s,transform .4s cubic-bezier(.3,1.5,.5,1)}
+.va .a-cmp-row.st em{opacity:1;transform:none}
+.va .chip-o{background:var(--orange-bg);color:var(--orange)}
+.va .chip-r{background:var(--red-bg);color:var(--red)}
+.va .chip-g{background:var(--green-bg);color:var(--green);display:inline-flex;align-items:center;gap:4px}
+.va .a-cmp-row.last b,.va .a-cmp-row.last.st b{color:var(--red)}
+.va .a-cmp-row.last b::after,.va .a-cmp-row.win b::after{display:none}
+.va .a-cmp-row.last b i{width:8px;height:8px;border-radius:50%;background:var(--red)}
+.va .a-cmp-row.win{height:50px}
+.va .a-cmp-row.win b,.va .a-cmp-row.win.st b{color:var(--green);font-size:32px;letter-spacing:-1.2px}
+.va .a-cmp-sum{justify-self:start;margin-top:8px;font-size:13px;font-weight:600;padding:6px 10px;border-radius:9px;opacity:0;transition:opacity .4s}
+.va .a-cmp-sum.in{opacity:1}
+.va .a-cmp-sum.r{background:var(--red-bg);color:var(--red)}
+.va .a-cmp-sum.g{background:var(--green-bg);color:var(--green)}
+.va .a-cmp-or{display:flex;align-items:center;gap:12px;margin:14px 0 12px;color:#B4B4BC;font-size:13px;opacity:0;transition:opacity .4s}
+.va .a-cmp-or.in{opacity:1}
+.va .a-cmp-or::before,.va .a-cmp-or::after{content:'';flex:1;height:1px;background:#E2E2E8}
+.va .a-cap.g{color:var(--green);opacity:0;transition:opacity .4s}
+.va .a-cap.g.in{opacity:1}
+.va .a-cmp-note{display:flex;align-items:center;gap:10px;height:50px;white-space:nowrap;padding:0 16px;border-radius:16px;border:1px solid var(--line);font-size:14.5px;color:var(--mut2);opacity:0;transform:translateY(8px);transition:opacity .4s,transform .4s}
+.va .a-cmp-note.in{opacity:1;transform:none}
+
+/* График. */
+.va .a-graph{margin:22px 24px 0;padding:20px 18px 18px}
+.va .a-graph-h{display:flex;justify-content:space-between;align-items:baseline;padding:0 2px 6px}
+.va .a-graph-h b{font-size:17px;font-weight:600;letter-spacing:-.2px}
+.va .a-graph-h span{font-size:12px;color:var(--mut)}
+.va .a-graph>p{margin:12px 2px 0;font-size:15px;line-height:1.4;color:var(--mut2);text-align:center;text-wrap:balance}
+
+/* Как звонит sonly. */
+.va .a-how{margin:22px 24px 0;padding:28px 20px 18px;border-radius:26px;background:#F6F6F8;display:flex;flex-direction:column}
+.va .rs-time{font-weight:700;font-size:58px;letter-spacing:-2.4px;height:58px}
+.va .rs-bell{width:66px;height:66px;margin-top:20px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.06);color:var(--ink)}
+.va .rs[data-step="5"] .rs-bell{background:var(--green-bg);color:var(--green)}
+.va .rs-task{align-self:stretch;margin-top:24px;gap:12px;padding:14px 14px 20px;border-radius:18px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.va .rs-task-i{width:42px;height:42px;border-radius:12px;background:var(--fill);display:grid;place-items:center;flex:none}
+.va .rs-task-t small{font-size:12.5px;color:var(--mut)}
+.va .rs-task-t b{font-size:16.5px;font-weight:600;letter-spacing:-.2px}
+.va .rs-task-ok{width:26px;height:26px;background:var(--green);color:#fff;flex:none}
+.va .rs-bar{left:14px;right:14px;bottom:9px;height:3px;border-radius:2px;background:var(--line)}
+.va .rs-bar u{background:var(--ink);border-radius:2px}
+.va .rs:is([data-step="4"],[data-step="5"]) .rs-bar u{background:var(--green)}
+.va .rs-st{margin-top:18px;font-size:14px;font-weight:500;color:var(--mut2)}
+.va .rs-st .st-off{color:var(--green);font-weight:600}
+.va .a-how-steps{display:flex;align-items:center;gap:10px;justify-content:center;margin-top:14px;font-size:13px;font-weight:600;color:#BDBDC5}
+.va .a-how-steps i{width:18px;height:1.5px;background:#DCDCE2}
+.va .a-how-steps span{transition:color .3s}
+.va .rs:not([data-step="0"])~.a-how-steps [data-k="1"],.va .rs:is([data-step="2"],[data-step="3"],[data-step="4"],[data-step="5"])~.a-how-steps [data-k="2"],.va .rs[data-step="5"]~.a-how-steps [data-k="3"]{color:var(--ink)}
+
+/* Каталог заданий: фильтр и список с тонкими разделителями. */
+.va .a-tabs{display:flex;gap:8px;padding:16px 24px 6px;overflow-x:auto;scrollbar-width:none;flex:none}
+.va .a-tabs::-webkit-scrollbar{display:none}
+.va .a-tab{flex:none;height:36px;padding:0 14px;border-radius:18px;background:var(--fill);font-size:14.5px;font-weight:500;color:var(--mut2)}
+.va .a-tab.on{background:var(--ink);color:#fff}
+.va .a-list{flex:1;padding:4px 24px 0;display:flex;flex-direction:column;-webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 30px),transparent);mask-image:linear-gradient(180deg,#000 calc(100% - 30px),transparent)}
+.va .a-task{display:flex;align-items:center;gap:14px;min-height:68px;padding:11px 0;border-bottom:1px solid var(--line);text-align:left;flex:none;width:100%}
+.va .a-task-ic{width:44px;height:44px;border-radius:13px;background:var(--fill);display:grid;place-items:center;flex:none;transition:background .2s,color .2s}
+.va .a-task.on .a-task-ic{background:var(--ink);color:#fff}
+.va .a-task-t{flex:1;display:grid;gap:2px;min-width:0}
+.va .a-task-t b{font-size:16.5px;font-weight:600;letter-spacing:-.2px}
+.va .a-task-t small{font-size:13.5px;line-height:1.3;color:var(--mut)}
+.va .a-radio{width:24px;height:24px;border-radius:50%;border:1.6px solid #D0D0D7;display:grid;place-items:center;flex:none;color:transparent;transition:all .18s}
+.va .a-task.on .a-radio{background:var(--ink);border-color:var(--ink);color:#fff}
+.va .a-list-end{flex:none;height:30px}
+
+/* Время и дни. */
+.va .a-wheel-wrap{flex:1;display:grid;place-items:center}
+.va .a-days-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:18px;padding:0 20px}
+.va .a-days-cap{font-size:15px;font-weight:500;color:var(--mut2)}
+.va .a-days{display:flex;gap:7px}
+.va .a-day{width:43px;height:66px;border-radius:22px;background:var(--fill);display:grid;place-content:center;justify-items:center;gap:3px;color:var(--mut2);transition:background .16s,color .16s}
+.va .a-day b{font-size:18px;font-weight:600}
+.va .a-day small{font-size:9.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;opacity:.7}
+.va .a-day.on{background:var(--ink);color:#fff}
+.va .a-presets{display:flex;gap:8px}
+.va .a-preset{height:36px;padding:0 15px;border-radius:18px;background:var(--fill);font-size:14px;font-weight:500;color:var(--mut2)}
+.va .a-preset.on{background:var(--ink);color:#fff}
+
+/* Уведомления. */
+.va .a-perm{flex:1;padding:30px 24px 0;display:flex;flex-direction:column;gap:14px}
+.va .a-dialog{position:relative;align-self:center;width:270px;border-radius:16px;background:#F3F3F6;text-align:center;box-shadow:0 14px 34px -14px rgba(0,0,0,.2);margin-bottom:26px}
+.va .a-dialog b{display:block;padding:20px 20px 18px;font-size:16px;font-weight:600;line-height:1.3}
+.va .a-dialog-b{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #E2E2E8}
+.va .a-dialog-b button{height:46px;font-size:16px;font-weight:500;color:var(--mut2)}
+.va .a-dialog-b .yes{background:var(--ink);color:#fff;border-radius:0 0 16px 0;font-weight:600}
+.va .a-hand{position:absolute;right:44px;bottom:-30px;animation:a-hand 1.6s ease-in-out 3}
+@keyframes a-hand{50%{transform:translateY(-7px)}}
+.va .a-perm-warn{font-size:14px;line-height:1.35;color:var(--red);text-align:center;min-height:20px;margin-top:-12px}
+.va .a-perm-list{display:grid;gap:10px}
+.va .a-perm-list>div{display:flex;gap:14px;align-items:center;padding:14px 16px;border-radius:16px;background:#F6F6F8}
+.va .a-perm-list span{display:grid;gap:2px}
+.va .a-perm-list b{font-size:15.5px;font-weight:600}
+.va .a-perm-list small{font-size:13.5px;color:var(--mut);line-height:1.3}
+
+/* Обещание и подпись. */
+.va .a-prom{flex:1;padding:22px 24px 0;display:flex;flex-direction:column}
+.va .a-prom blockquote{margin:0;padding:22px;border-radius:20px;background:#F6F6F8;font-size:19px;line-height:1.42;font-weight:500;letter-spacing:-.2px;text-wrap:pretty}
+.va .a-sign-h{margin-top:auto;display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--mut);padding:0 2px 8px}
+.va .a-sign-h button{width:32px;height:32px;border-radius:50%;background:var(--fill);display:grid;place-items:center;color:var(--mut2)}
+.va .a-sign{position:relative;height:160px;border-radius:18px;border:1.5px solid #DCDCE3;background:#fff;margin-bottom:6px}
+.va .a-sign svg{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none}
+.va .a-sign path,.va .a-res-sign path{fill:none;stroke:var(--ink);stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.va .a-sign i{position:absolute;left:30px;right:30px;bottom:34px;height:1.5px;background:var(--y);pointer-events:none}
+
+/* Сборка плана. */
+.va .a-load{flex:1;padding:66px 24px 0;display:flex;flex-direction:column;align-items:center;text-align:center}
+.va .a-pct{font-weight:700;font-size:64px;letter-spacing:-2.5px;line-height:1;font-variant-numeric:tabular-nums}
+.va .a-load h1{margin-top:22px;font-size:28px;font-weight:600;letter-spacing:-.6px;line-height:1.15}
+.va .a-load>p{margin-top:10px;font-size:15.5px;color:var(--mut);line-height:1.4;max-width:270px}
+.va .a-load-bar{align-self:stretch;height:4px;border-radius:2px;background:var(--line);margin:26px 0 22px;overflow:hidden}
+.va .a-load-bar i{display:block;height:100%;width:0;background:var(--ink);border-radius:2px}
+.va .a-load-list{align-self:stretch;display:grid;gap:10px;text-align:left}
+.va .a-load-row{display:flex;align-items:center;gap:14px;height:62px;padding:0 16px;border-radius:16px;background:#fff;border:1px solid var(--line);box-shadow:0 1px 2px rgba(0,0,0,.03);opacity:0;transform:translateY(10px);transition:opacity .4s,transform .4s}
+.va .a-load-row.in{opacity:1;transform:none}
+.va .a-load-ic{width:28px;height:28px;border-radius:50%;background:var(--fill);display:grid;place-items:center;color:transparent;flex:none;transition:background .3s,color .3s,transform .45s cubic-bezier(.3,1.6,.5,1)}
+.va .a-load-row.ok .a-load-ic{background:var(--green);color:#fff;transform:scale(1.07)}
+.va .a-load-row span{display:grid;gap:1px}
+.va .a-load-row b{font-size:15.5px;font-weight:600}
+.va .a-load-row small{font-size:13px;color:var(--mut)}
+
+/* Итог. */
+.va .a-res{flex:1;padding:24px 24px 130px;display:flex;flex-direction:column;align-items:center}
+.va .a-res-badge{width:44px;height:44px;border-radius:50%;background:var(--y);display:grid;place-items:center;color:var(--ink);flex:none}
+.va .a-res h1{margin-top:16px;font-size:32px;font-weight:700;letter-spacing:-.9px}
+.va .a-res-sub{margin-top:6px;font-size:16px;color:var(--mut)}
+.va .a-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:18px}
+.va .a-chips span{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:17px;background:var(--fill);font-size:14px;font-weight:500}
+.va .a-plan{align-self:stretch;margin-top:22px;padding:18px 20px 8px;display:grid;flex:none}
+.va .a-step{display:flex;align-items:center;gap:14px;height:54px;position:relative;font-size:16px;font-weight:500}
+.va .a-step i{width:32px;height:32px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;flex:none;position:relative;z-index:1}
+.va .a-step:not(:last-child)::after{content:'';position:absolute;left:15px;top:43px;height:22px;width:1.5px;background:#D5D5DC}
+.va .a-step.ok i{background:var(--green)}
+.va .a-res-days{align-self:stretch;margin-top:20px;display:grid;gap:10px;flex:none}
+.va .a-res-days>div{display:flex;gap:6px}
+.va .a-res-days i{flex:1;height:38px;border-radius:12px;background:var(--fill);display:grid;place-items:center;font-style:normal;font-size:13.5px;font-weight:600;color:#B4B4BC}
+.va .a-res-days i.on{background:var(--ink);color:#fff}
+.va .a-res-sign{align-self:stretch;margin-top:20px;padding:16px 20px 14px;display:grid;justify-items:center;flex:none}
+.va .a-res-sign .a-cap{justify-self:start}
+.va .a-res-sign svg{width:214px;height:100px}
+.va .a-res-sign small{font-size:12.5px;color:var(--mut)}
+
+/* Промокод. */
+.va .a-promo{flex:1;padding:96px 24px 0}
+.va .a-field{display:flex;gap:8px;height:58px;padding:5px;border-radius:16px;background:var(--fill);border:1.5px solid transparent;transition:border-color .2s}
+.va .a-field input{flex:1;min-width:0;border:0;background:none;outline:0;padding:0 14px;font:500 17px 'Inter',sans-serif;letter-spacing:.6px;color:var(--ink);text-transform:uppercase}
+.va .a-field input::placeholder{color:#B4B4BC;text-transform:none;letter-spacing:0}
+.va .a-field button{padding:0 18px;border-radius:12px;background:#fff;font-size:15px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08);display:grid;place-items:center}
+.va .a-field.ok{border-color:var(--green)}
+.va .a-field.ok button{background:var(--green);color:#fff;box-shadow:none}
+.va .a-field.err{border-color:var(--red)}
+.va .a-promo-msg{margin:12px 4px 0;font-size:14.5px;line-height:1.35;min-height:20px;color:var(--mut2)}
+.va .a-field.ok+.a-promo-msg{color:var(--green)}
+.va .a-field.err+.a-promo-msg{color:var(--red)}
+
+/* Перед оплатой. */
+.va .a-val{flex:1;padding:0 24px;display:flex;flex-direction:column}
+.va .a-val-you{margin-top:20px;padding:16px 18px;border-radius:18px;background:#F6F6F8;font-size:15.5px;line-height:1.44;color:var(--mut2)}
+.va .a-val-you b{color:var(--ink);font-weight:600}
+.va .a-val-list{margin-top:8px;display:grid}
+.va .a-val-row{display:flex;gap:16px;padding:18px 2px;border-bottom:1px solid var(--line)}
+.va .a-val-row:last-child{border-bottom:0}
+.va .a-val-row .ic{margin-top:2px}
+.va .a-val-row b{display:block;font-size:17.5px;font-weight:600;letter-spacing:-.2px}
+.va .a-val-row small{display:block;margin-top:3px;font-size:14.5px;line-height:1.38;color:var(--mut)}
+
+/* Подписка и предложение. */
+.va .a-pw-top{display:flex;justify-content:space-between;align-items:center;height:44px;padding:0 16px 0 14px;flex:none}
+.va .a-x{width:36px;height:36px;display:grid;place-items:center;color:#9B9BA3}
+.va .a-restore{font-size:14px;color:var(--mut);padding:8px}
+.va .a-pw{flex:1;padding:8px 24px 0;display:flex;flex-direction:column}
+.va .a-pw h1{text-align:center;font-size:29px;font-weight:700;letter-spacing:-.8px;line-height:1.14;text-wrap:balance}
+.va .a-checks{margin-top:24px;display:grid;gap:15px;padding:0 2px}
+.va .a-check{display:flex;gap:14px}
+.va .a-check .ic{margin-top:1px}
+.va .a-check b{display:block;font-size:16.5px;font-weight:600;letter-spacing:-.2px}
+.va .a-check small{display:block;margin-top:2px;font-size:14px;line-height:1.36;color:var(--mut)}
+.va .a-plans{margin-top:auto;display:grid;gap:10px;padding-top:18px}
+.va .a-plan-c{position:relative;display:flex;align-items:center;justify-content:space-between;height:70px;padding:0 18px;border-radius:16px;border:1.6px solid #DEDEE4;background:#fff;text-align:left;transition:border-color .18s,background .18s}
+.va .a-plan-c.on{border-color:var(--ink);background:#FFFDF2}
+.va .a-plan-c b{font-size:17px;font-weight:600}
+.va .a-plan-c small{display:block;margin-top:2px;font-size:13px;color:var(--mut2)}
+.va .a-plan-c .pr{font-size:17px;font-weight:600;text-align:right;white-space:nowrap}
+.va .a-plan-c .pr small{display:inline;font-weight:400}
+.va .a-plan-tab{position:absolute;left:14px;top:-11px;height:21px;padding:0 8px;border-radius:6px;background:var(--y);font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center}
+.va .a-plan-dot{position:absolute;right:-8px;top:-8px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;display:none;place-items:center}
+.va .a-plan-c.on .a-plan-dot{display:grid}
+.va .a-reassure{display:flex;justify-content:center;align-items:center;gap:7px;font-size:14px;font-weight:500;margin-top:14px}
+.va .a-pay-note{text-align:center;font-size:12.5px;line-height:1.35;color:var(--mut)}
+.va .a-legal-row{display:flex;justify-content:center;gap:12px}
+.va .a-legal-row button{font-size:12px;color:var(--mut);white-space:nowrap}
+.va .a-off{flex:1;padding:8px 24px 0;display:flex;flex-direction:column;align-items:center;text-align:center}
+.va .a-off h1{font-size:30px;font-weight:700;letter-spacing:-.8px;line-height:1.12;text-wrap:balance}
+.va .a-off>p{margin-top:8px;font-size:16px;color:var(--mut)}
+.va .a-off-card{position:relative;align-self:stretch;margin-top:56px;padding:46px 22px 22px;border-radius:26px;background:linear-gradient(165deg,#FFF7D6 0%,#FFE585 100%)}
+.va .a-off-gift{position:absolute;left:50%;top:-28px;width:56px;height:56px;margin-left:-28px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 6px 16px -6px rgba(0,0,0,.22)}
+.va .a-off-line{font-size:19px;font-weight:500;display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap}
+.va .a-off-pill{background:var(--ink);color:#fff;border-radius:9px;padding:4px 9px;font-size:16px;font-weight:700}
+.va .a-off-price{margin-top:16px;padding:16px;border-radius:18px;background:#fff;display:grid;gap:2px}
+.va .a-off-price s{font-size:16px;color:var(--mut)}
+.va .a-off-price b{font-size:36px;font-weight:700;letter-spacing:-1.2px}
+.va .a-off-price small{font-size:14px;color:var(--mut2)}
+.va .a-off-after{margin-top:14px;font-size:14px;color:#6B5A1E}
+
+/* После оплаты. */
+.va .a-done{flex:1;position:relative;padding:150px 28px 0;display:flex;flex-direction:column}
+.va .a-done .a-res-badge{width:56px;height:56px;position:relative}
+.va .a-done h1{position:relative;margin-top:26px;font-size:50px;font-weight:700;letter-spacing:-2.1px;line-height:1.02}
+.va .a-done h1 span{display:block}
+.va .a-done p{position:relative;margin-top:18px;font-size:18px;line-height:1.42;color:#4A4A51}

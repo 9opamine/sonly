@@ -1,0 +1,142 @@
+/* Партнёрская программа: страница «Партнёрам» (программа и кабинет) и заявка блогера.
+   Спокойная раскладка из тех же карточек и строк, что и настройки: один отступ 16px внутри карточек, одна сетка, мало текста. */
+.pt-tabs{margin-bottom:14px}
+.pt>.ap-card+.ap-card,.pt>.ap-card+.pt-fold{margin-top:10px}
+.pt>p.ap-note{margin-top:12px}
+
+/* Шапка: знак, большая сумма, одна строка пояснения. */
+.pt-top{display:grid;justify-items:center;text-align:center;padding:8px 8px 22px}
+.pt-top>i{display:block;line-height:0}
+.pt-top .mark{width:56px;height:auto;display:block}
+.pt-top b{margin-top:14px;font-family:var(--disp);font-stretch:120%;font-variation-settings:'wdth' 120;font-weight:850;font-size:52px;letter-spacing:-1.6px;line-height:1.02;font-variant-numeric:tabular-nums}
+.pt-top b small{margin-right:8px;font-size:28px;font-weight:750;letter-spacing:-.5px;color:var(--mut2)}
+.pt-top p{margin:8px 0 0;font-size:15.5px;line-height:1.35;color:var(--mut2)}
+
+/* Код: подпись, сам код, кнопка «скопировать» справа; ниже — кнопка «Поделиться». */
+.pt-code{padding:16px}
+.pt-code>div{display:flex;align-items:center;gap:12px}
+.pt-code>div>span{flex:1;min-width:0;display:grid;gap:3px;padding-left:2px}
+.pt-code small{font-size:13.5px;font-weight:600;color:var(--mut)}
+.pt-code span>b{font-family:var(--disp);font-stretch:118%;font-variation-settings:'wdth' 118;font-weight:820;font-size:26px;letter-spacing:.6px;line-height:1.1}
+.pt-copy{width:46px;height:46px;border-radius:50%;background:var(--card2);color:var(--ink);display:grid;place-items:center;flex:none;transition:transform .15s}
+.pt-copy:active{transform:scale(.94)}
+.pt-code>div{gap:10px}
+.pt-code .ap-btn{margin-top:14px}
+.pt-msg{margin:10px 0 0;text-align:center;font-size:13.5px;color:var(--mut)}
+.pt-perk{display:flex;align-items:center;gap:9px;margin:14px 2px 0;font-size:14px;font-weight:600;color:var(--mut2)}
+.pt-perk>i{width:26px;height:26px;border-radius:8px;background:var(--y);color:#0D0D0F;display:grid;place-items:center;flex:none}
+/* Свой промокод: крупное поле со счётчиком знаков, подсказка или ошибка, две кнопки. */
+.pt-code.edit .pt-f>span:first-child{padding-left:2px}
+.pt-in{position:relative;display:block}
+.pt-code.edit .pt-in input{height:58px;padding:0 64px 0 16px;background:var(--card2);box-shadow:none;font-family:var(--disp);font-stretch:118%;font-variation-settings:'wdth' 118;font-weight:820;font-size:24px;letter-spacing:1.6px;text-transform:uppercase}
+.pt-code.edit .pt-in input:focus{box-shadow:inset 0 0 0 2px var(--y)}
+.pt-in.err input,.pt-code.edit .pt-in.err input:focus{box-shadow:inset 0 0 0 2px var(--red)}
+.pt-in small{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:13.5px;font-weight:600;color:var(--mut);font-variant-numeric:tabular-nums;pointer-events:none}
+.pt-hint{margin:8px 2px 0;font-size:13.5px;line-height:1.35;color:var(--mut)}
+.pt-hint.bad{color:var(--red)}
+.pt-2b{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.pt-2b .ap-btn{margin:0;height:52px}
+.pt-2b .ap-btn.ghost{background:var(--card2);box-shadow:none}
+/* «Пример кабинета» — плашка сверху с кнопкой «Скрыть». */
+.pt-demo{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;padding:7px 7px 7px 14px;border-radius:18px;background:var(--card2)}
+.pt-demo span{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:650}
+.pt-demo span .ic{color:var(--y-deep)}
+.pt-demo button{height:34px;padding:0 14px;border-radius:12px;background:var(--btn);color:var(--btn-ink);font-size:13.5px;font-weight:650}
+/* Выплаты: сумма и дата слева, статус справа; строка раскрывается в расчёт. */
+.pt .pt-h{display:flex;justify-content:space-between;align-items:baseline}
+.pt-h span{font-size:15px;font-weight:650;color:var(--mut2);font-variant-numeric:tabular-nums}
+.pt-ph{flex:1;min-width:0;display:grid;gap:2px}
+.pt-pays .br-head .pt-ph b{font-size:16px;font-weight:750;font-variant-numeric:tabular-nums}
+.pt-ph small{font-size:13px;font-weight:500;color:var(--mut)}
+.pt-st{font-size:13px;font-weight:650;color:var(--mut2);white-space:nowrap}
+.pt-st.ok{color:var(--green)}
+.pt-pays .br-in .ap-seg{margin-bottom:4px}
+.pt-ideas{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.pt-ideas li{position:relative;padding-left:16px;font-size:14.5px;line-height:1.4;color:var(--mut2)}
+.pt-ideas li::before{content:'';position:absolute;left:2px;top:.62em;width:6px;height:6px;border-radius:50%;background:var(--y)}
+
+/* «Как это работает»: номера шагов вместо значков, строки той же высоты, что в настройках. */
+.pt-n{width:32px;height:32px;border-radius:50%;background:var(--card2);display:grid;place-items:center;flex:none;font-style:normal;font-size:15px;font-weight:750;color:var(--ink)}
+.pt .ap-list .ap-row{padding-top:11px;padding-bottom:11px}
+.pt .ap-list .ap-row span{line-height:1.3}
+
+/* Шкала доли: четыре ступени на одной линии; пройденные — жёлтые, выбранная — с кольцом. */
+.pt-share{padding:18px 8px 16px}
+.pt-track{position:relative;display:grid;grid-template-columns:repeat(4,1fr)}
+.pt-line{position:absolute;left:12.5%;right:12.5%;top:39px;height:2px;border-radius:1px;background:var(--card2)}
+.pt-line u{position:absolute;left:0;top:0;bottom:0;width:calc(var(--f) * 100%);border-radius:1px;background:var(--y)}
+.pt-track button{position:relative;display:grid;grid-template-rows:24px 14px auto;row-gap:8px;justify-items:center;padding:0 2px 2px}
+.pt-track button b{font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:800;font-size:18px;letter-spacing:-.3px;line-height:24px;color:var(--mut);transition:color .25s,transform .35s cubic-bezier(.22,1,.36,1)}
+.pt-track button i{width:14px;height:14px;border-radius:50%;background:var(--card);box-shadow:inset 0 0 0 2px var(--line);transition:box-shadow .3s,background .3s}
+.pt-track button small{font-size:12.5px;font-weight:600;line-height:1.25;color:var(--mut);white-space:nowrap}
+.pt-track button.got i{background:var(--y);box-shadow:none}
+.pt-track button.got b{color:var(--ink)}
+.pt-track button.on b{color:var(--ink);transform:scale(1.12)}
+.pt-track button.on i{background:var(--y);box-shadow:0 0 0 5px color-mix(in srgb,var(--y) 30%,transparent)}
+.pt-track button.on small{color:var(--ink)}
+.pt-get{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:18px 8px 0;padding-top:14px;border-top:1px solid var(--line)}
+.pt-get span{font-size:15px;font-weight:600;color:var(--mut2)}
+.pt-get b{font-family:var(--disp);font-stretch:118%;font-variation-settings:'wdth' 118;font-weight:820;font-size:24px;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
+.pt-share>p{margin:6px 8px 0;font-size:14px;line-height:1.4;color:var(--mut)}
+.tick{display:inline-block;animation:pt-tick .4s cubic-bezier(.22,1,.36,1)}
+@keyframes pt-tick{from{opacity:.25;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* Раскрывающиеся строки: спокойные серые значки, текст под заголовком строки. */
+.pt-fold .br-head>i{width:32px;height:32px;border-radius:10px;background:var(--card2);color:var(--ink)}
+.pt-fold .br-in{padding-left:44px}
+.pt-calc{display:grid}
+.pt-calc>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:6px 0;font-size:14.5px}
+.pt-calc span{color:var(--mut2)}
+.pt-calc b{font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pt-calc u{text-decoration:none}
+.pt-calc .you{margin-top:4px;padding-top:10px;border-top:1px solid var(--line)}
+.pt-calc .you span{color:var(--ink);font-weight:700}
+.pt-calc .you b{font-size:17px;font-weight:800}
+
+/* Кабинет: ожидаемая выплата, уровень, список покупок. */
+.pt-sum{padding:20px 18px 16px}
+.pt-sum>small{display:block;font-size:14px;font-weight:600;color:var(--mut)}
+.pt-sum>b{display:block;margin-top:4px;font-family:var(--disp);font-stretch:120%;font-variation-settings:'wdth' 120;font-weight:850;font-size:46px;letter-spacing:-1.4px;line-height:1.05;font-variant-numeric:tabular-nums}
+.pt-sum>p{margin:6px 0 0;font-size:14.5px;line-height:1.4;color:var(--mut2)}
+.pt-3{display:grid;grid-template-columns:repeat(3,1fr);margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.pt-3 span{display:grid;gap:2px}
+.pt-3 span+span{padding-left:14px;border-left:1px solid var(--line)}
+.pt-3 b{font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:800;font-size:22px;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.pt-3 small{font-size:13px;color:var(--mut)}
+.pt-level{padding:16px 18px}
+.pt-level>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.pt-level span{font-size:15px;font-weight:600;color:var(--mut2)}
+.pt-level b{font-size:16px;font-weight:750}
+.pt-bar{display:block;height:6px;margin:12px 0 10px;border-radius:3px;background:var(--card2);overflow:hidden}
+.pt-bar u{display:block;height:100%;border-radius:3px;background:var(--y)}
+.pt-level small{display:block;font-size:13.5px;color:var(--mut)}
+.pt-list{padding:0 16px}
+.pt-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:62px;padding:10px 0}
+.pt-row+.pt-row{border-top:1px solid var(--line)}
+.pt-row>span{display:grid;gap:3px}
+.pt-row b{font-size:15.5px;font-weight:650;font-variant-numeric:tabular-nums}
+.pt-row small{font-size:13px;color:var(--mut)}
+.pt-row .r{text-align:right;justify-items:end}
+.pt-row small.ok{color:var(--green)}
+.pt-row small.paid{color:var(--mut2)}
+.pt-row small.bad{color:var(--red)}
+.pt-empty{display:grid;justify-items:center;text-align:center;padding:26px 18px 18px}
+.pt-empty>i{width:58px;height:58px;border-radius:50%;background:var(--card2);color:var(--ink);display:grid;place-items:center;margin-bottom:12px}
+.pt-empty>b{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.pt-empty>p{margin:6px 0 0;font-size:14.5px;line-height:1.4;color:var(--mut)}
+.pt-empty .ap-btn{margin-top:18px}
+
+/* Заявка блогера: поля той же высоты, что кнопки. */
+.pt-form{display:grid;gap:14px}
+.pt-f{display:grid;gap:7px;min-width:0}
+.pt-f>span{padding-left:4px;font-size:13.5px;font-weight:600;color:var(--mut2)}
+.pt-f input{width:100%;height:54px;padding:0 16px;border:0;border-radius:16px;background:var(--card);box-shadow:var(--elev);font:inherit;font-size:16px;font-weight:550;color:var(--ink);outline:none;transition:box-shadow .2s}
+.pt-f input::placeholder{color:var(--mut);font-weight:500}
+.pt-f input:focus{box-shadow:var(--elev),inset 0 0 0 2px var(--y)}
+.pt-f .ap-seg.sm{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);box-shadow:var(--elev);border-radius:16px;padding:4px}
+.pt-f .ap-seg.sm button{height:46px;border-radius:12px;font-size:14px;padding:0 4px}
+.pt-f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pt-err{margin:14px 0 0;padding:12px 14px;border-radius:16px;background:color-mix(in srgb,var(--red) 12%,var(--card2));font-size:14.5px;line-height:1.4;color:var(--ink)}
+
+/* Знак на жёлтой карточке-приглашении. */
+.ap-gift>i .mark{width:28px;height:auto;display:block}

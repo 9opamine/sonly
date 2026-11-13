@@ -1,0 +1,39 @@
+/* Стекло как у Apple. Преломление и лёгкую радужную кромку ставит js/glass.js (библиотека liquid-glass.js) —
+   через backdrop-filter. Здесь сам материал по рецепту из README библиотеки: лёгкий тон, яркий блик по верхнему краю,
+   тонкая светлая кромка, которая ярче сверху слева (так свет ловит край стекла), и мягкая тень.
+   Тёмное стекло — по умолчанию (звонок, задания, тёмная тема), светлое — в светлой теме приложения. */
+.lg{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.03) 55%,rgba(255,255,255,.07));-webkit-backdrop-filter:blur(2px) saturate(1.1);backdrop-filter:blur(2px) saturate(1.1);box-shadow:inset 0 1px 1px rgba(255,255,255,.5),inset 0 -8px 18px rgba(255,255,255,.05),0 8px 24px rgba(0,0,0,.3);color:#fff}
+.lg::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.2px;background:linear-gradient(145deg,rgba(255,255,255,.75),rgba(255,255,255,.14) 28%,rgba(255,255,255,0) 50%,rgba(255,255,255,.1) 72%,rgba(255,255,255,.42));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.lg>*:not(.ap-tab-ind){position:relative;z-index:1}
+
+/* Светлое стекло. Экраны звонка и заданий всегда тёмные — там стекло остаётся тёмным. */
+.ap:not([data-theme="dark"]) .lg:not(:is(.rg,.tk,.cam) *){background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.32) 55%,rgba(255,255,255,.45));box-shadow:inset 0 1px 1px #fff,inset 0 -8px 18px rgba(255,255,255,.35),0 8px 24px rgba(13,13,15,.12),0 0 0 .5px rgba(13,13,15,.06);color:var(--ink)}
+.ap:not([data-theme="dark"]) .lg:not(:is(.rg,.tk,.cam) *)::before{background:linear-gradient(145deg,#fff,rgba(255,255,255,.5) 30%,rgba(255,255,255,.08) 52%,rgba(255,255,255,.4) 74%,#fff)}
+
+/* Маленькие кнопки: тень короче. */
+.ap-x.lg,.ap-more.lg,.ap-chip.lg,.tk-x.lg,.rg-x.lg,.cam-b.lg{box-shadow:inset 0 1px 1px rgba(255,255,255,.5),inset 0 -5px 12px rgba(255,255,255,.05),0 5px 16px rgba(0,0,0,.28)}
+
+/* В маленьком телефоне на экране «Твой будильник готов» стекло не нужно: там оно только мылит картинку. */
+.mi-real .lg{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(255,255,255,.72)}
+.mi-real .ap[data-theme="dark"] .lg{background:rgba(40,40,46,.9)}
+
+/* Панель вкладок: подложка под выбранной вкладкой и капля, которая появляется, только когда ведёшь пальцем. */
+.ap-tabs .ap-tab-ind{position:absolute;left:0;top:5px;bottom:5px;width:var(--w,64px);translate:var(--x,5px) 0;border-radius:27px;background:rgba(13,13,15,.07);pointer-events:none;transition:translate .55s cubic-bezier(.22,1,.36,1),width .55s cubic-bezier(.22,1,.36,1),scale .35s cubic-bezier(.22,1,.36,1),opacity .25s}
+.ap[data-theme="dark"] .ap-tabs .ap-tab-ind{background:rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.ap-tabs .ap-tab-ind.off{opacity:0}
+.ap-tabs .ap-tab-ind.now{transition:none}
+.ap-tabs-pill.press .ap-tab-ind{scale:1.04 1.06}
+.ap-tabs.drag .ap-tab-ind{opacity:0}
+.ap-tabs .ap-lens{position:absolute;left:0;top:-7px;width:94px;height:78px;border-radius:39px;translate:var(--x,0) 0;scale:.86;opacity:0;pointer-events:none;z-index:3;transition:translate .5s cubic-bezier(.22,1,.36,1),scale .4s cubic-bezier(.22,1,.36,1),opacity .3s;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.02))}
+.ap-tabs .ap-lens.on{opacity:1;scale:1}
+.ap-tabs.drag .ap-lens{transition:scale .4s cubic-bezier(.22,1,.36,1),opacity .2s}
+.ap-tabs .ap-lens.now{transition:none}
+.ap-tabs-pill button{transition:color .3s}
+.ap-tabs-pill .ui-on{transition:opacity .3s}
+.ap-tabs-pill button:not(.on) .ui-on{opacity:0}
+.phone.instant .ap-tab-ind,.phone.instant .ap-lens{transition:none}
+
+/* Панель вкладок плотнее остального стекла: под ней текст и цветные значки, они должны читаться как мягкий отсвет. */
+.ap-tabs-pill.lg,.ap-plus.lg{-webkit-backdrop-filter:blur(10px) saturate(1.1);backdrop-filter:blur(10px) saturate(1.1)}
+.ap[data-theme="dark"] .ap-tabs-pill.lg,.ap[data-theme="dark"] .ap-plus.lg{background:linear-gradient(180deg,rgba(52,52,58,.62),rgba(30,30,34,.55))}
+.ap:not([data-theme="dark"]) .ap-tabs-pill.lg,.ap:not([data-theme="dark"]) .ap-plus.lg{background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(255,255,255,.66))}
