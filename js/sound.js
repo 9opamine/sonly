@@ -60,8 +60,19 @@
   /** Короткий щелчок: нажатие клавиши, удар ритма. */
   function tick(freq = 660) { if (ready()) { master.gain.setValueAtTime(volume, ctx.currentTime); note(ctx.currentTime, [0, freq, 0.07, 'triangle', 0.35]); } }
 
+  /** Удар ритма: низкий «бум» со щелчком. at — через сколько секунд от сейчас; звуки ставятся в расписание точно, без задержек таймеров. */
+  function drum(at = 0, soft = false) {
+    if (!ready()) return;
+    const t = ctx.currentTime + Math.max(0, at);
+    master.gain.setValueAtTime(volume, ctx.currentTime);
+    note(t, [0, soft ? 300 : 170, soft ? 0.12 : 0.22, 'sine', soft ? 0.5 : 0.8, soft ? 140 : 55]);
+    note(t, [0, soft ? 1800 : 2600, 0.025, 'square', soft ? 0.05 : 0.09]);
+  }
+
   Sonly.sound = {
-    play, stop, tick, names: Object.keys(BANK),
+    play, stop, tick, drum, names: Object.keys(BANK),
+    /** Разрешает звук: браузер включает его только после нажатия. */
+    unlock: () => ready(),
     /** Громкость 0–100. mute — заглушить текущий звонок, не трогая настройку. */
     setVolume(v) { volume = Math.max(0, Math.min(1, v / 100)); if (master && ctx) master.gain.setTargetAtTime(volume, ctx.currentTime, 0.05); },
     mute(on) { if (master && ctx) { master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setTargetAtTime(on ? 0 : volume, ctx.currentTime, 0.05); } },

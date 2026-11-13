@@ -21,6 +21,10 @@ window.Sonly = (() => {
   }
   /** Залитая иконка Material Symbols по имени вида "fitness_center". */
   const ms = (name, cls = '') => `<span class="ms ${cls}" aria-hidden="true">${name}</span>`;
+  /* Эмодзи — только картинками Apple (img/emoji/<кодовые точки>.png), чтобы на любом телефоне и компьютере они выглядели одинаково. */
+  const emoCode = (ch) => [...ch].map((c) => c.codePointAt(0).toString(16)).join('-');
+  const emoSrc = (ch) => `img/emoji/${emoCode(ch)}.png`;
+  const emo = (ch, cls = '', alt = '') => `<img class="emj${cls ? ' ' + cls : ''}" src="${emoSrc(ch)}" alt="${alt}" draggable="false">`;
 
   const SB_ICONS =
     '<svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" width="3" height="12" rx="1"/></svg>' +
@@ -216,6 +220,8 @@ window.Sonly = (() => {
       this.c = concept;
       this.opts = opts;
       this.still = !!opts.still || REDUCE;
+      /* shot — неподвижный кадр для снимков экрана. При «Уменьшении движения» анимации короче, но задания идут по-настоящему. */
+      this.shot = !!opts.still;
       this.state = Object.assign(base(), concept.defaults ? concept.defaults() : {}, opts.state || {});
       this.history = [];
       this.timers = new Set();
@@ -236,6 +242,12 @@ window.Sonly = (() => {
     /* Отложенные шаги анимаций. В неподвижном режиме всё выполняется сразу, в порядке времени. */
     at(ms, fn) {
       if (this.still) { fn(); return; }
+      const id = setTimeout(() => { this.timers.delete(id); fn(); }, ms);
+      this.timers.add(id);
+    }
+    /** Пауза, которая нужна для смысла (показ узора, ответ, проверка), а не для красоты: идёт всегда, кроме снимков экрана. */
+    wait(ms, fn) {
+      if (this.shot) { fn(); return; }
       const id = setTimeout(() => { this.timers.delete(id); fn(); }, ms);
       this.timers.add(id);
     }
@@ -279,7 +291,7 @@ window.Sonly = (() => {
         el, flow: f, s: f.state, still: f.still,
         q: (s) => el.querySelector(s), qa: (s) => [...el.querySelectorAll(s)],
         set(k, v) { f.state[k] = v; f.refresh(); },
-        at: (ms, fn) => f.at(ms, fn), seq: (l) => f.seq(l), tween: (...a) => f.tween(...a), draw: (...a) => f.draw(...a),
+        at: (ms, fn) => f.at(ms, fn), wait: (ms, fn) => f.wait(ms, fn), shot: f.shot, seq: (l) => f.seq(l), tween: (...a) => f.tween(...a), draw: (...a) => f.draw(...a),
         next: () => f.next(), sheet: (h, c) => f.sheet(h, c),
       };
     }
@@ -424,5 +436,5 @@ window.Sonly = (() => {
       <button class="pay-ok" data-act="pay-ok">Подтвердить</button>`;
   }
 
-  return { $, $$, esc, pad, range, ic, ms, SB_ICONS, CATS, TASKS, DAYS, PRICE, isPromo, SIGN_DEMO, eur, tStr, taskOf, today, daysText, offer, wheel, signPad, odo, concepts, register, Flow, REDUCE };
+  return { $, $$, esc, pad, range, ic, ms, emo, emoSrc, SB_ICONS, CATS, TASKS, DAYS, PRICE, isPromo, SIGN_DEMO, eur, tStr, taskOf, today, daysText, offer, wheel, signPad, odo, concepts, register, Flow, REDUCE };
 })();

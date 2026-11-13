@@ -575,7 +575,9 @@
           if (Sonly.morning && Sonly.morning.on(flow, act, arg, el)) return true;
           if (Sonly.partner && Sonly.partner.on(flow, act, arg, el)) return true;
           /* Нажатия внутри настройки задания: предметы, сложность, количество. */
-          if (e && act.startsWith('to-') && TO.act(e.task, TO.get(e, e.task), act, arg)) {
+          const done = e && act.startsWith('to-') && TO.act(e.task, TO.get(e, e.task), act, arg);
+          if (done === 'keep') return true;
+          if (done) {
             const o = TO.get(e, e.task);
             if ((act === 'to-obj' || act === 'to-all') && !flow.still && TO.sync(flow.sheets, e.task, o)) { const b = flow.sheets.querySelector('.ap-sh-foot .ap-btn'); if (b) b.disabled = !TO.valid(e.task, o); return true; }
             taskSetup(flow, '');

@@ -60,15 +60,8 @@
 .tk-st{margin:0;font-size:15px;font-weight:600;color:var(--mut)}
 
 /* Примеры. */
-.tk-body.tk-math{justify-content:flex-end;gap:16px}
-.tk-body.tk-math .tk-h{margin-bottom:auto;margin-top:26px}
-.tk-q{width:100%;flex:1;max-height:220px;border-radius:30px;background:var(--card);box-shadow:var(--elev);display:grid;place-content:center;gap:12px}
-.tk-q span{font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:820;font-size:52px;letter-spacing:-1.4px;line-height:1;font-variant-numeric:tabular-nums}
-.tk-q b{justify-self:center;min-width:120px;height:56px;padding:0 18px;border-radius:18px;background:var(--card2);display:grid;place-items:center;font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:820;font-size:34px;font-variant-numeric:tabular-nums}
-.tk-q b i{width:3px;height:30px;border-radius:2px;background:#FFC700;animation:tk-caret 1s steps(1) infinite}
 @keyframes tk-caret{50%{opacity:0}}
 .phone.instant .tk-q b i{animation:none}
-.tk-q.bad{box-shadow:inset 0 0 0 2px #E5484D;animation:tk-shake .4s ease}
 @keyframes tk-shake{20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
 .tk-keys{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .tk-keys button{height:62px;border-radius:20px;background:var(--card);box-shadow:var(--elev);display:grid;place-items:center;font-family:var(--disp);font-stretch:112%;font-variation-settings:'wdth' 112;font-weight:700;font-size:27px;color:var(--ink);transition:transform .1s,opacity .2s}
@@ -131,18 +124,8 @@
 .tk-tap:active{transform:scale(.95)}
 
 /* Голос. */
-.tk-say{width:100%;padding:26px 22px;border-radius:28px;background:var(--card);box-shadow:var(--elev);font-family:var(--disp);font-stretch:108%;font-variation-settings:'wdth' 108;font-weight:750;font-size:27px;line-height:1.25;letter-spacing:-.5px;text-wrap:balance}
-.tk-mic{position:relative;width:96px;height:96px;border-radius:50%;background:#FFC700;color:#0D0D0F;display:grid;place-items:center;flex:none}
-.tk-mic::before,.tk-mic::after{content:'';position:absolute;inset:0;border-radius:50%;border:3px solid #FFC700;opacity:0}
-.tk-mic.rec::before{animation:tk-wave 1.2s ease-out infinite}
-.tk-mic.rec::after{animation:tk-wave 1.2s ease-out .6s infinite}
-@keyframes tk-wave{from{opacity:.8;transform:scale(1)}to{opacity:0;transform:scale(1.7)}}
 
 /* Викторина. */
-.tk-body.tk-quiz{justify-content:flex-end;padding-top:14px;gap:14px}
-.tk-qcard{width:100%;flex:1;max-height:330px;border-radius:30px;background:var(--card);box-shadow:var(--elev);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px}
-.tk-flag{font-family:'Apple Color Emoji','Noto Color Emoji','Segoe UI Emoji',sans-serif;font-size:110px;line-height:1;filter:drop-shadow(0 14px 20px rgba(0,0,0,.5))}
-.tk-qcard.new .tk-flag{animation:cam-in .5s cubic-bezier(.3,1.5,.5,1) both}
 .tk-ans{width:100%;display:grid;gap:10px}
 .tk-ans button{display:flex;align-items:center;gap:12px;height:60px;padding:0 16px 0 10px;border-radius:20px;background:var(--card);box-shadow:var(--elev);color:var(--ink);font-size:16.5px;font-weight:600;text-align:left;transition:background .2s,box-shadow .2s}
 .tk-ans button i{width:36px;height:36px;border-radius:12px;background:var(--card2);display:grid;place-items:center;font-style:normal;font-size:14px;font-weight:800;color:var(--mut2);flex:none}
@@ -351,3 +334,126 @@
 .ps-skel-live line,.ps-skel-live circle{transition:opacity .2s}
 .ps-skel-live .ps-skel line{stroke-width:4}
 .ps-skel-live.dn .j{fill:#FFC700}
+
+
+/* ── Задания, второй заход: прогресс отрезками, крупные карточки, отклик на каждое нажатие ── */
+.tk-prog{display:flex;gap:6px;width:100%;flex:none;margin:6px 0 2px}
+.tk-prog i{flex:1;height:5px;border-radius:3px;background:#222227;overflow:hidden;position:relative}
+.tk-prog i.on{background:#FFC700}
+.tk-prog i.now::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,199,0,0),rgba(255,199,0,.75),rgba(255,199,0,0));animation:tk-seg 1.6s ease-in-out infinite}
+@keyframes tk-seg{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.phone.instant .tk-prog i.now::after{animation:none;transform:none;background:rgba(255,199,0,.35)}
+.tk-qglow{position:absolute;left:50%;top:-40%;width:120%;height:100%;margin-left:-60%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,199,0,.16),rgba(255,199,0,0));pointer-events:none}
+
+/* Примеры: пример крупно, ответ в жёлтой рамке; верно — зелёная галочка и следующий выезжает справа. */
+.tk-body.tk-math{justify-content:flex-start;gap:12px;padding-top:4px}
+.tk-q{position:relative;width:100%;flex:1;min-height:200px;max-height:300px;border-radius:32px;background:linear-gradient(180deg,#1B1B20,#141418);box-shadow:var(--elev);display:grid;place-content:center;justify-items:center;gap:18px;overflow:hidden;transition:box-shadow .25s,background .25s}
+.tk-q span{position:relative;font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:830;font-size:58px;letter-spacing:-1.6px;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tk-q b{position:relative;min-width:132px;height:62px;padding:0 20px;border-radius:20px;background:#0B0B0E;box-shadow:inset 0 0 0 2px rgba(255,199,0,.55);display:grid;place-items:center;font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:830;font-size:36px;color:#FFC700;font-variant-numeric:tabular-nums;transition:box-shadow .2s,color .2s}
+.tk-q b i{width:3px;height:30px;border-radius:2px;background:#FFC700;animation:tk-caret 1s steps(1) infinite}
+.phone.instant .tk-q b i{animation:none}
+.tk-q.bad{box-shadow:inset 0 0 0 2px #E5484D;animation:tk-shake .4s ease}
+.tk-q.bad b{box-shadow:inset 0 0 0 2px rgba(229,72,77,.6)}
+.tk-q.ok{background:linear-gradient(180deg,#12301F,#0E2016);box-shadow:inset 0 0 0 2px #1FA055}
+.tk-q.ok b{box-shadow:inset 0 0 0 2px #2ED573;color:#7CF0A8}
+.tk-q.in{animation:tk-in .42s cubic-bezier(.22,1,.36,1)}
+@keyframes tk-in{from{transform:translateX(46px);opacity:0}}
+.tk-okb{position:absolute;right:16px;top:16px;width:40px;height:40px;border-radius:50%;background:#1FA055;color:#fff;display:grid;place-items:center;text-decoration:none;animation:cam-in .4s cubic-bezier(.3,1.7,.5,1) both}
+.tk-say-st{margin:-2px 0 0;height:20px;font-size:14.5px;font-weight:600;color:var(--mut);transition:color .2s}
+.tk-say-st.bad{color:#FF8A8A}
+.tk-keys button{transition:transform .1s,background .15s}
+.tk-keys button:active{background:#26262C}
+
+/* Викторина: флаг Apple крупно над вопросом, ответы с буквами; верный — галочка, неверный — крестик. */
+.tk-body.tk-quiz{justify-content:flex-start;gap:12px;padding-top:4px}
+.tk-qcard{position:relative;width:100%;flex:1;min-height:250px;max-height:340px;border-radius:32px;background:linear-gradient(180deg,#1B1B20,#141418);box-shadow:var(--elev);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;overflow:hidden}
+.tk-flag{position:relative;display:block;width:150px;height:150px}
+.tk-flagimg{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 16px 22px rgba(0,0,0,.55))}
+.tk-qcard.new .tk-flag{animation:cam-in .5s cubic-bezier(.3,1.5,.5,1) both}
+.tk-qcard .tk-h{position:relative;font-size:28px}
+.tk-ans button i svg{display:block}
+.tk-ans button.ok{animation:tk-good .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes tk-good{40%{transform:scale(1.03)}}
+
+/* Память: полоска времени на запоминание, точки — сколько клеток осталось; ошибка показывает, где были клетки. */
+.tk-body.tk-mem{justify-content:flex-start;gap:14px;padding-top:4px}
+.tk-mem .tk-h{margin-top:28px}
+.tk-memhint{height:42px;display:grid;justify-items:center;align-content:center;gap:8px;width:100%}
+.tk-memhint small{font-size:14.5px;font-weight:600;color:var(--mut)}
+.tk-membar{display:block;width:180px;height:6px;border-radius:3px;background:#FFC700;transform-origin:0 50%;animation:tk-bar var(--d) linear both}
+@keyframes tk-bar{to{transform:scaleX(0);opacity:.4}}
+.tk-dots{display:flex;gap:7px}
+.tk-dots i{width:10px;height:10px;border-radius:50%;background:#2A2A30;transition:background .2s,transform .3s cubic-bezier(.3,1.7,.5,1)}
+.tk-dots i.on{background:#FFC700;transform:scale(1.15)}
+.tk-grid{margin-top:auto;margin-bottom:auto}
+.tk-grid.show button.lit{animation:tk-lit .35s cubic-bezier(.3,1.6,.5,1) var(--d) both}
+@keyframes tk-lit{from{background:var(--card);box-shadow:none;transform:scale(.86)}}
+.tk-grid button.hit{animation:tk-hit .3s cubic-bezier(.3,1.7,.5,1)}
+@keyframes tk-hit{from{transform:scale(.8)}}
+.tk-grid button.was{box-shadow:inset 0 0 0 3px #FFC700;background:#1E1A0E}
+
+/* Пары. */
+.tk-body.tk-pairs{justify-content:flex-start;gap:14px;padding-top:4px}
+.tk-pairs .tk-h{margin:22px 0 auto}
+.tk-pairs .tk-cards{margin-bottom:auto}
+.tk-cards.c5{grid-template-columns:repeat(5,1fr)}
+.tk-cardx.no{box-shadow:inset 0 0 0 2px #E5484D;animation:tk-shake .4s ease}
+.tk-cardx.done{animation:tk-good .45s cubic-bezier(.3,1.6,.5,1)}
+
+/* Фраза: набранное белое, ошибка красная, следующая буква подсвечена; полоса — сколько осталось. */
+.tk-phrase .tk-text{font-size:24px;line-height:1.42;transition:box-shadow .2s}
+.tk-text .cur{color:#0D0D0F;background:#FFC700;border-radius:4px;box-shadow:0 0 0 2px #FFC700;animation:tk-cur 1s steps(1) infinite}
+@keyframes tk-cur{50%{background:rgba(255,199,0,.35);color:var(--mut)}}
+.phone.instant .tk-text .cur{animation:none}
+.tk-text.bad{box-shadow:inset 0 0 0 2px rgba(229,72,77,.55)}
+.tk-text.ok{box-shadow:inset 0 0 0 2px #1FA055}
+.tk-bar{width:100%;height:5px;border-radius:3px;background:#222227;overflow:hidden}
+.tk-bar i{display:block;height:100%;background:#FFC700;transform-origin:0 50%;transition:transform .25s ease}
+
+/* Скороговорка: каждое слово загорается, когда его услышали; под текстом — что распознано. */
+.tk-body.tk-voice{gap:18px}
+.tk-say{width:100%;padding:24px 20px;border-radius:30px;background:linear-gradient(180deg,#1B1B20,#141418);box-shadow:var(--elev);font-family:var(--disp);font-stretch:108%;font-variation-settings:'wdth' 108;font-weight:760;font-size:27px;line-height:1.32;letter-spacing:-.4px;color:#5E5E68;text-wrap:balance;transition:box-shadow .3s}
+.tk-say.ok{box-shadow:inset 0 0 0 2px #1FA055}
+.tk-w{display:inline-block;transition:color .25s}
+.tk-w.got{color:#fff}
+.tk-w.pop{animation:tk-word .4s cubic-bezier(.3,1.7,.5,1)}
+@keyframes tk-word{40%{transform:translateY(-4px) scale(1.06);color:#FFC700}}
+.tk-w.miss{color:#FF8A8A}
+.tk-heard{margin:-6px 0 0;height:20px;max-width:100%;font-size:14.5px;font-weight:500;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tk-mic{position:relative;width:104px;height:104px;border-radius:50%;background:#FFC700;color:#0D0D0F;display:grid;place-items:center;flex:none;box-shadow:0 18px 32px -16px rgba(255,170,0,.9);transition:transform .15s,background .25s}
+.tk-mic:active{transform:scale(.94)}
+.tk-micw{position:absolute;inset:0;border-radius:50%;border:3px solid #FFC700;opacity:0;pointer-events:none}
+.tk-mic.rec .tk-micw{animation:tk-wave 1.3s ease-out infinite}
+.tk-mic.rec .tk-micw.w2{animation-delay:.65s}
+@keyframes tk-wave{from{opacity:.8;transform:scale(1)}to{opacity:0;transform:scale(1.5)}}
+.tk-mic.ok{background:#1FA055;color:#fff;box-shadow:none}
+.tk-mic:disabled{cursor:default}
+.tk-st.warn{color:#FFB020}
+.phone.instant .tk-mic.rec .tk-micw{animation:none}
+
+/* Ритм: дорожка с ударами, большое солнце, по которому стучат. */
+.tk-body.tk-rhythm{gap:20px}
+.tk-track{position:relative;width:calc(100% - 28px);height:44px;margin:4px 14px 6px}
+.tk-track u{position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;border-radius:1px;background:#2A2A30}
+.tk-track i{position:absolute;left:var(--x);top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:#16161A;box-shadow:inset 0 0 0 2.5px #3A3A42;transition:background .15s,box-shadow .15s}
+.tk-track i.lit{background:#FFC700;box-shadow:0 0 0 5px rgba(255,199,0,.2),0 0 18px rgba(255,199,0,.6);animation:tk-beat .3s cubic-bezier(.3,1.8,.5,1)}
+.tk-track i.tap{background:#FFC700;box-shadow:none;animation:tk-beat .3s cubic-bezier(.3,1.8,.5,1)}
+.tk-track i.good{background:#1FA055;box-shadow:0 0 0 4px rgba(31,160,85,.22)}
+.tk-track i.bad{background:#E5484D;box-shadow:0 0 0 4px rgba(229,72,77,.22);animation:tk-shake .4s ease}
+@keyframes tk-beat{from{transform:scale(1.6)}}
+.tk-pad{position:relative;width:208px;height:208px;border-radius:50%;background:radial-gradient(circle at 50% 38%,#232329,#121215 70%);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.07),0 24px 40px -24px rgba(0,0,0,.8);display:grid;place-items:center;flex:none;touch-action:manipulation;-webkit-user-select:none;user-select:none;transition:box-shadow .3s,opacity .3s}
+.tk-pad .mark{width:118px;height:auto;opacity:.45;transition:opacity .3s,transform .12s}
+.tk-pad.on{box-shadow:inset 0 0 0 2.5px rgba(255,199,0,.55),0 24px 44px -20px rgba(255,170,0,.55)}
+.tk-pad.on .mark,.tk-pad.ok .mark{opacity:1}
+.tk-pad.ok{box-shadow:inset 0 0 0 2.5px #1FA055}
+.tk-pad:disabled{cursor:default}
+.tk-padring{position:absolute;inset:0;border-radius:50%;border:3px solid #FFC700;opacity:0;pointer-events:none}
+.tk-pad.hit .tk-padring{animation:tk-ring .55s ease-out}
+.tk-pad.hit .tk-padring.r2{animation-delay:.08s}
+.tk-pad.hit .mark{animation:tk-thump .22s ease-out}
+@keyframes tk-ring{from{opacity:.9;transform:scale(.92)}to{opacity:0;transform:scale(1.35)}}
+@keyframes tk-thump{40%{transform:scale(1.12)}}
+.tk-again{display:flex;align-items:center;gap:7px;height:40px;padding:0 16px 0 13px;border-radius:20px;background:#16161A;box-shadow:var(--elev);font-size:14px;font-weight:600;color:var(--mut2);transition:opacity .25s}
+.tk-again:disabled{opacity:0;pointer-events:none}
+.tk-st .tk-ear{width:20px;height:20px;vertical-align:-4px;margin-right:6px}
+.phone.instant .tk-membar{animation:none}

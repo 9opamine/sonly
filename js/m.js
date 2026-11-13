@@ -355,7 +355,9 @@
       },
       on(act, arg, el, c) {
         const t = taskOf(c.s), o = TO.get(c.s, t.id);
-        if (!TO.act(t.id, o, act, arg)) return false;
+        const done = TO.act(t.id, o, act, arg);
+        if (!done) return false;
+        if (done === 'keep') return true;
         /* Предметы переключаются на месте, с анимацией; остальные настройки перерисовывают экран. */
         if ((act === 'to-obj' || act === 'to-all') && !c.still && TO.sync(c.el, t.id, o)) { const b = c.q('.a-cta'); if (b) b.disabled = !TO.valid(t.id, o); return true; }
         c.flow.rerender();

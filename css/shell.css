@@ -169,3 +169,5 @@ body.shot .phone{border-radius:0;box-shadow:none}
 /* Нажатие: всё, что нажимается, чуть утапливается, как кнопки в iOS. Через scale — чтобы не ломать свои transform и transition у элементов. */
 .phone button:not(:disabled):active,.phone [role="button"]:active{scale:.97}
 .phone.instant button,.phone.instant [role="button"]{scale:none}
+/* Эмодзи Apple картинками: по умолчанию — размером с букву; где нужно крупнее, размер задаёт своё правило. */
+.emj{display:inline-block;width:1.25em;height:1.25em;object-fit:contain;vertical-align:-.25em}
