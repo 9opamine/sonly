@@ -433,7 +433,8 @@
    */
   function camera(k) {
     const spinning = k.phase === 'spin' || k.phase === 'stop', T = k.target || {}, busy = k.phase === 'scan' || k.phase === 'done', live = k.live === 'on', miss = k.phase === 'miss';
-    const say = k.phase === 'done' ? 'Готово' : k.phase === 'scan' ? 'Проверяем снимок…' : miss ? missSay(k, k.res || {}) : k.qr ? `Отсканируй ${T.acc}` : k.list ? `Найди и сфотографируй ${T.acc}` : `Сними ${T.acc}`;
+    const loading = live && k.ai !== 'ok' && k.phase === 'aim';
+    const say = loading ? HINT.load : k.phase === 'done' ? 'Готово' : k.phase === 'scan' ? 'Проверяем снимок…' : miss ? missSay(k, k.res || {}) : k.qr ? `Отсканируй ${T.acc}` : k.list ? `Найди и сфотографируй ${T.acc}` : `Сними ${T.acc}`;
     const note = !live && k.nocam ? `<span class="cam-note">${NOCAM_SAY[k.nocam] || NOCAM_SAY.busy} — пример</span>` : '';
     /* Проверка снимка: уголки сходятся на предмете, по нему проходит блик; когда предмет узнан — уголки зеленеют. */
     const lock = busy || live ? `<i class="cam-lk"><u></u><u></u><u></u><u></u></i>${T.img && k.phase === 'scan' && !live ? '<i class="cam-sweep"></i>' : ''}` : '';
@@ -446,7 +447,7 @@
     return `<div class="cam${live ? ' live' : ''}${k.flash ? ' flash' : ''}${k.flip ? ' flip' : ''}${k.phase === 'scan' ? ' snap' : ''}${busy ? ' held' : ''}">
       ${live ? '' : FEED}${head(k, 'chevron-left')}${scene}
       <div class="cam-bar"><button class="cam-b lg" data-act="cam-flip" aria-label="Другая камера"${spinning || busy ? ' disabled' : ''}>${ic('switch-camera', 22, 2)}</button>
-        <button class="tk-shot" data-act="shot" aria-label="Снять"${k.phase === 'aim' ? '' : ' disabled'}><i></i></button>
+        <button class="tk-shot" data-act="shot" aria-label="Снять"${k.phase === 'aim' && !loading ? '' : ' disabled'}><i></i></button>
         <button class="cam-b lg${k.flash ? ' on' : ''}" data-act="cam-flash" aria-label="Вспышка"${spinning || busy ? ' disabled' : ''}>${ic('zap', 22, 2.2)}</button></div>
     </div>`;
   }
@@ -470,16 +471,29 @@
     if (k.live === 'wait') return false;
     k.live = 'wait';
     /* Во время крутки экран не перерисовываем — она начнётся заново; живое видео появится, когда крутка встанет. */
-    const redraw = () => { if (c.flow.cur === el && k.phase !== 'spin' && k.phase !== 'stop') c.flow.rerender(); };
-    Promise.all([V.camera(facing), model().catch(() => { throw { code: 'model' }; })]).then(() => {
-      k.live = 'on';
-      redraw();
-    }, (e) => {
+    /* Экран к этому моменту мог уже перерисоваться — проверяем, что мы всё ещё в этом задании, а не тот же элемент. */
+    const here = () => c.flow.id === 'task' && c.flow.state._ring && c.flow.state._ring.k === k;
+    const redraw = () => { if (here() && k.phase !== 'spin' && k.phase !== 'stop') c.flow.rerender(); };
+    /* Камера и ИИ готовятся отдельно: видео появляется сразу, а пока модель скачивается (на мобильном интернете — десятки секунд),
+       на нём написано «Загружаем ИИ…» и снимать нельзя. Что-то не вышло — камера выключается, задание становится примером с причиной. */
+    let failed = false;
+    const fail = (e) => {
+      if (failed) return;
+      failed = true;
       k.live = 'off';
       k.nocam = (e && e.code) || 'busy';
       V.stop();
       redraw();
-    });
+    };
+    if (k.ai !== 'ok') k.ai = 'load';
+    /* Камера включилась уже после ошибки ИИ или после ухода с задания — сразу выключаем её. */
+    V.camera(facing).then(() => { if (failed || !here()) { V.stop(); return; } k.live = 'on'; redraw(); }, fail);
+    model().then(() => {
+      if (failed) return;
+      k.ai = 'ok';
+      /* Скелет сам начнёт считать, как только модель готова; у фото-задания включаем кнопку «Снять». */
+      if (k.live === 'on' && k.kind === 'cam') redraw();
+    }, () => fail({ code: 'model' }));
     return false;
   }
   /** Скелет поверх живого видео: 14 точек как у рисованного человека, в координатах экрана. */
@@ -521,7 +535,8 @@
     const sk = skeleton(svg);
     let lm = null, rid = 0, lastV = -1, lastRun = 0;
     const say = (s) => { if (hint && hint.textContent !== s) hint.textContent = s; };
-    V.pose().then((x) => { lm = x; });
+    if (!lm) say(k.ai === 'ok' ? hintOf('none', t.id) : HINT.load);
+    V.pose().then((x) => { lm = x; k.ai = 'ok'; say(hintOf('none', t.id)); }, () => {});
     const frame = (now) => {
       c.flow.frames.delete(rid);
       if (c.flow.cur !== el || k.i >= k.n) return;
@@ -580,7 +595,7 @@
   /** Повторы через камеру: человек в кадре, скелет поверх, счёт идёт сам. Внизу растёт солнце. */
   function pose(k, t) {
     const live = k.live === 'on';
-    const sub = live ? hintOf('none', t.id) : k.live === 'wait' ? HINT.wait : k.nocam ? `${NOCAM_SAY[k.nocam] || NOCAM_SAY.busy} — пример` : HINT.go;
+    const sub = live ? (k.ai === 'ok' ? hintOf('none', t.id) : HINT.load) : k.live === 'wait' ? HINT.wait : k.nocam ? `${NOCAM_SAY[k.nocam] || NOCAM_SAY.busy} — пример` : HINT.go;
     return `<div class="cam ps${live ? ' live' : ''}">${live ? '<svg class="ps-skel-live js-skel" aria-hidden="true"></svg>' : FEED}${head(k)}
       <div class="cam-pill top lg" data-lg="pill"><b>${k.n} ${COUNT[t.id]}</b><span class="ps-live${k.nocam && !live ? ' off' : ''}"><i></i><span class="js-hint">${sub}</span></span></div>
       ${live ? '' : `<div class="ps-stage"><i class="ps-box"><u></u><u></u><u></u><u></u></i>${figure(t.id, 0.6)}</div>`}
@@ -898,7 +913,7 @@
           if (key === 'flash') cam.querySelector('[data-act="cam-flash"]').classList.toggle('on', k.flash);
           return true;
         }
-        case 'shot': if (k.phase === 'aim') {
+        case 'shot': if (k.phase === 'aim' && !(k.live === 'on' && k.ai !== 'ok')) {
           /* Живая камера: снимок — это кадр видео и квадрат видоискателя; дальше его проверяет ИИ. */
           const box = flow.cur && flow.cur.querySelector('.cam'), v = Sonly.vision && Sonly.vision.video;
           if (k.live === 'on' && !k.qr && box && v && v.videoWidth) { const sh = snapshot(box, v, box.querySelector('.js-frame')); k.snap = sh.cv; k.rects = sh.rects; }
