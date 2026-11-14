@@ -89,7 +89,8 @@
   const BEAT = (n) => { const t = [0]; for (let i = 1; i < n; i++) t.push(t[i - 1] + ([1, 0, 0, 1, 0, 1, 1, 0, 0][i - 1] ? 800 : 400)); return t; };
   const beatTrack = (n, cls = '') => { const t = BEAT(n), end = t[t.length - 1]; return `<div class="tp-track${cls}"><u></u>${t.map((x, i) => `<i style="--x:${((x / end) * 100).toFixed(1)}%;--d:${i * 60}ms;--t:${x}ms"></i>`).join('')}</div>`; };
   /** Последние два слова — неразрывно: одно слово не остаётся на последней строке. */
-  const glue = (t) => t.replace(/ (\S+)$/, ' $1');
+  /* Текст без дыр: последнее слово не остаётся одно, а короткие предлоги и союзы («и», «у», «а», «по») переносятся вместе со следующим словом. */
+  const glue = (t) => t.replace(/(^|[\s ])([а-яёa-z]{1,2}) /gi, '$1$2 ').replace(/ (\S+)$/, ' $1');
   const canSpeak = () => typeof window !== 'undefined' && 'speechSynthesis' in window;
   const VIEW = {
     math(o) {
