@@ -29,16 +29,22 @@
     return out;
   }
   const ranked = (p) => Object.keys(p).sort((a, b) => p[b] - p[a]);
-  /** Что видно на снимке, если это не то, что просили: первый «предметный» класс. */
-  const seen = (p, not) => ranked(p).find((k) => k !== not && !GENERIC.includes(k) && p[k] > 0.15) || null;
+  /** Что видно на снимке, если это не то, что просили: «предметный» класс, только если ИИ в нём правда уверен —
+      среди двух первых и не меньше 0,3. Иначе на белую стену было бы «похоже на небо». */
+  const seen = (p, not) => ranked(p).slice(0, 2).find((k) => k !== not && !GENERIC.includes(k) && p[k] >= 0.3) || null;
 
   /**
    * Засчитано ли задание. task — id предмета или фото-задания. Возвращает { ok, why, seen, p }:
-   * why — 'screen' (снят экран или бумага), 'unmade' (кровать не заправлена), 'other' (на снимке другое), 'unsure' (не уверены).
+   * why — 'screen' (снят экран или бумага), 'unmade' (кровать не заправлена), 'other' (на снимке другое), 'unsure' (не уверены),
+   * 'dark' (темно — на снимке почти ничего не видно). o.lum — средняя яркость снимка 0…1, если известна.
    */
-  function check(task, p) {
+  function check(task, p, o = {}) {
     const want = TASKS[task] || task, order = ranked(p), top = order[0];
-    const res = (ok, why) => ({ ok, why: ok ? '' : why, seen: ok ? want : seen(p, want), p: p[want] || 0 });
+    const res = (ok, why) => {
+      /* Не засчитано, а снимок почти чёрный или ИИ видит в основном темноту — просим свет, а не «не вижу». */
+      if (!ok && why !== 'screen' && (top === 'dark' || (o.lum != null && o.lum < 0.07))) why = 'dark';
+      return { ok, why: ok ? '' : why, seen: ok ? want : why === 'dark' ? null : seen(p, want), p: p[want] || 0 };
+    };
     if ((top === 'screen' && task !== 'tv') || top === 'paper') return res(false, 'screen');
     if (task === 'bed') {
       const bed = p.bed_made + p.bed_unmade;

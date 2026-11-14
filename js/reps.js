@@ -26,15 +26,22 @@
    * down/up — пороги с запасом (гистерезис): ниже down — нижняя точка, выше up — верхняя. lower — нижняя точка, когда значение меньше.
    */
   const KINDS = {
-    /* Приседания: насколько бедро опустилось — высота бедра над коленом в длинах голени. Стоя ≈ 1, присед до параллели ≈ 0,3.
-       Работает и сбоку, и анфас (угол в колене анфас почти не меняется: бедро уходит к камере). Нужны плечи, бёдра, колени и стопы. */
+    /* Приседания: насколько опустились плечи и таз над стопами — от стойки этого человека (rel: запоминается, какой он стоя).
+       Стопы при приседе стоят на месте, а плечи и таз идут вниз одинаково анфас, сбоку и сзади, при любой высоте телефона.
+       Углы и длины частей ноги для этого не годятся: анфас колени выходят к камере, голень в кадре укорачивается, и присед
+       выглядит почти как стойка. Плечи MediaPipe видит надёжно, даже когда точка таза анфас «не доезжает» вниз.
+       Повтор — опустился до 0,82 стойки (бедро примерно на 45–50° от вертикали, присед до середины) и встал до 0,92.
+       Наклон без приседа не считается: таз должен опуститься сам (gate). Сдвинулись стопы — человек переходит, это не повтор (foot).
+       Нужны плечи, таз и стопы. */
     squat: {
-      down: 0.52, up: 0.82, lower: true, minRep: 550,
+      rel: true, down: 0.82, up: 0.92, gate: 0.9, gateOn: 'hip', shallow: 0.9, lower: true, minRep: 550,
       measure(q) {
-        const legs = [[P.lh, P.lk, P.la], [P.rh, P.rk, P.ra]].filter((ids) => ids.every((i) => q.vis(i)));
-        if (!legs.length || !(q.vis(P.ls) || q.vis(P.rs))) return { hint: 'body' };
-        const r = legs.map(([h, k, an]) => (q.pt(k).y - q.pt(h).y) / (dist(q.pt(k), q.pt(an)) || 1));
-        return { v: r.reduce((a, b) => a + b, 0) / r.length };
+        const legs = [[P.lh, P.la], [P.rh, P.ra]].filter((ids) => ids.every((i) => q.vis(i)));
+        const sh = [P.ls, P.rs].filter((i) => q.vis(i));
+        if (!legs.length || !sh.length) return { hint: 'body' };
+        const avg = (f, list) => list.reduce((s, x) => s + f(x), 0) / list.length;
+        const foot = { x: avg(([, an]) => q.pt(an).x, legs), y: avg(([, an]) => q.pt(an).y, legs) };
+        return { c: { torso: foot.y - avg((i) => q.pt(i).y, sh), hip: foot.y - avg(([h]) => q.pt(h).y, legs) }, foot };
       },
     },
     /* Отжимания: угол в локте (плечо — локоть — запястье). Наверху ≈ 165°, внизу ≈ 90°.
@@ -87,14 +94,47 @@
   function make(kind, aspect = 1) {
     const K = KINDS[kind];
     let count = 0, phase = 'up', since = 0, repStart = 0, sm = null, lastT = 0, lostSince = 0, hint = 'none', reachedDown = false;
+    /* Для мерок «от стойки»: сглаженные значения и стойка по каждой мерке, самое низкое место попытки, подсказка «глубже». */
+    let cs = {}, base = {}, dip = 1, deeperTill = 0;
     const st = { count: 0, phase: 'up', depth: 0, hint: 'none', seen: false };
     function out(h, depth) {
       Object.assign(st, { count, phase, hint: h, depth: depth == null ? st.depth : depth });
       return st;
     }
+    /**
+     * Мерки → одно число: 1 — как стоит этот человек, меньше — ниже.
+     * Стойка — верхняя огибающая: вверх догоняет быстро (человек выпрямился, подошёл ближе), вниз сползает медленно
+     * и только наверху (отошёл, телефон чуть съехал). Во время приседа она не меняется.
+     */
+    function relative(c, dt) {
+      const a = 1 - Math.exp(-dt / 70), rise = 1 - Math.exp(-dt / 250), fall = 1 - Math.exp(-dt / 5000), r = {};
+      Object.keys(c).forEach((n) => {
+        const s = (cs[n] = cs[n] == null ? c[n] : cs[n] + (c[n] - cs[n]) * a);
+        if (base[n] == null) base[n] = s;
+        else if (s > base[n]) base[n] += (s - base[n]) * rise;
+        else if (phase === 'up' && s > base[n] * 0.9) base[n] += (s - base[n]) * fall;
+        r[n] = base[n] > 0.05 ? s / base[n] : 1;
+      });
+      const v = Object.values(r).reduce((x, y) => x + y, 0) / Object.keys(r).length, g = r[K.gateOn] != null ? r[K.gateOn] : v;
+      return { v, g, gateOk: K.gate == null || g < K.gate };
+    }
+    /* Где стоят стопы. Ушли больше чем на десятую часть роста в кадре — человек перешёл (или телефон сдвинули):
+       стойка запоминается заново, начатый повтор не считается. Отошёл подальше — иначе выглядело бы как присед. */
+    let foot = null, home = null, footAt = null, drift = 0;
+    function moved(f, dt) {
+      const a = 1 - Math.exp(-dt / 70);
+      foot = foot ? { x: foot.x + (f.x - foot.x) * a, y: foot.y + (f.y - foot.y) * a } : { ...f };
+      const scale = base.torso || cs.torso || 0;
+      if (!home || !scale) { home = { ...foot }; return false; }
+      if (Math.hypot(foot.x - home.x, foot.y - home.y) > scale * 0.1) { home = { ...foot }; return true; }
+      const b = 1 - Math.exp(-dt / 1500);
+      home.x += (foot.x - home.x) * b;
+      home.y += (foot.y - home.y) * b;
+      return false;
+    }
     return {
       get count() { return count; },
-      reset() { count = 0; phase = 'up'; sm = null; reachedDown = false; },
+      reset() { count = 0; phase = 'up'; sm = null; reachedDown = false; cs = {}; base = {}; dip = 1; foot = home = null; },
       push(lm, t) {
         const dt = lastT ? Math.min(200, t - lastT) : 33;
         lastT = t;
@@ -105,7 +145,7 @@
           pt: (i) => ({ x: lm[i].x * aspect, y: lm[i].y }),
         };
         const m = K.measure(q);
-        if (m.v == null) {
+        if (m.v == null && !m.c) {
           /* Короткие провалы распознавания не ломают повтор; подсказка — только если провал держится. */
           if (!lostSince) lostSince = t;
           if (t - lostSince > 500) hint = m.hint;
@@ -113,22 +153,36 @@
         }
         lostSince = 0;
         hint = null;
-        /* Сглаживание дрожания точек: чем дольше кадр, тем сильнее верим новому значению. */
-        const a = 1 - Math.exp(-dt / 70);
-        sm = sm == null ? m.v : sm + (m.v - sm) * a;
-        const isDown = K.lower ? sm < K.down : sm > K.down, isUp = K.lower ? sm > K.up : sm < K.up;
+        let gateOk = true, g = 1;
+        if (m.foot && moved(m.foot, dt)) { cs = {}; base = {}; phase = 'up'; reachedDown = false; repStart = 0; dip = 1; }
+        if (m.c) ({ v: sm, g, gateOk } = relative(m.c, dt));
+        /* Насколько уехали стопы с начала повтора (самое дальнее место, а не только конец: отошёл и вернулся — тоже не повтор). */
+        if (repStart && footAt && foot) drift = Math.max(drift, Math.hypot(foot.x - footAt.x, foot.y - footAt.y));
+        else {
+          /* Сглаживание дрожания точек: чем дольше кадр, тем сильнее верим новому значению. */
+          const a = 1 - Math.exp(-dt / 70);
+          sm = sm == null ? m.v : sm + (m.v - sm) * a;
+        }
+        const isDown = (K.lower ? sm < K.down : sm > K.down) && gateOk, isUp = K.lower ? sm > K.up : sm < K.up;
         const depth = Math.max(0, Math.min(1, K.lower ? (K.up - sm) / (K.up - K.down) : (sm - K.up) / (K.down - K.up)));
-        if (phase === 'up' && isDown && t - since > 120) { phase = 'down'; since = t; reachedDown = true; if (!repStart) repStart = t; }
+        /* Присел, но не до середины, и встал — подсказываем «глубже» (только у мерок от стойки; наклон без приседа — не попытка). */
+        if (K.shallow != null && phase === 'up') {
+          if (g < K.gate + 0.05) dip = Math.min(dip, sm);
+          if (isUp && sm > K.up + 0.03) { if (dip < K.shallow) deeperTill = t + 2500; dip = 1; }
+        }
+        const begin = () => { repStart = t; footAt = foot && { ...foot }; drift = 0; };
+        if (phase === 'up' && isDown && t - since > 120) { phase = 'down'; since = t; reachedDown = true; dip = 1; deeperTill = 0; if (!repStart) begin(); }
         else if (phase === 'down' && isUp && t - since > 120) {
           phase = 'up';
           since = t;
-          /* Слишком быстрый повтор — дёрнулась точка, а не человек: не засчитываем. */
-          if (reachedDown && t - repStart >= K.minRep) count++;
+          /* Слишком быстрый повтор — дёрнулась точка, а не человек: не засчитываем.
+             Повтор — на месте: если стопы за это время уезжали, человек отходил или подходил к телефону. */
+          if (reachedDown && t - repStart >= K.minRep && drift < (base.torso || 1) * 0.06) count++;
           reachedDown = false;
           repStart = 0;
-        } else if (phase === 'up' && !isUp && !repStart) repStart = t;
+        } else if (phase === 'up' && !isUp && !repStart) begin();
         else if (phase === 'up' && isUp) repStart = 0;
-        return out(null, depth);
+        return out(t < deeperTill ? 'deeper' : null, depth);
       },
     };
   }

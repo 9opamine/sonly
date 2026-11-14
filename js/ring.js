@@ -19,7 +19,7 @@
   const canLive = () => !NOCAM && !!Sonly.vision && Sonly.vision.supported();
   /* Подсказки на камере повторов: что сделать, чтобы счёт пошёл. Одна строка. */
   const PLACE = { squat: 'Поставь телефон и отойди на 2 шага', jump: 'Поставь телефон и отойди на 2 шага', pushup: 'Положи телефон сбоку и прими упор' };
-  const HINT = { wait: 'Включаем камеру…', load: 'Загружаем ИИ…', body: 'Отойди — нужно видеть тебя целиком', floor: 'Прими упор лёжа боком к камере', go: 'Камера считает сама' };
+  const HINT = { wait: 'Включаем камеру…', load: 'Загружаем ИИ…', body: 'Отойди — нужно видеть тебя целиком', floor: 'Прими упор лёжа боком к камере', deeper: 'Приседай чуть глубже', go: 'Камера считает сама' };
   const hintOf = (h, id) => (h === 'none' ? PLACE[id] : HINT[h] || HINT.go);
   /* Почему камера не включилась — коротко, одной строкой. */
   const NOCAM_SAY = { insecure: 'Камера недоступна в этом окне', denied: 'Нет доступа к камере', none: 'Камера не найдена', busy: 'Камера занята', model: 'ИИ не загрузился' };
@@ -423,6 +423,7 @@
     if (res.why === 'screen') return 'Сними сам предмет, а не экран';
     if (res.why === 'unmade') return 'Кровать ещё не заправлена';
     if (res.why === 'unsure') return 'Не разглядеть — подойди ближе';
+    if (res.why === 'dark') return 'Темно — включи свет или вспышку';
     const seen = res.seen && (SEEN_ACC[res.seen] || (TO.objects({ off: [] }).find((x) => x.id === res.seen) || {}).acc);
     return seen ? `Это похоже на ${seen}` : `Не вижу ${T.acc}`;
   }
@@ -529,7 +530,7 @@
   }
   /** Повторы с камеры: скелет на каждом кадре, счётчик засчитывает только полные повторы. */
   function livePose(c, k, t) {
-    const V = Sonly.vision, box = c.q('.cam'), hint = c.q('.js-hint'), svg = c.q('.js-skel'), el = c.el;
+    const V = Sonly.vision, box = c.q('.cam'), hint = c.q('.js-hint'), svg = c.q('.js-skel'), bar = c.q('.js-depth'), el = c.el;
     const video = V.attach(box);
     if (!video || !svg) return;
     const sk = skeleton(svg);
@@ -553,6 +554,10 @@
       const st = k.rc.push(pts, now);
       drawSkeleton(sk, svg, box, video, pts, video.classList.contains('mirror'));
       svg.classList.toggle('dn', st.phase === 'down');
+      if (bar) {
+        bar.style.setProperty('--d', (st.seen && !st.hint ? st.depth : 0).toFixed(3));
+        bar.parentNode.classList.toggle('full', st.phase === 'down');
+      }
       say(hintOf(st.hint, t.id));
       while (k.i < Math.min(st.count, k.n)) count(c.flow, k);
     };
@@ -599,7 +604,8 @@
   function pose(k, t) {
     const live = k.live === 'on';
     const sub = live ? (k.ai === 'ok' ? hintOf('none', t.id) : HINT.load) : k.live === 'wait' ? HINT.wait : k.nocam ? `${NOCAM_SAY[k.nocam] || NOCAM_SAY.busy} — пример` : HINT.go;
-    return `<div class="cam ps${live ? ' live' : ''}">${live ? '<svg class="ps-skel-live js-skel" aria-hidden="true"></svg>' : FEED}${head(k)}
+    /* Шкала глубины: заполняется по ходу повтора и желтеет, когда глубины хватает, — видно, почему повтор не засчитан. */
+    return `<div class="cam ps${live ? ' live' : ''}">${live ? '<svg class="ps-skel-live js-skel" aria-hidden="true"></svg><div class="ps-depth" aria-hidden="true"><i class="js-depth"></i></div>' : FEED}${head(k)}
       <div class="cam-pill top lg" data-lg="pill"><b>${k.n} ${COUNT[t.id]}</b><span class="ps-live${k.nocam && !live ? ' off' : ''}"><i></i><span class="js-hint">${sub}</span></span></div>
       ${live ? '' : `<div class="ps-stage"><i class="ps-box"><u></u><u></u><u></u><u></u></i>${figure(t.id, 0.6)}</div>`}
       <div class="ps-hud"><div class="tk-grow${k.i >= k.n ? ' final' : ''}" style="--g:${(k.i / k.n).toFixed(3)}"><i class="tk-glow"></i>${Sonly.mark()}</div>

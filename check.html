@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>sonly · проверка камеры</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap">
+<style>
+  :root{--bg:#0D0D0F;--card:#17171B;--line:rgba(255,255,255,.08);--ink:#F4F4F6;--mut:#8E8E96;--y:#FFC700;--green:#34C46A;--red:#FF6B6B}
+  *{box-sizing:border-box;margin:0}
+  html,body{background:var(--bg);color:var(--ink);font:15px/1.4 Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+  main{max-width:460px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 20px) 16px calc(env(safe-area-inset-bottom,0px) + 28px);display:grid;gap:14px}
+  h1{font-size:26px;line-height:1.15;font-weight:800;letter-spacing:-.02em}
+  h1 span{color:var(--y)}
+  .lead{color:var(--mut);font-size:15px}
+  .warn{border-radius:18px;padding:14px 16px;background:rgba(255,107,107,.12);box-shadow:inset 0 0 0 1px rgba(255,107,107,.3);display:grid;gap:8px}
+  .warn b{color:var(--red)}
+  .warn label{display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)}
+  .warn input{width:20px;height:20px;accent-color:var(--y)}
+  .view{position:relative;aspect-ratio:3/4;border-radius:26px;overflow:hidden;background:#000 radial-gradient(circle at 50% 45%,#1d1d22,#09090b 70%);box-shadow:inset 0 0 0 1px var(--line)}
+  .view .cam-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .view .mirror{transform:scaleX(-1)}
+  .view canvas.dots{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .view .hint{position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:13px;font-weight:600;color:rgba(255,255,255,.85);text-shadow:0 1px 6px rgba(0,0,0,.7)}
+  .view .empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--mut);font-size:14px;text-align:center;padding:24px}
+  ol{list-style:none;padding:0;display:grid;gap:2px;border-radius:22px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
+  li{display:grid;grid-template-columns:22px 1fr;gap:12px;padding:13px 16px;align-items:start}
+  li+li{border-top:1px solid var(--line)}
+  li i{width:22px;height:22px;border-radius:50%;margin-top:1px;display:grid;place-items:center;background:#2A2A30;font-style:normal;font-size:13px;font-weight:800;color:#0D0D0F}
+  li.run i{background:var(--y);animation:pulse 1s ease-in-out infinite}
+  li.ok i{background:var(--green)}
+  li.bad i{background:var(--red)}
+  li.skip i{background:#3A3A42;color:var(--mut)}
+  li b{font-weight:650;display:block}
+  li small{display:block;color:var(--mut);font-size:13px;margin-top:2px}
+  li.bad small{color:#FFB3B3}
+  @keyframes pulse{50%{transform:scale(.8);opacity:.7}}
+  .sum{border-radius:22px;padding:16px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);display:grid;gap:6px}
+  .sum b{font-size:18px}
+  .sum.ok b{color:var(--green)}
+  .sum.bad b{color:var(--red)}
+  .sum p{color:var(--mut);font-size:14px}
+  .btns{display:grid;gap:10px}
+  button,a.btn{appearance:none;border:0;border-radius:18px;padding:16px;font:700 16px Inter,system-ui,sans-serif;text-align:center;text-decoration:none;cursor:pointer;background:var(--y);color:#0D0D0F;transition:transform .12s}
+  button:active,a.btn:active{transform:scale(.97)}
+  button:disabled{opacity:.45}
+  .g{background:#24242A;color:var(--ink)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  details{border-radius:18px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line);padding:12px 16px}
+  summary{cursor:pointer;font-weight:650;color:var(--mut)}
+  pre{margin-top:10px;white-space:pre-wrap;word-break:break-word;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;color:#C8C8D0;max-height:40vh;overflow:auto}
+  .dev{color:var(--mut);font-size:12px}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <h1><span>sonly</span> · проверка камеры</h1>
+  <p class="lead">Шаг за шагом включает камеру и ИИ — так видно, что именно не работает на этом телефоне.</p>
+  <div class="warn" id="crash" hidden>
+    <b id="crash-t"></b>
+    <span>Скопируй результат и пришли — по нему видно причину.</span>
+    <label><input type="checkbox" id="skip"> Пропустить этот шаг и проверить остальное</label>
+  </div>
+  <div class="view" id="view"><div class="empty" id="empty">Здесь будет камера</div><canvas class="dots" id="dots"></canvas><div class="hint" id="hint"></div></div>
+  <ol id="steps"></ol>
+  <div class="sum" id="sum" hidden><b id="sum-t"></b><p id="sum-p"></p></div>
+  <div class="btns">
+    <button id="go">Начать проверку</button>
+    <button class="g" id="copy">Скопировать результат</button>
+    <div class="row"><a class="btn g" href="index.html?shot=app&live=1&theme=dark&s=home&sheet=ring:squat&debug=1">Приседания</a><a class="btn g" href="index.html?shot=app&live=1&theme=dark&s=home&sheet=ring:hunt&debug=1">Найди предмет</a></div>
+  </div>
+  <details><summary>Журнал</summary><pre id="log"></pre></details>
+  <p class="dev" id="dev"></p>
+</main>
+<script src="js/diag.js"></script>
+<script src="js/verdict.js"></script>
+<script src="js/reps.js"></script>
+<script src="js/vision.js"></script>
+<script>
+(() => {
+  'use strict';
+  const V = Sonly.vision, $ = (id) => document.getElementById(id);
+  const KEY = 'sonly-check';
+  const STEPS = [
+    { id: 'front', name: 'Фронтальная камера' },
+    { id: 'pose-load', name: 'Скелет: загрузка' },
+    { id: 'pose-run', name: 'Скелет: 10 секунд счёта' },
+    { id: 'back', name: 'Основная камера' },
+    { id: 'clip-load', name: 'Распознавание предметов: загрузка' },
+    { id: 'clip-run', name: 'Распознавание: снимок' },
+  ];
+  const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { return {}; } };
+  const save = (d) => { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) { /* приватный режим */ } };
+  const log = (m, k) => { Sonly.diag.log('проверка: ' + m, k); paintLog(); };
+  const sec = (ms) => (ms / 1000).toFixed(1).replace('.', ',') + ' с';
+  const mem = () => (performance.memory ? ` · память JS ${Math.round(performance.memory.usedJSHeapSize / 1e6)} МБ` : '');
+  const res = {};
+
+  /* Прошлая проверка не дошла до конца шага — значит, на нём браузер закрылся или завис. */
+  const prev = load();
+  const died = prev.cur && STEPS.find((s) => s.id === prev.cur);
+  if (died) {
+    $('crash').hidden = false;
+    $('crash-t').textContent = `В прошлый раз браузер закрылся на шаге «${died.name}»`;
+    $('skip').checked = true;
+    res[died.id] = { st: 'bad', note: 'на этом шаге браузер закрылся' };
+  }
+  const ua = navigator.userAgent, ios = /iPhone|iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  $('dev').textContent = `${ios ? 'iOS' : /Android/.test(ua) ? 'Android' : 'компьютер'} · ядер ${navigator.hardwareConcurrency || '?'}${navigator.deviceMemory ? ' · память ' + navigator.deviceMemory + ' ГБ' : ''} · ${screen.width}×${screen.height} ×${devicePixelRatio}`;
+
+  function paint() {
+    $('steps').innerHTML = STEPS.map((s) => {
+      const r = res[s.id] || {};
+      const mark = r.st === 'ok' ? '✓' : r.st === 'bad' ? '!' : r.st === 'skip' ? '–' : '';
+      return `<li class="${r.st || ''}"><i>${mark}</i><div><b>${s.name}</b>${r.note ? `<small>${r.note}</small>` : ''}</div></li>`;
+    }).join('');
+  }
+  function paintLog() {
+    try { $('log').textContent = JSON.parse(localStorage.getItem('sonly-diag')).lines.join('\n'); } catch (e) { /* пусто */ }
+  }
+  paint();
+  paintLog();
+
+  /* Насколько замирал экран: самый долгий промежуток между кадрами анимации, пока идёт шаг. */
+  let gapMax = 0, lastF = 0;
+  const frame = (t) => { if (lastF) gapMax = Math.max(gapMax, t - lastF); lastF = t; requestAnimationFrame(frame); };
+  requestAnimationFrame(frame);
+  const froze = () => (gapMax > 120 ? ` · экран замирал до ${sec(gapMax)}` : '');
+
+  const box = $('view'), dots = $('dots'), g = dots.getContext('2d');
+  const hint = (t) => { $('hint').textContent = t || ''; };
+  /* Кадры камеры за время t: сколько раз сменился currentTime. */
+  async function fps(v, ms) {
+    let n = 0, last = -1;
+    const t0 = performance.now();
+    while (performance.now() - t0 < ms) {
+      if (v.currentTime !== last) { n++; last = v.currentTime; }
+      await new Promise((r) => requestAnimationFrame(r));
+    }
+    return Math.round(n / (ms / 1000));
+  }
+  async function cam(facing) {
+    const t0 = performance.now(), v = await V.camera(facing);
+    V.attach(box);
+    $('empty').hidden = true;
+    hint(facing === 'user' ? 'Встань в кадр целиком' : 'Наведи на любой предмет');
+    const f = await fps(v, 2500);
+    if (!v.videoWidth) throw new Error('камера включилась, но кадров нет');
+    return `${v.videoWidth}×${v.videoHeight}, ${f} кадров/с, включилась за ${sec(performance.now() - t0)}`;
+  }
+  function draw(lm, v) {
+    const bw = dots.width = box.clientWidth * devicePixelRatio, bh = dots.height = box.clientHeight * devicePixelRatio;
+    if (!lm) return;
+    const k = Math.max(bw / v.videoWidth, bh / v.videoHeight), ox = (bw - v.videoWidth * k) / 2, oy = (bh - v.videoHeight * k) / 2, mir = v.classList.contains('mirror');
+    g.fillStyle = '#FFC700';
+    lm.forEach((p, i) => { if (i < 11 && i) return; let x = ox + p.x * v.videoWidth * k; if (mir) x = bw - x; g.beginPath(); g.arc(x, oy + p.y * v.videoHeight * k, 5 * devicePixelRatio, 0, 7); g.fill(); });
+  }
+
+  const RUN = {
+    front: () => cam('user'),
+    async 'pose-load'() {
+      const t0 = performance.now();
+      await V.pose();
+      return `готов за ${sec(performance.now() - t0)} · ${new URLSearchParams(location.search).get('pose') === 'gpu' ? 'видеокарта' : 'процессор'}`;
+    },
+    async 'pose-run'() {
+      const lm = await V.pose(), v = V.video, t0 = performance.now(), rc = Sonly.reps.make('squat', v.videoWidth / v.videoHeight);
+      let n = 0, seen = 0, lastV = -1, lastRun = 0, reps = 0;
+      while (performance.now() - t0 < 10000) {
+        const now = await new Promise((r) => requestAnimationFrame(r));
+        const gap = Math.min(250, Math.max(66, V.stats.detectMs * 1.5));
+        if (v.readyState < 2 || v.currentTime === lastV || now - lastRun < gap) continue;
+        lastV = v.currentTime; lastRun = now;
+        const p = V.detect(lm, v, now);
+        n++;
+        if (p) { seen++; reps = rc.push(p, now).count; }
+        draw(p, v);
+        hint(p ? `Вижу тебя · приседаний: ${reps}` : 'Не вижу человека — отойди подальше');
+      }
+      draw(null, v);
+      if (!n) throw new Error('ни одного кадра не обработано');
+      return `${Math.round(V.stats.detectMs)} мс на кадр · ${n} кадров · человек найден в ${Math.round((seen / n) * 100)}%`;
+    },
+    back: () => cam('environment'),
+    async 'clip-load'() {
+      const t0 = performance.now();
+      await V.clip();
+      return `готово за ${sec(performance.now() - t0)}`;
+    },
+    async 'clip-run'() {
+      const v = V.video;
+      if (!v) throw new Error('камера не включена');
+      const r = await V.look('kettle', v, [V.square(v)]);
+      const top = Sonly.verdict.ranked(r.probs).slice(0, 3).map((k) => `${k} ${Math.round(r.probs[k] * 100)}%`).join(', ');
+      return `проверено за ${sec(r.ms)} · видит: ${top}`;
+    },
+  };
+  const why = (e) => (e && e.code ? { denied: 'нет разрешения на камеру', insecure: 'браузер не даёт камеру на этой странице', none: 'камера не найдена', busy: 'камера занята другим приложением' }[e.code] || e.code : (e && e.message) || String(e));
+
+  let running = false;
+  $('go').onclick = async () => {
+    if (running) return;
+    running = true;
+    $('go').disabled = true;
+    $('sum').hidden = true;
+    const skip = $('skip').checked && died ? died.id : null;
+    STEPS.forEach((s) => { res[s.id] = s.id === skip ? { st: 'skip', note: 'пропущен: в прошлый раз на нём браузер закрылся' } : {}; });
+    paint();
+    log(`начата · ${ua}`);
+    let bad = null;
+    for (const s of STEPS) {
+      if (res[s.id].st === 'skip') continue;
+      /* Сперва записываем, какой шаг идёт, — если браузер упадёт, при следующем открытии это будет видно. */
+      save({ cur: s.id, at: new Date().toISOString() });
+      res[s.id] = { st: 'run', note: 'идёт…' };
+      paint();
+      log(`шаг «${s.name}»`);
+      gapMax = 0;
+      try {
+        const note = await RUN[s.id]();
+        res[s.id] = { st: 'ok', note: note + froze() + mem() };
+        log(`«${s.name}» — ок: ${res[s.id].note}`);
+      } catch (e) {
+        res[s.id] = { st: 'bad', note: why(e) + froze() };
+        log(`«${s.name}» — ошибка: ${why(e)}`, 'ОШИБКА');
+        bad = bad || s;
+        /* Без камеры дальше по этой камере проверять нечего. */
+        if (s.id === 'front') { res['pose-run'] = { st: 'skip', note: 'нужна фронтальная камера' }; }
+        if (s.id === 'back') { res['clip-run'] = { st: 'skip', note: 'нужна основная камера' }; }
+      }
+      paint();
+    }
+    save({});
+    V.stop();
+    $('empty').hidden = false;
+    hint('');
+    $('crash').hidden = true;
+    const fails = STEPS.filter((s) => res[s.id].st === 'bad');
+    $('sum').hidden = false;
+    $('sum').className = 'sum ' + (fails.length ? 'bad' : 'ok');
+    $('sum-t').textContent = fails.length ? `Не работает: ${fails.map((s) => '«' + s.name + '»').join(', ')}` : skip ? 'Остальное работает' : 'Всё работает';
+    $('sum-p').textContent = fails.length || skip ? 'Скопируй результат и пришли — разберусь, в чём дело.' : 'Камера и оба ИИ работают на этом телефоне. Теперь можно открыть задания.';
+    log(fails.length ? `закончена, не работает: ${fails.map((s) => s.name).join(', ')}` : 'закончена, всё работает');
+    $('go').textContent = 'Проверить ещё раз';
+    $('go').disabled = false;
+    running = false;
+  };
+  $('copy').onclick = () => {
+    const lines = [`sonly · проверка камеры · ${new Date().toLocaleString('ru-RU')}`, $('dev').textContent, ua, ''];
+    if (died) lines.push(`прошлый раз упало на шаге: ${died.name}`, '');
+    STEPS.forEach((s) => { const r = res[s.id] || {}; lines.push(`${r.st === 'ok' ? 'ок ' : r.st === 'bad' ? 'НЕТ' : r.st === 'skip' ? ' — ' : ' ? '} ${s.name}${r.note ? ': ' + r.note : ''}`); });
+    lines.push('', '— журнал:');
+    try { const d = JSON.parse(localStorage.getItem('sonly-diag')); if (d.prev) lines.push('(прошлый запуск, оборвался)', ...d.prev.lines, '(этот запуск)'); lines.push(...d.lines); } catch (e) { /* пусто */ }
+    const text = lines.join('\n');
+    const done = () => { $('copy').textContent = 'Скопировано'; setTimeout(() => { $('copy').textContent = 'Скопировать результат'; }, 1800); };
+    const old = () => { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { $('copy').textContent = 'Не вышло — сделай снимок экрана'; } ta.remove(); };
+    (navigator.clipboard ? navigator.clipboard.writeText(text).then(done, old) : old());
+  };
+  /* Ушли со страницы посреди проверки — это не падение. */
+  addEventListener('pagehide', () => { if (running) save({}); });
+})();
+</script>
+</body>
+</html>

@@ -29,9 +29,12 @@
     stop();
     starting = (async () => {
       try {
-        /* 640×480 хватает и скелету, и проверке снимка; большее разрешение только нагружает телефон и память. */
+        /* Скелету (фронтальная) хватает 640×480: кадры идут без остановки, большее разрешение только нагружает телефон.
+           Предметам (основная) — 1280×720: снимок один, а в рамку видоискателя должно попасть достаточно точек,
+           иначе мелкий предмет для ИИ превращается в пятно. */
+        const [w, h] = want === 'user' ? [640, 480] : [1280, 720];
         log(`камера: прошу ${want === 'user' ? 'фронтальную' : 'основную'}`);
-        stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: want }, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30, max: 30 } } });
+        stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: want }, width: { ideal: w }, height: { ideal: h }, frameRate: { ideal: 30, max: 30 } } });
       } catch (e) {
         const n = e && e.name;
         log(`камера не включилась: ${n || e}`, 'ОШИБКА');
@@ -162,9 +165,15 @@
     g.imageSmoothingQuality = 'high';
     g.drawImage(source, rect.x, rect.y, rect.s, rect.s, 0, 0, S, S);
     const d = g.getImageData(0, 0, S, S).data, px = new Float32Array(3 * S * S);
-    for (let i = 0; i < S * S; i++) { px[i] = d[i * 4] / 255; px[S * S + i] = d[i * 4 + 1] / 255; px[2 * S * S + i] = d[i * 4 + 2] / 255; }
+    /* Утром темно: тёмный снимок осветляем, как это сделала бы сама камера (до средней яркости ~0,45, не больше чем втрое). */
+    let lum = 0;
+    for (let i = 0; i < S * S; i++) lum += 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+    lum /= S * S * 255;
+    const gain = lum < 0.38 ? Math.min(3, 0.45 / Math.max(lum, 0.02)) : 1;
+    for (let i = 0; i < S * S; i++) { px[i] = Math.min(1, (d[i * 4] / 255) * gain); px[S * S + i] = Math.min(1, (d[i * 4 + 1] / 255) * gain); px[2 * S * S + i] = Math.min(1, (d[i * 4 + 2] / 255) * gain); }
+    if (Sonly.diag && Sonly.diag.on && Sonly.diag.pic) Sonly.diag.pic(canvas, gain > 1 ? `осветлено ×${gain.toFixed(1)}` : '');
     const out = await m.session.run({ [m.session.inputNames[0]]: new m.ort.Tensor('float32', px, [1, 3, S, S]) });
-    return out[m.session.outputNames[0]].data;
+    return { e: out[m.session.outputNames[0]].data, lum };
   }
   const size = (src) => ({ w: src.videoWidth || src.naturalWidth || src.width, h: src.videoHeight || src.naturalHeight || src.height });
   /** Квадрат по центру источника, k — доля короткой стороны. */
@@ -179,13 +188,17 @@
   async function look(task, source, rects) {
     const m = await clip(), t0 = performance.now(), V = Sonly.verdict;
     const list = rects && rects.length ? rects : [square(source)];
-    const acc = {};
+    const acc = {}, seen = [];
+    let lum = 1;
     for (const r of list) {
-      const p = V.probs(await embed(m, source, r), m.E, m.labels, m.dim, m.scale);
+      const { e, lum: l } = await embed(m, source, r);
+      lum = Math.min(lum, l);
+      const p = V.probs(e, m.E, m.labels, m.dim, m.scale);
+      seen.push(V.ranked(p).slice(0, 3).map((k) => `${k} ${Math.round(p[k] * 100)}%`).join(', '));
       Object.keys(p).forEach((k) => { acc[k] = (acc[k] || 0) + p[k] / list.length; });
     }
-    const res = Object.assign(V.check(task, acc), { ms: Math.round(performance.now() - t0), probs: acc });
-    log(`снимок проверен за ${res.ms} мс: ${res.ok ? 'засчитано' : 'нет (' + res.why + ')'}`);
+    const res = Object.assign(V.check(task, acc, { lum }), { ms: Math.round(performance.now() - t0), probs: acc });
+    log(`снимок «${task}» проверен за ${res.ms} мс: ${res.ok ? 'засчитано' : 'нет (' + res.why + ')'} · яркость ${Math.round(lum * 100)}% · ${seen.map((x, i) => (list.length > 1 ? (i ? 'кадр: ' : 'рамка: ') : '') + x).join(' · ')}`);
     return res;
   }
 

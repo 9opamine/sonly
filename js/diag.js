@@ -38,6 +38,7 @@
       .diag header{display:flex;gap:6px;align-items:center;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.1);font:600 12px system-ui,sans-serif}
       .diag header b{flex:1}.diag button{font:600 12px system-ui,sans-serif;color:#0D0D0F;background:#FFC700;border-radius:10px;padding:6px 10px}
       .diag button.g{background:#2A2A30;color:#fff}.diag .l{overflow:auto;padding:8px 10px}.diag .d-ОШИБКА{color:#FF8A8A}.diag .d-прошлый{color:#FFD86A}
+      .diag figure{display:inline-flex;flex-direction:column;gap:2px;margin:4px 6px 4px 0;font-size:10px;color:#9A9AA2}.diag figure img{width:72px;height:72px;border-radius:8px;object-fit:cover}
       .diag.min{left:auto;right:12px;top:calc(env(safe-area-inset-top,0px) + 60px);background:none;box-shadow:none}
       .diag.min .l,.diag.min header b,.diag.min .js-copy{display:none}.diag.min header{padding:0;border:0}.diag.min .js-min{background:rgba(42,42,48,.92)}`;
     document.head.appendChild(css);
@@ -62,6 +63,18 @@
   window.Sonly = window.Sonly || {};
   Sonly.diag = {
     on, log,
+    /** Что именно увидел ИИ: маленькая картинка вырезанного куска кадра — только на экране, в память не пишется. */
+    pic(canvas, caption) {
+      if (!list) return;
+      try {
+        const f = document.createElement('figure'), im = new Image();
+        im.src = canvas.toDataURL('image/jpeg', 0.7);
+        f.appendChild(im);
+        if (caption) f.appendChild(document.createTextNode(caption));
+        list.appendChild(f);
+        list.scrollTop = list.scrollHeight;
+      } catch (e) { /* холст недоступен — без картинки */ }
+    },
     /** Запуск и остановка отметок памяти — пока идёт задание с камерой. */
     watch(yes) { clearInterval(memTimer); memTimer = yes && performance.memory ? setInterval(() => log(mem()), 3000) : 0; },
   };

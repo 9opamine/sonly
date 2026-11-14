@@ -32,6 +32,10 @@
       make(host, PRESET[name]);
       t = host.style.backdropFilter;
       tpl.set(key, t);
+      /* Заготовке фильтр больше не нужен: его забрали настоящие элементы. Скрытая копия с преломлением
+         иначе так и висит на странице, а телефону лишний слой с фильтром ни к чему — особенно поверх камеры. */
+      host.style.backdropFilter = host.style.webkitBackdropFilter = '';
+      host.style.display = 'none';
     }
     return t;
   }
