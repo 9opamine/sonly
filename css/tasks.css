@@ -151,3 +151,31 @@
 .tp-emo.shake .emj{animation:tp-shake .5s ease-in-out infinite}
 @keyframes tp-walk{0%{transform:translateX(-26px) translateY(0)}25%{transform:translateX(-13px) translateY(-6px)}50%{transform:translateX(0) translateY(0)}75%{transform:translateX(13px) translateY(-6px)}100%{transform:translateX(26px) translateY(0)}}
 @keyframes tp-shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-16deg) translateX(-4px)}75%{transform:rotate(16deg) translateX(4px)}}
+
+/* Невысокие экраны (iPhone SE, 13 mini с клавиатурой и т. п.): меню плотнее, чтобы всё помещалось над «Готово» без прокрутки. */
+@media (max-height:720px){
+  .to{gap:8px}
+  .to h4{margin-top:4px}
+  .to-step{height:78px;border-radius:24px}
+  .to-step b{font-size:40px;letter-spacing:-1.2px}
+  .to-step small{font-size:13px}
+  .to-step button{width:46px;height:46px}
+  .to-prev{padding:12px 16px;gap:9px;border-radius:22px}
+  .to-card{padding:10px 8px 9px;gap:4px}
+  .to-card.wide{padding:11px 44px 12px 14px}
+  .to-opts.row .to-opt{padding:11px 6px 9px;gap:2px}
+  .tp-eq{font-size:34px}
+  .tp-row i{height:32px}
+  .tp-flag{width:46px;height:46px}
+  .tp-qhead b{font-size:19px}
+  .tp-ans span{height:30px}
+  .tp-pics{height:40px}
+  .tp-pics .emj{width:36px;height:36px}
+  .tp-pics.n1 .emj{width:40px;height:40px}
+  .to-prev .tp-figsvg{width:118px;height:148px}
+  .to-prev .tp-figsvg.flat{width:200px;height:120px}
+  .tp-emo .emj{width:72px;height:72px}
+  .tp-cards{gap:5px}
+  .tp-cards i{width:36px;height:44px}
+  .tp-cards{grid-template-columns:repeat(var(--c),36px)}
+}
