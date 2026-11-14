@@ -167,6 +167,7 @@
         : `<section class="ap-hero idle" data-in style="--i:1"><i class="ap-sun"></i><i class="ap-rise">${Sonly.mark()}</i><small>${s.alarms.length ? 'Все будильники выключены' : 'Будильников пока нет'}</small><div class="ap-hero-n t">Поставь будильник</div>
           <button class="ap-hero-btn" data-act="new">${ic('plus', 17, 2.6)}Новый будильник</button></section>`}
       ${weekCard(s, st, 2)}
+      ${Sonly.lock ? Sonly.lock.home(s, 3) : ''}
       ${s.shareHidden ? '' : `<div class="ap-card ap-share" data-in style="--i:3"><button class="ap-share-in" data-act="page:share"><i>${ic('gift', 20, 2.1)}</i><span><b>${Sonly.partner.title}</b><small>${Sonly.partner.sub}</small></span></button><button class="ap-share-x" data-act="share-hide" aria-label="Скрыть">${ic('x', 15, 2.4)}</button></div>`}
       <div class="ap-sec" data-in style="--i:4"><h2>Будильники</h2>${s.alarms.length ? `<button class="ap-more lg" data-act="al-menu" aria-label="Действия с будильниками">${ic('ellipsis', 20, 2.6)}</button>` : ''}</div>
       ${s.alarms.length ? `<div class="ap-alarms">${s.alarms.map(alarmCard).join('')}</div>`
@@ -322,6 +323,7 @@
           <button class="ap-card ap-sub" data-act="page:sub" data-in style="--i:2"><i>${ic('check', 20, 3)}</i><span><b>Подписка активна</b><small>Год · продление ${renew()}</small></span>${chev()}</button>
           <h3>Будильник</h3>
           <div class="ap-card ap-list">${row(ic('volume-2', 17, 2.2), 'Громкость', `${s.volume} %`, 'page:volume', '#F0453A')}${row(ic('music-2', 17, 2.2), 'Звук по умолчанию', s.sndDef, 'page:sound', '#E84A9C')}${row(ic('shield-check', 17, 2.2), 'Готовность к звонку', '', 'page:help', '#12A871')}</div>
+          ${Sonly.lock ? `<h3>Фокус</h3><div class="ap-card ap-list"><button class="ap-row tall" data-act="page:lock"><i class="ap-row-i c" style="--c:${Sonly.lock.COLORS.lock}">${ic('lock', 17, 2.2)}</i><span>Блокировка приложений<small>${Sonly.lock.status(s)}</small></span>${chev()}</button></div>` : ''}
           <h3>Оформление</h3>
           <div class="ap-card ap-list"><div class="ap-row col"><div><i class="ap-row-i c" style="--c:#6B5CE6">${ic('contrast', 17, 2.2)}</i><span>Тема</span></div>${seg('theme', s.theme, [['system', 'Как в системе'], ['dark', 'Тёмная'], ['light', 'Светлая']])}</div>
             ${row(ic('globe', 17, 2.2), 'Язык', 'Русский', 'page:lang', '#2F7BF6')}${row(ic('bell', 17, 2.2), 'Уведомления', `${1 + (s.nEve ? 1 : 0) + (s.nWeek ? 1 : 0)} из 3`, 'page:notify', '#F0453A')}</div>
@@ -362,7 +364,7 @@
         <div class="ap-card ap-list gap">${tgRow(ic('trending-up', 17, 2.1), 'Нарастание', 'За 10 секунд', s.riseDef, 'set-flag:riseDef')}${tgRow(ic('bell-ring', 17, 2.1), 'В беззвучном режиме', '', true, '')}</div>`,
         '<button class="ap-btn" data-act="vol-test">Проверить звук</button>'];
       case 'sound': return ['Звук по умолчанию', `${soundRows(s, s.sndDef, 'set-snd')}`, ''];
-      case 'help': return ['Готовность к звонку', `<div class="ap-card ap-list">${check('ok', 'Уведомления включены', '')}${check(s.volume < 40 ? 'warn' : 'ok', `Громкость ${s.volume} %`, s.volume < 40 ? 'Тихо — можно проспать' : '')}${check('ok', 'Беззвучный режим не мешает', '')}${check('info', 'Не смахивай приложение', '')}</div>`,
+      case 'help': return ['Готовность к звонку', `<div class="ap-card ap-list">${check('ok', 'Уведомления включены', '')}${check(s.volume < 40 ? 'warn' : 'ok', `Громкость ${s.volume} %`, s.volume < 40 ? 'Тихо — можно проспать' : '')}${check('ok', 'Беззвучный режим не мешает', '')}${Sonly.lock && Sonly.lock.ready(s) ? check('ok', 'Приложения закроются до подъёма', '') : ''}${check('info', 'Не смахивай приложение', '')}</div>`,
         '<button class="ap-btn" data-act="ring-test">Проверить звонок</button>'];
       case 'lang': return ['Язык', `<div class="ap-card ap-list"><div class="ap-row ap-snd on"><i class="ap-row-i">${ic('globe', 17, 2.1)}</i><span>Русский</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></div><div class="ap-row"><i class="ap-row-i">${ic('globe', 17, 2.1)}</i><span>English</span><em>скоро</em></div></div>`, ''];
       case 'notify': return ['Уведомления', `<div class="ap-card ap-list">${tgRow(ic('alarm-clock', 17, 2.1), 'Звонок будильника', '', true, '')}${tgRow(ic('moon', 17, 2.1), 'Напоминание вечером', 'В 22:00', s.nEve, 'set-flag:nEve')}${tgRow(ic('calendar-check', 17, 2.1), 'Итоги недели', 'По воскресеньям', s.nWeek, 'set-flag:nWeek')}</div>`, ''];
@@ -373,6 +375,7 @@
         <div class="ap-coupon${s.promo === 'ok' ? ' ok' : s.promo ? ' err' : ''}"><i>${ic('ticket', 21, 1.9)}</i><input class="js-promo" maxlength="7" value="${esc(s.promoCode || '')}" placeholder="Промокод" aria-label="Промокод" autocomplete="off" spellcheck="false"${s.promo === 'ok' ? ' disabled' : ''}>${s.promo === 'ok' ? `<em>${ic('check', 18, 3)}</em>` : '<button data-act="promo-go">Применить</button>'}</div>
         <p class="ap-coupon-msg ${s.promo === 'ok' ? 'ok' : s.promo ? 'bad' : ''}">${PROMO_MSG[s.promo] || ''}</p>`, ''];
       case 'share': case 'blog': return Sonly.partner.page(s, id);
+      case 'lock': case 'lock-ex': case 'lock-night': case 'lock-demo': return Sonly.lock.page(s, id, arg);
       case 'widgets': return ['Как добавить виджет', `<div class="ap-card ap-steps">${WIDGET_STEPS.map((t, n) => `<div><b>${n + 1}</b><span>${t}</span></div>`).join('')}</div>`, ''];
       case 'msg': {
         const [title, hint] = MSG[arg] || MSG.support;
@@ -390,6 +393,7 @@
       <div class="ap-sh-body scroll">${body}</div>${foot ? `<div class="ap-sh-foot">${foot}</div>` : ''}`, `ap-sheet${same ? ' now' : ''}`);
     setTop(flow, top);
     if (Sonly.partner && Sonly.partner.mount) Sonly.partner.mount(flow);
+    if (Sonly.lock && Sonly.lock.mount) Sonly.lock.mount(flow);
     const vol = flow.sheets.querySelector('.js-vol');
     if (vol) vol.addEventListener('input', () => { s.volume = +vol.value; vol.style.setProperty('--p', ((s.volume - 10) / 90) * 100 + '%'); flow.sheets.querySelector('.js-vn').textContent = s.volume; Sonly.sound.setVolume(s.volume); });
   }
@@ -575,6 +579,7 @@
           if (Sonly.ringer && Sonly.ringer.on(flow, act, arg)) return true;
           if (Sonly.morning && Sonly.morning.on(flow, act, arg, el)) return true;
           if (Sonly.partner && Sonly.partner.on(flow, act, arg, el)) return true;
+          if (Sonly.lock && Sonly.lock.on(flow, act, arg, el)) return true;
           /* Нажатия внутри настройки задания: предметы, сложность, количество. */
           const done = e && act.startsWith('to-') && TO.act(e.task, TO.get(e, e.task), act, arg);
           if (done === 'keep') return true;

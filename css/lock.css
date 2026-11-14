@@ -1,0 +1,122 @@
+/* Блокировка приложений — «Утро без ленты» (js/lock.js). Карточка сверху и пример экрана всегда тёмные: так это и будет выглядеть утром. */
+
+/* Карточка на главной. */
+.lk-home{display:flex;align-items:center;gap:14px;width:100%;margin-top:10px;padding:16px;text-align:left;color:var(--ink)}
+.lk-home>i{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none;background:color-mix(in srgb,#5E5CE6 16%,var(--card2));color:#5E5CE6}
+.ap[data-theme="dark"] .lk-home>i{color:#8E8CFF}
+.lk-home span{flex:1;display:grid;gap:2px;min-width:0}
+.lk-home b{font-size:16.5px;font-weight:700;letter-spacing:-.2px}
+.lk-home small{font-size:13.5px;color:var(--mut)}
+.lk-home>.ic{color:var(--mut)}
+
+/* Плитка приложения. */
+.lk-ic{position:relative;display:block;aspect-ratio:1;border-radius:27%;transition:transform .45s cubic-bezier(.3,1.4,.5,1)}
+.lk-face{position:absolute;inset:0;border-radius:inherit;display:grid;place-items:center;background:var(--ab);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 6px 14px -8px rgba(0,0,0,.6);transition:filter .45s}
+.lk-face .lk-mark{display:grid;place-items:center;width:62%}
+.lk-face .lk-mark .mark{width:100%;height:auto}
+.lk-face .lk-mark .mark path{fill:#0D0D0F}
+.lk-ic.off .lk-face{filter:grayscale(1) brightness(.42)}
+.lk-ic u{position:absolute;right:-4px;bottom:-4px;width:17px;height:17px;border-radius:50%;background:#FFC700;color:#0D0D0F;display:grid;place-items:center;box-shadow:0 0 0 2.5px #121216;animation:lk-pop .4s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes lk-pop{from{transform:scale(0)}}
+
+/* Карточка сверху: экран «Домой» в миниатюре, при включении приложения гаснут и получают замочки. */
+.lk-hero{position:relative;overflow:hidden;border-radius:28px;padding:20px 18px 16px;background:linear-gradient(180deg,#1A1A1F,#0E0E11);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 18px 34px -24px rgba(0,0,0,.7);color:#F5F5F7;display:grid;gap:16px}
+.lk-hero::before{content:'';position:absolute;left:50%;top:-55%;width:130%;height:100%;margin-left:-65%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,199,0,.16),rgba(255,199,0,0));pointer-events:none;transition:opacity .5s}
+.lk-hero:not(.on)::before{opacity:.45}
+.lk-hero>*{position:relative}
+.lk-mini{display:grid;grid-template-columns:repeat(6,1fr);gap:11px;padding:2px 4px}
+.lk-mini .lk-ic{border-radius:28%}
+.lk-mini .lk-ic:nth-child(2n) u{animation-delay:.05s}
+.lk-mini .lk-ic:nth-child(3n) u{animation-delay:.1s}
+.lk-mini .lk-ic:nth-child(5n) u{animation-delay:.15s}
+.lk-hero-t b{display:block;font-family:var(--disp);font-stretch:118%;font-variation-settings:'wdth' 118;font-weight:820;font-size:25px;letter-spacing:-.6px;line-height:1.1}
+.lk-hero-t p{margin-top:6px;font-size:14.5px;line-height:1.4;color:#A7A7B0;text-wrap:pretty}
+.lk-hero-sw{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 10px 10px 16px;border-radius:20px;background:rgba(255,255,255,.06)}
+.lk-hero-sw span{display:flex;align-items:center;gap:7px;font-size:15.5px;font-weight:650;color:#C9C9D0}
+.lk-hero.on .lk-hero-sw span{color:#FFD12E}
+.lk-hero .ap-tg{--tg:#3A3A40}
+
+/* Нет доступа к Экранному времени. */
+.lk-warn{display:flex;align-items:center;gap:12px;margin-top:12px;padding:14px 14px 14px 16px;color:var(--ink)}
+.lk-warn>.ic{color:#F08A24;flex:none}
+.lk-warn span{flex:1;display:grid;gap:2px;min-width:0}
+.lk-warn b{font-size:14.5px;font-weight:700}
+.lk-warn small{font-size:12.5px;color:var(--mut);line-height:1.3}
+.lk-warn button{flex:none;height:36px;padding:0 14px;border-radius:18px;background:var(--btn);color:var(--btn-ink);font-size:13.5px;font-weight:700}
+
+/* Строки списка: значок приложения цветной, «убрать из исключений». */
+.lk-ri,.lk-ri-in{background:var(--ab)!important;color:#fff!important}
+.ap-row-i .lk-ri-in{width:100%;height:100%;border-radius:inherit;display:grid;place-items:center}
+.ap-row-i:has(.lk-ri-in){background:none;overflow:hidden}
+.lk-rm{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;background:color-mix(in srgb,var(--red) 14%,var(--card2));color:var(--red);transition:transform .15s}
+.lk-rm:active{transform:scale(.9)}
+.lk-mode{margin-bottom:0}
+.ap-seg.lk-mode{background:var(--card);box-shadow:var(--elev);border-radius:20px;padding:4px}
+.ap-seg.lk-mode button{height:42px;border-radius:16px;font-size:14.5px}
+.lk-list{margin-top:10px}
+.lk-bad{color:var(--red)}
+.lk-try>.ic:first-child{background:#5E5CE6;color:#fff}
+.lk-try>.ic:last-child{margin-left:auto;background:none;color:var(--mut);padding:0;width:17px;height:17px}
+.lk-always{color:var(--mut)}
+
+/* Вечернее время — колесо как в редакторе будильника. */
+.lk-wheel{padding:8px 16px 10px}
+.lk-wheel .wheel{--wheel-w:100%;--wheel-h:176px}
+
+/* Пример экрана «Домой». */
+.lk-scenes{margin-bottom:18px}
+.lk-phone{position:relative;overflow:hidden;border-radius:38px;padding:12px 18px 14px;aspect-ratio:9/15.6;max-height:560px;margin:8px auto 30px;display:flex;flex-direction:column;
+  background:radial-gradient(120% 70% at 50% 108%,#FF9F43 0%,#E8604C 26%,#6B3FA0 58%,#1C1C3A 100%);box-shadow:0 0 0 7px #0D0D0F,0 0 0 8px #2B2B31,0 26px 44px -26px rgba(0,0,0,.7)}
+.lk-phone.lk-night{background:radial-gradient(120% 70% at 50% 110%,#3A3F8F 0%,#1C1F4D 40%,#0A0B1A 100%)}
+.lk-phone.lk-after{background:radial-gradient(120% 70% at 50% 108%,#FFD36B 0%,#FF9F43 30%,#4A86E8 72%,#2A4DA8 100%)}
+.lk-sb{display:flex;align-items:center;justify-content:space-between;height:26px;padding:0 8px;color:#fff;font-size:14px;font-weight:650}
+.lk-sb i{width:76px;height:22px;border-radius:12px;background:#000}
+.lk-sb-r{display:flex;align-items:center;gap:4px}
+.lk-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 14px;margin-top:22px}
+.lk-dock{margin-top:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:12px 12px 12px;border-radius:28px;background:rgba(255,255,255,.18);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.lk-dock .lk-name{display:none}
+.lk-app{display:grid;justify-items:center;gap:5px;min-width:0}
+.lk-app .lk-ic{width:100%;border-radius:24%}
+.lk-app:active .lk-ic{transform:scale(.9)}
+.lk-app .lk-name{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:500;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+.lk-app .lk-ic.off .lk-face{filter:grayscale(1) brightness(.5)}
+.lk-toast{position:absolute;left:50%;bottom:104px;transform:translateX(-50%);max-width:calc(100% - 40px);padding:10px 16px;border-radius:18px;background:rgba(20,20,24,.86);color:#fff;font-size:13.5px;font-weight:600;white-space:nowrap;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);animation:lk-toast .35s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes lk-toast{from{opacity:0;transform:translate(-50%,10px)}}
+.ap-note.lk-tap{text-align:center;margin-top:0}
+
+/* Экран блокировки — как его рисует система: значок, заголовок, подпись и одна кнопка, поверх размытого экрана. */
+.lk-shield{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;padding:0 22px 26px;background:rgba(10,10,14,.62);-webkit-backdrop-filter:blur(26px) saturate(1.2);backdrop-filter:blur(26px) saturate(1.2);color:#fff;animation:lk-shield .45s cubic-bezier(.2,.9,.3,1) both}
+@keyframes lk-shield{from{opacity:0}}
+.lk-sh-in{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;animation:lk-rise .5s .05s cubic-bezier(.3,1.3,.5,1) both}
+@keyframes lk-rise{from{opacity:0;transform:translateY(16px) scale(.96)}}
+.lk-sh-i{position:relative;width:76px;height:76px;border-radius:22px;background:linear-gradient(140deg,#FFE070,#FFC21A);display:grid;place-items:center;margin-bottom:8px;box-shadow:0 14px 30px -12px rgba(255,190,0,.6)}
+.lk-sh-i .lk-mark{width:58%;display:grid}
+.lk-sh-i .lk-mark .mark{width:100%;height:auto}
+.lk-sh-i .lk-mark .mark path{fill:#0D0D0F}
+.lk-sh-i u{position:absolute;right:-6px;bottom:-6px;width:28px;height:28px;border-radius:50%;background:#0D0D0F;color:#FFC700;display:grid;place-items:center;box-shadow:0 0 0 3px rgba(255,255,255,.12)}
+.lk-sh-in b{font-family:var(--disp);font-stretch:118%;font-variation-settings:'wdth' 118;font-weight:820;font-size:24px;letter-spacing:-.5px}
+.lk-sh-in p{max-width:230px;font-size:15px;line-height:1.38;color:rgba(255,255,255,.72);text-wrap:balance}
+.lk-sh-btn{height:50px;border-radius:16px;background:#FFC700;color:#0D0D0F;font-size:16.5px;font-weight:700;transition:transform .15s}
+.lk-sh-btn:active{transform:scale(.97)}
+
+/* Своё объяснение перед системным запросом. */
+.lk-ask{text-align:center}
+.lk-ask-i{position:relative;width:60px;height:60px;margin:2px auto 12px;border-radius:18px;background:linear-gradient(140deg,#7B79FF,#5E5CE6);color:#fff;display:grid;place-items:center}
+.lk-ask-i u{position:absolute;right:-5px;bottom:-5px;width:24px;height:24px;border-radius:50%;background:#FFC700;color:#0D0D0F;display:grid;place-items:center;box-shadow:0 0 0 3px var(--sheet-bg,#fff)}
+.ap[data-theme="dark"] .lk-ask-i u{box-shadow:0 0 0 3px #232327}
+.lk-ask .msg-col{display:grid;gap:6px}
+.msg-ok.lk-go,.ap[data-theme="dark"] .msg-ok.lk-go{background:#111113;color:#fff}
+.ap[data-theme="dark"] .msg-ok.lk-go{background:#fff;color:#0D0D0F}
+
+/* Подобие системного окна iOS. */
+.sheet.center.lk-sys-sheet{left:56px;right:56px;padding:0;border-radius:16px;overflow:hidden;background:rgba(242,242,247,.96);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+.ap[data-theme="dark"] .sheet.center.lk-sys-sheet{background:rgba(44,44,48,.96)}
+.lk-sys{text-align:center}
+.lk-sys b{display:block;padding:18px 16px 0;font-size:16px;font-weight:600;line-height:1.3}
+.lk-sys p{padding:6px 16px 16px;font-size:13px;line-height:1.35;color:#3C3C43;opacity:.8}
+.ap[data-theme="dark"] .lk-sys p{color:#EBEBF5}
+.lk-sys-b{display:grid}
+.lk-sys-b button{height:44px;border-top:.5px solid rgba(60,60,67,.29);font-size:16.5px;color:#0A84FF}
+.lk-sys-b button:first-child{font-weight:600}
+
+@media (prefers-reduced-motion:reduce){.lk-ic u,.lk-shield,.lk-sh-in,.lk-toast{animation:none}}
