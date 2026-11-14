@@ -542,12 +542,15 @@
       if (c.flow.cur !== el || k.i >= k.n) return;
       rid = requestAnimationFrame(frame);
       c.flow.frames.add(rid);
-      /* Не чаще 30 кадров в секунду и только новые кадры камеры. */
-      if (!lm || video.readyState < 2 || video.currentTime === lastV || now - lastRun < 30) return;
+      /* Не чаще 15 кадров в секунду и не чаще, чем телефон успевает: пауза — полтора времени прошлого кадра. */
+      const gap = Math.min(250, Math.max(66, (V.stats.detectMs || 0) * 1.5));
+      if (!lm || video.readyState < 2 || video.currentTime === lastV || now - lastRun < gap) return;
       lastV = video.currentTime;
       lastRun = now;
       k.rc = k.rc || Sonly.reps.make(t.id, (video.videoWidth || 16) / (video.videoHeight || 9));
-      const pts = V.detect(lm, video, now), st = k.rc.push(pts, now);
+      let pts = null;
+      try { pts = V.detect(lm, video, now); } catch (e) { if (Sonly.diag) Sonly.diag.log(`скелет: сбой кадра (${e && e.message})`, 'ОШИБКА'); return; }
+      const st = k.rc.push(pts, now);
       drawSkeleton(sk, svg, box, video, pts, video.classList.contains('mirror'));
       svg.classList.toggle('dn', st.phase === 'down');
       say(hintOf(st.hint, t.id));
@@ -631,8 +634,6 @@
         const tick = () => { node.textContent = nowHM(); c.wait(5000, tick); };
         if (!c.shot) c.wait(5000, tick);
         /* Пока звенит будильник, ИИ для задания уже грузится — к нажатию «Начать задание» он готов. */
-        const id = K.taskOf(ensure(c.s).a).id;
-        if (!c.shot && canLive() && id !== 'qr') Sonly.vision.preload(KIND[id]);
       },
     },
 

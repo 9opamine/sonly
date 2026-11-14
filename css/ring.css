@@ -467,4 +467,8 @@
   body.full .tk-q{min-height:150px}
   body.full .tk-keys button{height:56px}
 }
+/* Поверх живого видео — без преломления и без светящейся тени у скелета: такие фильтры пересчитываются на каждом кадре
+   и на телефоне подвешивали экран. Подложка у стекла — ровная тёмная. */
+.cam.live .lg{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.ps-skel-live .ps-skel{filter:none}
 

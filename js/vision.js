@@ -9,6 +9,11 @@
 
   let video = null, stream = null, facing = null, starting = null;
   let poseP = null, clipP = null;
+  const log = (m, k) => { if (Sonly.diag) Sonly.diag.log(m, k); };
+  /* ?pose=cpu / ?pose=gpu — принудительно, для проверки на телефоне. */
+  const FORCE = new URLSearchParams(location.search).get('pose');
+  /** Время на один кадр скелета (сглаженное) — по нему подстраивается частота распознавания. */
+  const stats = { detectMs: 0, frames: 0 };
 
   /** Есть ли вообще камера в этом окне: нужен защищённый адрес и разрешение браузера. */
   const supported = () => !!(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
@@ -24,9 +29,12 @@
     stop();
     starting = (async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: want }, width: { ideal: 1280 }, height: { ideal: 720 } } });
+        /* 640×480 хватает и скелету, и проверке снимка; большее разрешение только нагружает телефон и память. */
+        log(`камера: прошу ${want === 'user' ? 'фронтальную' : 'основную'}`);
+        stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: want }, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30, max: 30 } } });
       } catch (e) {
         const n = e && e.name;
+        log(`камера не включилась: ${n || e}`, 'ОШИБКА');
         throw { code: n === 'NotAllowedError' || n === 'SecurityError' ? 'denied' : n === 'NotFoundError' || n === 'OverconstrainedError' ? 'none' : 'busy' };
       }
       facing = want;
@@ -42,6 +50,8 @@
       video.classList.toggle('mirror', want === 'user');
       await video.play().catch(() => {});
       if (!video.videoWidth) await new Promise((ok) => { video.onloadedmetadata = () => ok(); setTimeout(ok, 1500); });
+      log(`камера включена: ${video.videoWidth}×${video.videoHeight}`);
+      if (Sonly.diag) Sonly.diag.watch(true);
       return video;
     })();
     try { return await starting; } finally { starting = null; }
@@ -49,6 +59,8 @@
   /** Выключает камеру совсем (уходя с экрана задания). */
   function stop() {
     shownIn = null;
+    if (stream) log('камера выключена');
+    if (Sonly.diag) Sonly.diag.watch(false);
     if (stream) stream.getTracks().forEach((t) => t.stop());
     stream = null;
     facing = null;
@@ -82,12 +94,19 @@
   function pose() {
     if (poseP) return poseP;
     poseP = (async () => {
+      const t = performance.now();
+      log('скелет: загружаю');
       const { FilesetResolver, PoseLandmarker } = await import(url(MP.bundle));
       const files = await FilesetResolver.forVisionTasks(url(MP.wasm));
       const opts = (delegate) => ({ baseOptions: { modelAssetPath: url(MP.model), delegate }, runningMode: 'VIDEO', numPoses: 1, minPoseDetectionConfidence: 0.5, minPosePresenceConfidence: 0.5, minTrackingConfidence: 0.5 });
-      try { return await PoseLandmarker.createFromOptions(files, opts('GPU')); } catch (e) { return PoseLandmarker.createFromOptions(files, opts('CPU')); }
+      /* По умолчанию — процессор: без долгой сборки шейдеров на первом кадре (экран замирал) и без сбоев видеокарты.
+         Облегчённой модели хватает 15–20 мс на кадр. Видеокарта — только по ?pose=gpu. */
+      let lm, how = FORCE === 'gpu' ? 'GPU' : 'CPU';
+      try { lm = await PoseLandmarker.createFromOptions(files, opts(how)); } catch (e) { if (how === 'CPU') throw e; how = 'CPU'; log(`скелет: видеокарта не подошла (${e && e.message}), считаю процессором`); lm = await PoseLandmarker.createFromOptions(files, opts('CPU')); }
+      log(`скелет готов за ${Math.round(performance.now() - t)} мс (${how === 'GPU' ? 'видеокарта' : 'процессор'})`);
+      return lm;
     })();
-    poseP.catch(() => { poseP = null; });
+    poseP.catch((e) => { poseP = null; log(`скелет не загрузился: ${e && (e.message || e)}`, 'ОШИБКА'); });
     return poseP;
   }
   let lastTs = 0;
@@ -95,7 +114,13 @@
   function detect(lm, source, t) {
     const ts = Math.max(lastTs + 1, Math.round(t));
     lastTs = ts;
+    const a = performance.now();
     const r = lm.detectForVideo(source, ts);
+    const ms = performance.now() - a;
+    /* Первые кадры — прогрев (видеокарта собирает шейдеры, до нескольких секунд): в среднее их не берём. */
+    if (++stats.frames > 3) stats.detectMs = stats.detectMs ? stats.detectMs * 0.8 + ms * 0.2 : ms;
+    else log(`скелет: прогрев, кадр ${stats.frames} — ${Math.round(ms)} мс`);
+    if (stats.frames % 60 === 0) log(`скелет: ${Math.round(stats.detectMs)} мс на кадр`);
     return (r && r.landmarks && r.landmarks[0]) || null;
   }
 
@@ -103,9 +128,13 @@
   function clip() {
     if (clipP) return clipP;
     clipP = (async () => {
+      const t = performance.now();
+      log('распознавание предметов: загружаю');
       const ort = await import(url(CLIP.ort));
       ort.env.wasm.wasmPaths = url(CLIP.wasm);
       ort.env.wasm.numThreads = self.crossOriginIsolated ? Math.min(4, navigator.hardwareConcurrency || 1) : 1;
+      /* Модель работает в отдельном потоке: экран не замирает ни при загрузке, ни при проверке снимка. */
+      ort.env.wasm.proxy = true;
       const [parts, text] = await Promise.all([
         Promise.all(CLIP.parts.map((p) => fetch(url(p)).then((r) => { if (!r.ok) throw new Error(p); return r.arrayBuffer(); }))),
         fetch(url(CLIP.text)).then((r) => r.json()),
@@ -113,12 +142,14 @@
       const bytes = new Uint8Array(parts.reduce((n, b) => n + b.byteLength, 0));
       let o = 0;
       parts.forEach((b) => { bytes.set(new Uint8Array(b), o); o += b.byteLength; });
-      const session = await ort.InferenceSession.create(bytes, { executionProviders: ['wasm'], graphOptimizationLevel: 'all' });
+      log(`распознавание предметов: модель скачана (${Math.round(bytes.length / 1e6)} МБ)`);
+      const session = await ort.InferenceSession.create(bytes, { executionProviders: ['wasm'], graphOptimizationLevel: 'all', enableCpuMemArena: false });
+      log(`распознавание предметов готово за ${Math.round(performance.now() - t)} мс`);
       const bin = atob(text.emb), raw = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) raw[i] = bin.charCodeAt(i);
       return { ort, session, E: new Float32Array(raw.buffer), labels: text.labels, dim: text.dim, scale: text.scale };
     })();
-    clipP.catch(() => { clipP = null; });
+    clipP.catch((e) => { clipP = null; log(`распознавание предметов не загрузилось: ${e && (e.message || e)}`, 'ОШИБКА'); });
     return clipP;
   }
   let canvas = null;
@@ -153,7 +184,9 @@
       const p = V.probs(await embed(m, source, r), m.E, m.labels, m.dim, m.scale);
       Object.keys(p).forEach((k) => { acc[k] = (acc[k] || 0) + p[k] / list.length; });
     }
-    return Object.assign(V.check(task, acc), { ms: Math.round(performance.now() - t0), probs: acc });
+    const res = Object.assign(V.check(task, acc), { ms: Math.round(performance.now() - t0), probs: acc });
+    log(`снимок проверен за ${res.ms} мс: ${res.ok ? 'засчитано' : 'нет (' + res.why + ')'}`);
+    return res;
   }
 
   /** Заранее грузит то, что понадобится заданию: пока звенит будильник, модель уже готова. */
@@ -162,5 +195,5 @@
     if (kind === 'cam') clip().catch(() => {});
   }
 
-  Sonly.vision = { supported, camera, stop, attach, torch, pose, detect, clip, look, square, size, preload, get video() { return video; } };
+  Sonly.vision = { supported, camera, stop, attach, torch, pose, detect, clip, look, square, size, preload, stats, get video() { return video; } };
 })();
