@@ -43,6 +43,7 @@
         <div class="brand">${Sonly.logo()}<small>прототип</small></div>
         <div class="seg" role="tablist">${IDS.map((id) => `<button role="tab" data-tab="${id}">${concepts[id].name}</button>`).join('')}</div>
         <button class="ghost-btn" id="restart">Сначала</button>
+        <button class="fs-btn" id="fs-open">${Sonly.ic('maximize-2', 16, 2.4)}На весь экран</button>
       </div>
       <div class="strip" id="strip"></div>
     </div>
@@ -108,6 +109,29 @@
     flows[tab].c.shell.set(flows[tab], key, val);
     drawShell(flows[tab]);
   });
+  /* На телефоне — просмотр на весь экран: без рамки, панели прототипа и нарисованной строки состояния, как настоящее
+     приложение. Выйти — кнопка «Выйти» сверху, жест «назад» или Esc. На Android ещё и браузер прячет свою строку. */
+  document.body.insertAdjacentHTML('beforeend', `<button class="fs-exit" id="fs-exit" aria-label="Выйти из полноэкранного просмотра">${Sonly.ic('x', 15, 2.6)}Выйти</button>`);
+  const fsOn = () => document.body.classList.contains('fs');
+  function fsOpen() {
+    if (fsOn()) return;
+    document.body.classList.add('fs', 'full');
+    history.pushState({ fs: 1 }, '');
+    try { const r = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen({ navigationUI: 'hide' }); if (r && r.catch) r.catch(() => {}); } catch (e) { /* iPhone: только CSS */ }
+    fit();
+  }
+  function fsClose(fromHistory) {
+    if (!fsOn()) return;
+    document.body.classList.remove('fs', 'full');
+    try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { /* уже вышли */ }
+    if (!fromHistory && history.state && history.state.fs) history.back();
+    fit();
+  }
+  $('#fs-open').addEventListener('click', fsOpen);
+  $('#fs-exit').addEventListener('click', () => fsClose(false));
+  addEventListener('popstate', () => { if (fsOn() && !(history.state && history.state.fs)) fsClose(true); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') fsClose(false); });
+  document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && fsOn() && history.state && history.state.fs) fsClose(false); });
   addEventListener('hashchange', () => show(fromHash()));
   addEventListener('resize', fit);
   show(fromHash());

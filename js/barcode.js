@@ -128,11 +128,14 @@
     }
     return out;
   }
-  /** Линии чтения: строки и столбцы по середине кадра и две диагонали. */
+  /**
+   * Линии чтения: строки и столбцы по середине кадра и диагонали. Строки и столбцы — не реже чем через 22 точки:
+   * в высоком кадре камеры iPhone (720 × 1280) 13 строк шли бы через 64 точки, и невысокую этикетку пересекала бы одна.
+   */
   function lines(w, h) {
-    const out = [];
-    for (let k = 0; k < 13; k++) { const y = h * (0.2 + 0.6 * (k / 12)); out.push([0, y, w - 1, y]); }
-    for (let k = 0; k < 11; k++) { const x = w * (0.15 + 0.7 * (k / 10)); out.push([x, 0, x, h - 1]); }
+    const out = [], nh = Math.max(13, Math.min(41, Math.round((h * 0.6) / 22) + 1)), nv = Math.max(11, Math.min(41, Math.round((w * 0.7) / 22) + 1));
+    for (let k = 0; k < nh; k++) { const y = h * (0.2 + 0.6 * (k / (nh - 1))); out.push([0, y, w - 1, y]); }
+    for (let k = 0; k < nv; k++) { const x = w * (0.15 + 0.7 * (k / (nv - 1))); out.push([x, 0, x, h - 1]); }
     const c = [w / 2, h / 2], R = Math.min(w, h) * 0.48;
     [Math.PI / 9, -Math.PI / 9, Math.PI / 2 + Math.PI / 9, Math.PI / 2 - Math.PI / 9].forEach((a) => out.push([c[0] - Math.cos(a) * R, c[1] - Math.sin(a) * R, c[0] + Math.cos(a) * R, c[1] + Math.sin(a) * R]));
     return out;

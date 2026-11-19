@@ -183,3 +183,8 @@
   .tp-cards i{width:36px;height:44px}
   .tp-cards{grid-template-columns:repeat(var(--c),36px)}
 }
+
+/* Угадай мелодию: нот много — точки бита мельче. */
+.tp-tune .tp-track i{width:11px;height:11px;margin:-5.5px 0 0 -5.5px}
+.tp-tune .tp-ans{margin-top:4px}
+@media (max-height:720px){.tp-tune .tp-ans{margin-top:0}.tp-tune .tp-ans span{height:28px;font-size:13px}.tp-tune .tp-track{margin-block:0}}

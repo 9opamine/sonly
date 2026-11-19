@@ -50,7 +50,10 @@
   // silently no-op, so they get the frosted fallback instead.
   const supported = (() => {
     const ua = navigator.userAgent;
-    const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|Edg/.test(ua);
+    // sonly: на iPhone и iPad любой браузер — WebKit (Telegram, Edge, Chrome для iOS), а встроенные пишут себя без «Safari»
+    // или с «EdgiOS» — их тоже ведём на матовое стекло, иначе SVG-фильтр не рисуется и у панели нет даже размытия.
+    const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isSafari = ios || (/AppleWebKit/.test(ua) && !/Chrome|Chromium/.test(ua));
     const isFirefox = /Firefox/.test(ua);
     if (isSafari || isFirefox) return false;
     if (!CSS.supports("backdrop-filter", "url(#lg)")) return false;

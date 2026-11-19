@@ -459,6 +459,7 @@
 .tk-say{width:100%;padding:24px 20px;border-radius:30px;background:linear-gradient(180deg,#1B1B20,#141418);box-shadow:var(--elev);font-family:var(--disp);font-stretch:108%;font-variation-settings:'wdth' 108;font-weight:760;font-size:27px;line-height:1.32;letter-spacing:-.4px;color:#5E5E68;text-wrap:balance;transition:box-shadow .3s}
 .tk-say.ok{box-shadow:inset 0 0 0 2px #1FA055}
 .tk-w{display:inline-block;transition:color .25s}
+.tk-g{white-space:nowrap}
 .tk-w.got{color:#fff}
 .tk-w.pop{animation:tk-word .4s cubic-bezier(.3,1.7,.5,1)}
 @keyframes tk-word{40%{transform:translateY(-4px) scale(1.06);color:#FFC700}}
@@ -477,6 +478,23 @@
 
 /* Ритм: дорожка с ударами, большое солнце, по которому стучат. */
 .tk-body.tk-rhythm{gap:20px}
+/* Угадай мелодию: солнце меньше, варианты — сеткой два на два. */
+.tk-body.tk-tune{gap:12px}
+.tk-tune .tk-pad{width:150px;height:150px;flex:none}
+.tk-tune .tk-pad .mark{width:86px}
+.tk-tune .tk-track{height:36px;margin:0 14px}
+.tk-tune .tk-track i{width:13px;height:13px;margin:-6.5px 0 0 -6.5px;box-shadow:inset 0 0 0 2px #3A3A42}
+.tk-track.win i.lit{background:#1FA055;box-shadow:0 0 0 4px rgba(31,160,85,.22)}
+.tk-note{color:#FFC700;display:grid;place-items:center;animation:tk-note .6s cubic-bezier(.3,1.6,.5,1)}
+@keyframes tk-note{from{transform:scale(.6) rotate(-12deg);opacity:0}}
+.tk-tune .tk-st{margin:0}
+.tk-ans.tk-tunes{grid-template-columns:1fr 1fr;gap:8px}
+.tk-tunes button{height:auto;min-height:64px;padding:10px 10px 10px 8px;gap:9px;border-radius:18px}
+.tk-tunes button i{width:30px;height:30px;border-radius:10px}
+.tk-tunes button span{display:grid;gap:1px;line-height:1.22}
+.tk-tunes button b{font-size:14px;font-weight:700;letter-spacing:-.1px}
+.tk-tunes button small{font-size:11.5px;font-weight:500;color:var(--mut)}
+@media (max-height:720px){.tk-tune .tk-pad{width:116px;height:116px}.tk-tune .tk-pad .mark{width:66px}.tk-tunes button{min-height:56px;padding:8px}}
 .tk-track{position:relative;width:calc(100% - 28px);height:44px;margin:4px 14px 6px}
 .tk-track u{position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;border-radius:1px;background:#2A2A30}
 .tk-track i{position:absolute;left:var(--x);top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:#16161A;box-shadow:inset 0 0 0 2.5px #3A3A42;transition:background .15s,box-shadow .15s}

@@ -189,3 +189,13 @@ body.full .phone>.statusbar,body.full .phone>.homebar{visibility:hidden}
 @keyframes turn-it{0%,35%{transform:rotate(90deg)}55%,100%{transform:rotate(0)}}
 @media (prefers-reduced-motion:reduce){.turn i{animation:none}}
 
+
+/* Просмотр на весь экран (кнопка «На весь экран» в шапке): приложение занимает экран телефона целиком. */
+.fs-btn{display:none;align-items:center;gap:6px;padding:8px 13px 8px 11px;border-radius:10px;background:var(--fg);color:var(--bg);font-weight:700;font-size:13px}
+@media (max-width:600px),(pointer:coarse){.fs-btn{display:inline-flex}}
+.fs-exit{display:none}
+body.fs .bar,body.fs .note,body.fs .shell-row{display:none}
+body.fs .stage{padding:0}
+body.fs .phone-box{position:fixed;inset:0;z-index:40;width:auto;height:auto;padding:0}
+body.fs .fs-exit{position:fixed;z-index:60;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;display:flex;align-items:center;gap:5px;height:32px;padding:0 13px 0 10px;border-radius:16px;background:rgba(20,20,24,.62);color:#fff;font:700 13px/1 'Inter',system-ui,sans-serif;-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.22),0 6px 16px -6px rgba(0,0,0,.5)}
+body.fs .fs-exit:active{transform:scale(.95)}

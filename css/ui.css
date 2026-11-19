@@ -45,23 +45,45 @@
 .ap-sec{display:flex;justify-content:space-between;align-items:center;margin:24px 4px 12px}
 .ap-sec h2{font-size:21px;font-weight:700;letter-spacing:-.5px}
 .ap-sec span{min-width:26px;height:26px;padding:0 8px;border-radius:13px;background:var(--card2);display:grid;place-items:center;font-size:13.5px;font-weight:700;color:var(--mut2)}
-.ap-alarms{display:grid;gap:10px}
+.ap-alarms{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
 .ap-alarm{border-radius:28px;background:var(--card);padding:16px;box-shadow:var(--elev);cursor:pointer;transition:transform .15s}
 .ap-alarm:active{transform:scale(.99)}
 .ap-alarm-main{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .ap-alarm-main small{display:block;font-size:13.5px;font-weight:600;color:var(--mut)}
 .ap-alarm-main b{display:block;font-family:var(--disp);font-stretch:112%;font-variation-settings:'wdth' 112;font-weight:800;font-size:44px;letter-spacing:-1.4px;line-height:1.12;font-variant-numeric:tabular-nums;transition:color .2s}
-.ap-alarm-meta{display:flex;align-items:center;gap:10px;margin-top:8px}
-.ap-tchip{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px 0 4px;border-radius:16px;background:var(--card2);font-size:13.5px;font-weight:600;white-space:nowrap}
-.ap-tchip i{width:24px;height:24px;border-radius:50%;background:color-mix(in srgb,var(--c) var(--tint),var(--card2));color:var(--c);display:grid;place-items:center}
-.ap-alarm-meta em{font-style:normal;font-size:14px;font-weight:500;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Дни буквами и время до звонка. */
+.al-when{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px;min-height:30px}
+.al-days{display:flex;gap:3px;flex:none}
+.al-days i{position:relative;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:11.5px;font-weight:700;color:var(--mut);background:var(--card2);transition:background .2s,color .2s}
+.ap-alarm.on .al-days i.on{background:var(--y);color:#0D0D0F}
+.al-days i.on{color:var(--ink)}
+.al-days i.now::after{content:'';position:absolute;left:50%;bottom:-6px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--mut2)}
+.al-once{font-size:14px;font-weight:600;color:var(--mut2)}
+.al-when em{min-width:0;font-style:normal;font-size:13.5px;font-weight:600;color:var(--mut2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+/* Задание, звук и проверка подъёма — метки в одну строку; не влезли — листаются, край мягко гаснет. */
+.ap-alarm-meta{display:flex;align-items:center;gap:5px;margin:12px -16px 0;padding:0 16px;overflow-x:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 22px),transparent)}
+.ap-alarm-meta::-webkit-scrollbar{display:none}
+.ap-tchip{flex:none;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px 0 4px;border-radius:16px;background:var(--card2);font-size:13px;font-weight:600;white-space:nowrap}
+.ap-tchip i{width:24px;height:24px;border-radius:8px;display:grid;place-items:center}
+.al-chip{flex:none;display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 10px 0 8px;border-radius:16px;background:var(--card2);font-size:12.5px;font-weight:600;color:var(--mut2);white-space:nowrap}
+.al-chip .si{color:var(--mut)}
 .ap-alarm:not(.on) .ap-alarm-main b{color:var(--mut)}
-.ap-alarm:not(.on) .ap-tchip{opacity:.6}
+.ap-alarm:not(.on) .ap-alarm-meta,.ap-alarm:not(.on) .al-days{opacity:.55}
 .ap-skip{display:flex;align-items:center;gap:8px;width:100%;height:40px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:14px;font-weight:600;color:var(--mut2);text-align:left}
 .ap-skip span{flex:1}
 .ap-skip b{font-weight:700;color:var(--ink)}
 .ap-skip.on{color:#D08312}
 .ap-add{width:100%;height:64px;border-radius:24px;border:1.5px dashed var(--line);display:flex;align-items:center;justify-content:center;gap:8px;font-size:15.5px;font-weight:600;color:var(--mut2)}
+/* «Готов к звонку» на главной: итог проверок слева, пробный звонок справа. */
+.ap-rdy{display:flex;align-items:center;gap:10px;margin-top:10px;padding:12px 12px 12px 14px}
+.ap-rdy-in{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;color:var(--ink)}
+.ap-rdy .ap-row-i{width:42px;height:42px;border-radius:13px}
+.ap-rdy-in span{display:grid;gap:2px;min-width:0}
+.ap-rdy-in b{font-size:16px;font-weight:700;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-rdy-in small{font-size:13px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-rdy.warn .ap-rdy-in small{color:#E07B12}
+.ap-rdy-go{flex:none;height:38px;padding:0 14px 0 11px;border-radius:19px;display:flex;align-items:center;gap:6px;background:var(--card2);font-size:14px;font-weight:700;color:var(--ink);transition:transform .15s}
+.ap-rdy-go:active{transform:scale(.95)}
 .ap-ready,.ap-sub{display:flex;align-items:center;gap:14px;width:100%;padding:16px;text-align:left;color:var(--ink)}
 .ap-ready{margin-top:10px}
 .ap-ready i,.ap-sub i{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none}

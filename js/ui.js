@@ -22,7 +22,7 @@
   const refOf = (s) => s.ref || (s.ref = 'SUN' + code4());
   const WD = ['в понедельник', 'во вторник', 'в среду', 'в четверг', 'в пятницу', 'в субботу', 'в воскресенье'];
   const CATS = [['all', 'Все', 'layout-grid'], ['camera', 'Камера', 'camera'], ['move', 'Движение', 'activity'], ['mind', 'Голова', 'brain'], ['voice', 'Голос', 'mic']];
-  const SOUNDS = [['Спокойные', ['Рассвет', 'Капель', 'Птицы за окном']], ['Классика', ['Будильник', 'Колокол', 'Радио']], ['Громкие', ['Сирена', 'Гудок']]];
+  const SOUNDS = [['Спокойные', ['Рассвет', 'Капель', 'Птицы за окном']], ['Мелодии', ['Солнечный зайчик', 'Утренний бриз', 'Жаворонок', 'Звонкий ручей', 'Золотой рассвет']], ['Классика', ['Будильник', 'Колокол', 'Радио']], ['Громкие', ['Сирена', 'Гудок']]];
   const TABS = [['home', 'Главная', 'house'], ['morning', 'Утро', 'sunrise'], ['stats', 'Статистика', 'chart-no-axes-column'], ['settings', 'Настройки', 'settings']];
   const CHECKS = [[0, 'Выключена', ''], [3, 'Через 3 минуты', ''], [5, 'Через 5 минут', ''], [10, 'Через 10 минут', '']];
   /* Пламя серии: рисунок, а не значок из набора, чтобы у серии было своё лицо. */
@@ -211,15 +211,42 @@
       <div class="ap-week-d">${week.map((w) => `<i class="${w.done ? 'done' : w.plan && !w.past ? 'plan' : 'off'}${w.today ? ' today' : ''}"><u>${w.done ? ic('check', 15, 3.2) : ''}</u>${w.d}</i>`).join('')}</div></div>`;
   }
 
+  /** Дни недели буквами: включённые подсвечены, сегодняшний — с точкой снизу. */
+  const dayDots = (a, now) => { const t = (now.getDay() + 6) % 7; return `<span class="al-days" role="img" aria-label="${cap(daysText(a.days))}">${DAYS.map((d, k) => `<i class="${a.days.includes(k) ? 'on' : ''}${k === t ? ' now' : ''}">${d[0]}</i>`).join('')}</span>`; };
+  const inText = (d, now) => { const min = Math.max(1, Math.round((d - now) / 60000)), h = Math.floor(min / 60), dd = Math.floor(h / 24); return dd ? `через ${dd} д ${h % 24} ч` : h ? `через ${h} ч` : `через ${min} мин`; };
+
+  /**
+   * Карточка будильника: название, время, дни буквами и сколько до звонка; задание, звук и проверка подъёма — метками.
+   * «Пропустить» называет, какой звонок пропустится, а пропущенный — какой именно и когда следующий.
+   */
   const alarmCard = (a, i) => {
-    const t = taskOf(a);
+    const t = taskOf(a), now = new Date(), at = nextOf(a, now), skipped = a.on && a.skip ? nextOf({ ...a, skip: false }, now) : null;
+    const when = !a.on ? 'выключен' : at ? inText(at, now) : '';
+    const skip = !a.on || a.once ? '' : a.skip
+      ? `<button class="ap-skip on" data-act="skip:${a.id}">${ic('undo-2', 15, 2.3)}<span>${skipped ? `${cap(dayWord(skipped, now))} не зазвонит` : 'Следующий звонок пропущен'}</span><b>Вернуть</b></button>`
+      : `<button class="ap-skip" data-act="skip:${a.id}">${ic('skip-forward', 15, 2.3)}<span>Пропустить звонок ${at ? dayWord(at, now) : ''}</span></button>`;
     return `<article class="ap-alarm${a.on ? ' on' : ''}" data-act="edit:${a.id}" role="button" tabindex="0" data-in style="--i:${i + 5}">
-      <div class="ap-alarm-main"><div><small>${a.once ? 'Один раз' : cap(daysText(a.days))}</small><b>${hm(a)}</b></div>
+      <div class="ap-alarm-main"><div><small>${esc(a.name || 'Будильник')}</small><b>${hm(a)}</b></div>
         <button class="ap-tg${a.on ? ' on' : ''}" data-act="toggle:${a.id}" role="switch" aria-checked="${a.on}" aria-label="Будильник ${hm(a)}"></button></div>
-      <div class="ap-alarm-meta"><span class="ap-tchip cat-${t.cat}"><i>${tic(t, 15)}</i>${t.name}</span><em>${esc(a.name)}</em></div>
-      ${a.on && !a.once ? `<button class="ap-skip${a.skip ? ' on' : ''}" data-act="skip:${a.id}">${ic(a.skip ? 'undo-2' : 'skip-forward', 15, 2.3)}<span>${a.skip ? 'Следующий звонок пропущен' : 'Пропустить следующий звонок'}</span>${a.skip ? '<b>Вернуть</b>' : ''}</button>` : ''}
+      <div class="al-when">${a.once ? `<span class="al-once">Один раз${at ? ` · ${dayWord(at, now)}` : ''}</span>` : dayDots(a, now)}<em>${when}</em></div>
+      <div class="ap-alarm-meta"><span class="ap-tchip"><i class="tb cat-${t.cat}">${tic(t, 15)}</i>${t.name}</span><span class="al-chip">${Sonly.si('music', 14)}${esc(a.sound)}</span>${a.check ? `<span class="al-chip" title="Проверка подъёма через ${a.check} мин">${Sonly.si('eye', 14)}${a.check} мин</span>` : ''}</div>
+      ${skip}
     </article>`;
   };
+
+  /** Готовность к звонку: что проверено и что может помешать проснуться. Этот же список — на странице «Готовность к звонку». */
+  const readiness = (s) => [
+    ['ok', 'Уведомления включены', ''],
+    [s.volume < 40 ? 'warn' : 'ok', `Громкость ${s.volume} %`, s.volume < 40 ? 'Тихо — можно проспать' : ''],
+    ['ok', 'Беззвучный режим не мешает', ''],
+  ].concat(Sonly.lock && Sonly.lock.ready(s) ? [['ok', 'Приложения закроются до подъёма', '']] : []).concat([['info', 'Не смахивай приложение', '']]);
+  /** Строка на главной: итог проверок и пробный звонок в одно касание. */
+  function readyCard(s, i) {
+    const warn = readiness(s).find((x) => x[0] === 'warn');
+    return `<div class="ap-card ap-rdy${warn ? ' warn' : ''}" data-in style="--i:${i}"><button class="ap-rdy-in" data-act="page:help">
+      <i class="ap-row-i c" style="--c:${warn ? '#FF9500' : '#34C759'}">${Sonly.si('ready', 24)}</i><span><b>${warn ? 'Тихий звонок' : 'Готов к звонку'}</b><small>${warn ? warn[1] : 'Всё в порядке'}</small></span></button>
+      <button class="ap-rdy-go" data-act="ring-test">${Sonly.si('play', 14)}Проверить</button></div>`;
+  }
 
   /** Строка списка: значок в плитке (color — цвет плитки), подпись, значение справа. */
   const row = (icon, label, value, act, color) => `<button class="ap-row" data-act="${act}"><i class="ap-row-i${color ? ' c' : ''}"${color ? ` style="--c:${color}"` : ''}>${icon}</i><span>${label}</span>${value ? `<em>${value}</em>` : ''}${chev()}</button>`;
@@ -239,7 +266,7 @@
       <div class="ap-sec" data-in style="--i:4"><h2>Будильники</h2>${s.alarms.length ? `<button class="ap-more lg" data-act="al-menu" aria-label="Действия с будильниками">${ic('ellipsis', 20, 2.6)}</button>` : ''}</div>
       ${s.alarms.length ? `<div class="ap-alarms">${s.alarms.map(alarmCard).join('')}</div>`
         : `<button class="ap-add" data-act="new" data-in style="--i:5">${ic('plus', 18, 2.4)}Первый будильник</button>`}
-      <button class="ap-card ap-ready" data-act="page:help" data-in style="--i:${s.alarms.length + 6}"><i>${ic('shield-check', 21, 2)}</i><span><b>Готов к звонку</b></span>${chev()}</button>
+      ${readyCard(s, s.alarms.length + 6)}
     </div>`;
   }
 
@@ -302,7 +329,10 @@
 
   /** Что внутри задания: предметы, сложность, количество. Тот же блок, что и в онбординге. */
   function taskSetup(flow, enter = 'push') {
-    const e = flow.state._ed, t = taskOf(e), o = TO.get(e, t.id), top = keepTop(flow, enter);
+    const e = flow.state._ed, t = taskOf(e);
+    /* У «Заправь кровать», «Утреннего неба» и «Витаминов» настроек нет — пустой лист не показываем, сразу редактор. */
+    if (!TO.has(t.id)) { editor(flow, 'back'); return; }
+    const o = TO.get(e, t.id), top = keepTop(flow, enter);
     flow.sheet(`${back(t.name)}
       <div class="ap-sh-body scroll"><div class="ap-setup-h"><b>${TO.ask(t.id)}</b>${TO.hint(t.id) ? `<p>${TO.hint(t.id)}</p>` : ''}</div>${TO.html(t.id, o)}</div>
       <div class="ap-sh-foot"><button class="ap-btn" data-act="ed-back"${TO.valid(t.id, o) ? '' : ' disabled'}>Готово</button></div>`, `ap-sheet ${enter}`);
@@ -329,10 +359,9 @@
         <div class="ap-card ap-list">${CHECKS.map(([n, name, note]) => `<button class="ap-row ap-snd${note ? ' tall' : ''}${(e.check || 0) === n ? ' on' : ''}" data-act="ed-chk:${n}"><i class="ap-row-i">${Sonly.si(n ? 'eye' : 'eyeoff')}</i><span>${name}${note ? `<small>${note}</small>` : ''}</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></button>`).join('')}</div></div>`, `ap-sheet ${enter}`);
   }
 
-  /** Звуки по группам. Звуки-награды открываются, когда серия доходит до нужной длины. */
+  /** Звуки по группам. Все доступны сразу: подарки за серию — пейзажи открыток, а не звуки. */
   function soundRows(s, cur, act) {
-    const rw = Sonly.morning ? Sonly.morning.rewards(s) : [];
-    const groups = SOUNDS.map(([g, list]) => [g, list.map((n) => ({ name: n, open: true }))]).concat(rw.length ? [['Награды за серию', rw]] : []);
+    const groups = SOUNDS.map(([g, list]) => [g, list.map((n) => ({ name: n, open: true }))]);
     return groups.map(([g, list]) => `<h3>${g}</h3><div class="ap-card ap-list">${list.map((x) => (x.open
       ? `<button class="ap-row ap-snd${cur === x.name ? ' on' : ''}" data-act="${act}:${x.name}"><i class="ap-row-i">${Sonly.si('wave')}</i><span>${x.name}</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></button>`
       : `<div class="ap-row ap-snd locked"><i class="ap-row-i">${Sonly.si('lock')}</i><span>${x.name}</span><em>серия ${x.n}</em></div>`)).join('')}</div>`).join('');
@@ -452,7 +481,7 @@
         <div class="ap-card ap-list gap">${tgRow(Sonly.si('trend'), 'Нарастание', 'За 10 секунд', s.riseDef, 'set-flag:riseDef')}${tgRow(Sonly.si('ring'), 'В беззвучном режиме', '', true, '')}</div>`,
         '<button class="ap-btn" data-act="vol-test">Проверить звук</button>'];
       case 'sound': return ['Звук по умолчанию', `${soundRows(s, s.sndDef, 'set-snd')}`, ''];
-      case 'help': return ['Готовность к звонку', `<div class="ap-card ap-list">${check('ok', 'Уведомления включены', '')}${check(s.volume < 40 ? 'warn' : 'ok', `Громкость ${s.volume} %`, s.volume < 40 ? 'Тихо — можно проспать' : '')}${check('ok', 'Беззвучный режим не мешает', '')}${Sonly.lock && Sonly.lock.ready(s) ? check('ok', 'Приложения закроются до подъёма', '') : ''}${check('info', 'Не смахивай приложение', '')}</div>`,
+      case 'help': return ['Готовность к звонку', `<div class="ap-card ap-list">${readiness(s).map(([st, label, note]) => check(st, label, note)).join('')}</div>`,
         '<button class="ap-btn" data-act="ring-test">Проверить звонок</button>'];
       case 'lang': return ['Язык', `<div class="ap-card ap-list"><div class="ap-row ap-snd on"><i class="ap-row-i">${Sonly.si('globe')}</i><span>Русский</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></div><div class="ap-row"><i class="ap-row-i">${ic('globe', 17, 2.1)}</i><span>English</span><em>скоро</em></div></div>`, ''];
       case 'notify': return ['Уведомления', `<div class="ap-card ap-list">${tgRow(Sonly.si('alarm'), 'Звонок будильника', '', true, '')}${tgRow(Sonly.si('moon'), 'Напоминание вечером', 'В 22:00', s.nEve, 'set-flag:nEve')}${tgRow(Sonly.si('calendar'), 'Итоги недели', 'По воскресеньям', s.nWeek, 'set-flag:nWeek')}</div>`, ''];

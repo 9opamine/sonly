@@ -67,7 +67,7 @@ window.Sonly = (() => {
     { id: 'pairs', cat: 'mind', name: 'Пары', desc: 'Найди одинаковые карточки', lu: 'copy', ms: 'style' },
     { id: 'phrase', cat: 'mind', name: 'Набери фразу', desc: 'Перепечатай без ошибок', lu: 'keyboard', ms: 'keyboard' },
     { id: 'tongue', cat: 'voice', name: 'Скороговорка', desc: 'Произнеси вслух', lu: 'mic', ms: 'mic' },
-    { id: 'rhythm', cat: 'voice', name: 'Ритм', desc: 'Повтори ритм касаниями', lu: 'drum', ms: 'graphic_eq' },
+    { id: 'rhythm', cat: 'voice', name: 'Угадай мелодию', desc: 'Узнай мелодию по биту', lu: 'music', ms: 'music_note' },
   ];
   const DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
   /* intro — первый год по промокоду или предложению (−25 %); trial — пробные дни, их даёт только промокод. */

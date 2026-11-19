@@ -71,7 +71,22 @@
     note(t, [0, soft ? 1800 : 2600, 0.025, 'square', soft ? 0.05 : 0.09]);
   }
 
+  /** Мелодия нотами: [частота, длительность в четвертях], 0 — пауза; q — секунд на четверть. Возвращает длину в секундах. */
+  function melody(notes, q, at = 0.05) {
+    if (!ready()) return 0;
+    stop();
+    master.gain.cancelScheduledValues(ctx.currentTime);
+    master.gain.setValueAtTime(volume, ctx.currentTime);
+    let t = at;
+    notes.forEach(([f, d]) => {
+      if (f) { note(ctx.currentTime + t, [0, f, Math.max(0.12, d * q * 0.92), 'triangle', 0.42]); note(ctx.currentTime + t, [0, f * 2, Math.max(0.08, d * q * 0.5), 'sine', 0.08]); }
+      t += d * q;
+    });
+    return t;
+  }
+
   Sonly.sound = {
+    melody,
     play, stop, tick, drum, names: Object.keys(BANK),
     /** Длина такта звука в секундах. */
     len: (name) => (BANK[name] || BANK['Будильник']).len,

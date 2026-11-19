@@ -127,14 +127,14 @@
     else if (k.kind === 'pairs') { const pics = shuffle(TO.objects({ off: [] })).slice(0, o.n); k.n = o.n; k.cards = shuffle([...pics, ...pics]).map((p, id) => ({ id, p, open: false, done: false })); }
     else if (k.kind === 'phrase') Object.assign(k, { text: TO.pick('phrase', o.len) || TO.sample('phrase', 'len', o.len), val: '' });
     else if (k.kind === 'voice') Object.assign(k, { text: (TO.pick('tongue', o.level) || TO.sample('tongue', 'level', o.level)).replace(/\u00a0/g, ' '), phase: 'idle', got: [], heard: '' });
-    else if (k.kind === 'rhythm') Object.assign(k, { beats: o.n, ref: Sonly.rhythm.make(o.n), phase: 'intro', taps: [], marks: null, tries: 0 });
+    else if (k.kind === 'rhythm') { const n = Math.max(1, Math.min(5, +o.n || 3)); Object.assign(k, { n, i: 0, order: shuffle(Sonly.rhythm.TUNES.map((x) => x.id)).slice(0, n), no: [], phase: 'intro' }); tuneOpts(k); }
     else if (k.kind === 'count' || k.kind === 'pose') { k.n = o.n; k.auto = { steps: 520, shake: 300 }[t.id] || 0; }
     else if (t.id === 'hunt') { k.list = TO.objects(o); k.rerolls = 1; spin(k, k.list); }
     else if (t.id === 'qr') Object.assign(k, { phase: 'aim', qr: true, own: o.code === 'own' ? TO.ownCode() : null, target: { acc: o.code === 'own' ? 'свой код sonly' : 'любой штрихкод' } });
     else Object.assign(k, { phase: 'aim', target: SHOT[t.id] });
     r.k = k;
   }
-  /* Ритм слушают, скороговорку говорят: пока идёт такое задание, звонок молчит (и «Заглушить» не глушит удары).
+  /* Мелодию слушают, скороговорку говорят: пока идёт такое задание, звонок молчит (и «Заглушить» не глушит удары).
      Вернулся на экран звонка — звонит снова, с той же громкостью и тем же «заглушено». */
   const QUIET = { voice: 1, rhythm: 1 };
   function hush(flow, r) {
@@ -251,6 +251,24 @@
     if (k.i >= k.n) flow.wait(520, () => finish(flow));
   }
 
+  /**
+   * Слова скороговорки по группам, которые не рвутся на конце строки: короткое слово (в, у, а, и) держится за следующее,
+   * тире — за предыдущее, последние два слова вместе. Слова — отдельные блоки (у них своя анимация), поэтому неразрывный
+   * пробел между ними не помогает: группа целиком лежит в span с white-space: nowrap.
+   */
+  function sayGroups(words, one) {
+    const out = [];
+    let g = [];
+    const short = (w) => w.replace(/[^а-яёa-z]/gi, '').length <= 2 && /[а-яёa-z]/i.test(w);
+    words.forEach((w, i) => {
+      g.push(one(w, i));
+      const next = words[i + 1];
+      const keep = next != null && (short(w) || /^[—–-]$/.test(next) || i === words.length - 2);
+      if (!keep) { out.push(g.length > 1 ? `<span class="tk-g">${g.join(' ')}</span>` : g[0]); g = []; }
+    });
+    return out.join(' ');
+  }
+
   /* ── Разметка заданий ────────────────────────────────────── */
 
   /**
@@ -278,7 +296,6 @@
   /* Скороговорка: что написать под микрофоном в каждом состоянии. Одна строка. */
   const VOICE = { idle: 'Нажми и скажи вслух', listen: 'Слушаю — говори', ok: 'Чётко!', retry: 'Почти — скажи ещё раз', silence: 'Не слышно — скажи громче', denied: 'Нет доступа к микрофону', nomic: 'Микрофон не найден', network: 'Нужен интернет для распознавания', none: 'Распознавание речи недоступно', error: 'Не получилось — ещё раз', demo: 'Пример: слова загораются сами' };
   /* Ритм: заголовок по состоянию. */
-  const RHYTHM = { intro: 'Слушай ритм', play: 'Слушай ритм', tap: 'Повтори ритм', ok: 'Точно в ритм!', fast: 'Слишком быстро', slow: 'Слишком медленно', off: 'Сбился — слушай ещё', count: 'Не достучал — слушай ещё' };
   const BODY = {
     math: (k) => {
       const q = k.list[Math.min(k.i, k.n - 1)], st = k.solved ? ' ok' : k.bad ? ' bad' : '';
@@ -317,20 +334,20 @@
     voice: (k) => {
       const shown = k.text.split(/\s+/), ph = k.phase, rec = ph === 'listen' || ph === 'demo';
       return `<div class="tk-body tk-voice"><h2 class="tk-h">${ph === 'ok' ? 'Чётко!' : 'Скажи вслух'}</h2>
-        <div class="tk-say${ph === 'ok' ? ' ok' : ''}">${shown.map((w, i) => `<span class="tk-w${k.got[i] ? ' got' : ph === 'retry' && k.tried ? ' miss' : ''}" data-i="${i}">${esc(w).replace(/-/g, '‑')}</span>`).map((x, i, all) => (i < all.length - 1 ? x + (i === all.length - 2 ? ' ' : ' ') : x)).join('')}</div>
+        <div class="tk-say${ph === 'ok' ? ' ok' : ''}">${sayGroups(shown, (w, i) => `<span class="tk-w${k.got[i] ? ' got' : ph === 'retry' && k.tried ? ' miss' : ''}" data-i="${i}">${esc(w).replace(/-/g, '‑')}</span>`)}</div>
         <p class="tk-heard js-heard">${k.heard ? `«${esc(k.heard.length > 44 ? '…' + k.heard.slice(-43) : k.heard)}»` : ' '}</p>
         <button class="tk-mic${rec ? ' rec' : ''}${ph === 'ok' ? ' ok' : ''}" data-act="mic" aria-label="${rec ? 'Остановить' : 'Говорить'}"${ph === 'ok' ? ' disabled' : ''}><i class="tk-micw"></i><i class="tk-micw w2"></i>${ic(ph === 'ok' ? 'check' : rec ? 'square' : 'mic', rec ? 26 : 34, 2.4)}</button>
         <p class="tk-st js-st${['denied', 'nomic', 'network', 'none', 'error', 'silence'].includes(ph) ? ' warn' : ''}">${VOICE[ph] || VOICE.idle}</p></div>`;
     },
-    /* Ритм: сначала слушаешь, потом стучишь по солнцу; точки на дорожке — удары с паузами. */
+    /* Угадай мелодию: сначала бит — удары в такт нотам, без самих нот, — потом выбор из четырёх. Верный — играет сама мелодия. */
     rhythm: (k) => {
-      const end = k.ref[k.ref.length - 1], ph = k.phase, res = ph === 'ok' || ph === 'bad';
-      const dot = (i) => (res && k.marks ? (k.marks[i] ? 'good' : 'bad') : ph === 'tap' && i < k.taps.length ? 'tap' : '');
-      return `<div class="tk-body tk-rhythm"><h2 class="tk-h">${ph === 'bad' ? RHYTHM[k.why] || RHYTHM.off : RHYTHM[ph]}</h2>
-        <div class="tk-track js-track"><u></u>${k.ref.map((t, i) => `<i class="${dot(i)}" style="--x:${((t / end) * 100).toFixed(2)}%"></i>`).join('')}</div>
-        <button class="tk-pad js-pad${ph === 'tap' ? ' on' : ''}${ph === 'ok' ? ' ok' : ''}" aria-label="Стучи здесь"${ph === 'tap' ? '' : ' disabled'}><i class="tk-padring"></i><i class="tk-padring r2"></i>${Sonly.mark()}</button>
-        <p class="tk-st">${ph === 'tap' ? `Стучи по солнцу · ${k.taps.length} из ${k.beats}` : ph === 'ok' ? ' ' : `${emo('👂', 'tk-ear')}Запомни паузы`}</p>
-        <button class="tk-again" data-act="rh-replay"${ph === 'tap' ? '' : ' disabled'}>${ic('rotate-ccw', 15, 2.5)}Послушать ещё раз</button></div>`;
+      const t = tuneOf(k), ph = k.phase, win = ph === 'win', end = Math.max(1, Sonly.rhythm.length(t));
+      const head = win ? 'Верно!' : ph === 'intro' || ph === 'play' ? 'Слушай бит' : k.no.length ? 'Не она — ещё раз' : 'Что за мелодия?';
+      return `<div class="tk-body tk-tune">${prog(k.n, k.i)}<h2 class="tk-h">${head}</h2>
+        <div class="tk-track js-track${win ? ' win' : ''}"><u></u>${Sonly.rhythm.beat(t).map((x) => `<i style="--x:${((x / end) * 100).toFixed(2)}%"></i>`).join('')}</div>
+        <button class="tk-pad js-pad on${win ? ' ok' : ''}" data-act="tn-replay" aria-label="Послушать бит ещё раз"${win ? ' disabled' : ''}><i class="tk-padring"></i><i class="tk-padring r2"></i>${win ? `<b class="tk-note">${Sonly.ti('rhythm', 52)}</b>` : Sonly.mark()}</button>
+        <p class="tk-st">${win ? `${t.name} · ${t.by}` : ph === 'intro' || ph === 'play' ? `${emo('👂', 'tk-ear')}Слушай, как идут ноты` : 'Нажми на солнце — бит ещё раз'}</p>
+        <div class="tk-ans tk-tunes">${k.opts.map((id) => { const x = TUNE(id), cl = win && id === t.id ? 'ok' : k.no.includes(id) ? 'no' : ''; return `<button class="${cl}" data-act="tn:${id}"${win || k.no.includes(id) ? ' disabled' : ''}><i>${cl === 'ok' ? ic('check', 17, 3.4) : cl === 'no' ? ic('x', 16, 3.2) : ic('music', 16, 2.4)}</i><span><b>${x.name}</b><small>${x.by}</small></span></button>`; }).join('')}</div></div>`;
     },
   };
   const FEED = '<div class="cam-feed"><i class="cf-wall"></i><i class="cf-desk"></i><i class="cf-light"></i><i class="cf-bokeh b1"></i><i class="cf-bokeh b2"></i><i class="cf-bokeh b3"></i></div>';
@@ -388,50 +405,36 @@
     if (k.phase === 'ok') c.wait(1100, () => finish(c.flow));
   }
 
-  /* ── Ритм ─────────────────────────────────────────────────── */
+  /* ── Угадай мелодию ──────────────────────────────────────── */
 
-  function mountRhythm(c, k) {
-    const el = c.el, track = c.q('.js-track'), pad = c.q('.js-pad'), dots = track ? [...track.querySelectorAll('i')] : [];
+  const TUNE = (id) => Sonly.rhythm.TUNES.find((x) => x.id === id) || Sonly.rhythm.TUNES[0];
+  const tuneOf = (k) => TUNE(k.order[Math.min(k.i, k.n - 1)]);
+  /** Четыре варианта: загаданная мелодия и три случайные другие. */
+  function tuneOpts(k) {
+    const cur = k.order[Math.min(k.i, k.n - 1)];
+    k.opts = shuffle([cur, ...shuffle(Sonly.rhythm.TUNES.map((x) => x.id).filter((id) => id !== cur)).slice(0, 3)]);
+  }
+  /** Бит: удары в такт нотам, точки на дорожке и солнце мигают вместе с ними. Угадал — играет мелодия, потом следующая. */
+  function mountTune(c, k) {
+    const pad = c.q('.js-pad'), dots = c.qa('.js-track i'), t = tuneOf(k), b = Sonly.rhythm.beat(t);
     const pulse = () => { pad.classList.remove('hit'); void pad.offsetWidth; pad.classList.add('hit'); };
-    if (k.phase === 'intro') c.wait(650, () => { k.phase = 'play'; c.flow.rerender(); });
+    const light = (lead) => b.forEach((ms, i) => c.wait(lead + ms, () => { if (dots[i]) dots[i].classList.add('lit'); pulse(); }));
+    if (k.phase === 'intro') c.wait(600, () => { k.phase = 'play'; c.flow.rerender(); });
     if (k.phase === 'play') {
-      /* Образец: звук стоит в расписании звуковой карты, точки и солнце мигают в такт. */
-      const lead = 450;
-      k.ref.forEach((t, i) => { sound.drum((lead + t) / 1000, false); c.wait(lead + t, () => { dots[i].classList.add('lit'); pulse(); }); });
-      c.wait(lead + k.ref[k.ref.length - 1] + 750, () => { k.phase = 'tap'; k.taps = []; c.flow.rerender(); });
+      const lead = 400;
+      if (!c.shot) b.forEach((ms, i) => sound.drum((lead + ms) / 1000, i % 2 === 1));
+      light(lead);
+      c.wait(lead + Sonly.rhythm.length(t) + 350, () => { k.phase = 'pick'; c.flow.rerender(); });
     }
-    if (k.phase === 'tap') {
-      const gap = Math.max(...k.ref.slice(1).map((t, i) => t - k.ref[i]));
-      let wait = 0;
-      const judge = () => {
-        const r = Sonly.rhythm.score(k.ref, k.taps);
-        k.marks = r.marks;
-        k.why = r.why;
-        k.phase = r.ok ? 'ok' : 'bad';
-        k.tries += r.ok ? 0 : 1;
-        sound.tick(r.ok ? 1175 : 247);
-        c.flow.rerender();
-      };
-      const down = (e) => {
-        e.preventDefault();
-        if (c.flow.cur !== el || k.phase !== 'tap') return;
-        k.taps.push(performance.now());
-        const i = k.taps.length - 1;
-        sound.drum(0, true);
-        pulse();
-        if (dots[i]) dots[i].classList.add('tap');
-        const st = c.q('.tk-st');
-        if (st) st.textContent = `Стучи по солнцу · ${k.taps.length} из ${k.beats}`;
-        clearTimeout(wait);
-        if (k.taps.length >= k.beats) { c.wait(180, judge); return; }
-        /* Замолчал надолго — значит, сбился: проверяем, что успел. */
-        wait = setTimeout(() => { if (c.flow.cur === el && k.phase === 'tap' && k.taps.length) judge(); }, gap * 2.4 + 600);
-      };
-      pad.addEventListener('pointerdown', down);
-      c.flow.leave = () => clearTimeout(wait);
+    if (k.phase === 'win' && !c.shot) {
+      const sec = sound.melody(t.notes, t.q);
+      light(50);
+      c.wait(Math.max(1700, sec * 1000 + 600), () => {
+        k.i++;
+        if (k.i >= k.n) { finish(c.flow); return; }
+        k.phase = 'intro'; k.no = []; tuneOpts(k); c.flow.rerender();
+      });
     }
-    if (k.phase === 'ok') c.wait(1000, () => finish(c.flow));
-    if (k.phase === 'bad') c.wait(1900, () => { k.phase = 'play'; k.taps = []; k.marks = null; c.flow.rerender(); });
   }
 
   /** Человек для меню настройки: повторяет упражнение без скриптов (анимация SVG прямо в разметке). */
@@ -735,7 +738,7 @@
         if (k.kind === 'pairs' && k.wait) c.wait(800, () => { k.cards.forEach((x) => { if (!x.done) x.open = false; }); k.wait = false; k.just = -1; again(); });
         if (QUIET[k.kind]) hush(c.flow, c.s._ring);
         if (k.kind === 'voice') mountVoice(c, k);
-        if (k.kind === 'rhythm') mountRhythm(c, k);
+        if (k.kind === 'rhythm') mountTune(c, k);
         if (k.kind === 'cam') {
           const live = wantLive(c, k, k.flip ? 'user' : 'environment', k.qr ? () => Promise.resolve() : () => Sonly.vision.clip()), box = c.q('.cam');
           if (live) {
@@ -987,7 +990,15 @@
           k.phase = 'scan'; sound.tick(1800); flow.rerender();
         } return true;
         case 'mic': micTap(flow, k); return true;
-        case 'rh-replay': if (k.phase === 'tap') { k.phase = 'play'; k.taps = []; k.marks = null; flow.rerender(); } return true;
+        case 'tn-replay': if (k.phase === 'pick') { k.phase = 'play'; flow.rerender(); } return true;
+        /* Ответ можно дать и пока идёт бит. Неверный — гаснет и выбывает: в худшем случае останется один, верный. */
+        case 'tn': {
+          if (k.phase === 'win' || k.no.includes(arg)) return true;
+          sound.stop();
+          if (arg === k.order[k.i]) { k.phase = 'win'; sound.tick(1175); } else { k.no.push(arg); k.phase = 'pick'; sound.tick(247); }
+          flow.rerender();
+          return true;
+        }
         default: return false;
       }
     },
