@@ -63,7 +63,7 @@
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - k);
       /* Сегодняшнее утро попадает в историю, только если время будильника уже прошло. */
       if (k === 0 && now.getHours() * 60 + now.getMinutes() < a.h * 60 + a.m + 10) continue;
-      if (a.days.includes((d.getDay() + 6) % 7)) out.push({ d, wake: a.h * 60 + a.m + off[14 - k], secs: secs[14 - k] });
+      if (a.days.includes((d.getDay() + 6) % 7)) out.push({ d, wake: a.h * 60 + a.m + off[14 - k], secs: secs[14 - k], task: a.task === 'random' ? 'math' : a.task });
     }
     return out.filter((x) => !log.some((y) => y.d.getTime() === x.d.getTime())).concat(log).sort((x, y) => x.d - y.d);
   }
@@ -105,24 +105,88 @@
   }
   const hex = (b) => `<i class="bd-hex${b.on ? ' on' : ''}"><svg viewBox="0 0 60 66" aria-hidden="true"><path d="${HEX}"/></svg>${ic(b.on ? b.icon : 'lock', b.on ? 24 : 18, 2.2)}</i>`;
 
+  /* ── График статистики ───────────────────────────────────── */
+
+  const CW = 318, CH = 172;
+  const dShort = (d) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
+  /** Плавная линия без выбросов за точки (монотонная кубическая): график не рисует значений, которых не было. */
+  function smooth(P) {
+    const f = (v) => v.toFixed(1), n = P.length;
+    if (n < 3) return 'M' + P.map((p) => `${f(p[0])} ${f(p[1])}`).join(' L');
+    const dx = [], m = [], t = [];
+    for (let i = 0; i < n - 1; i++) { dx[i] = P[i + 1][0] - P[i][0]; m[i] = (P[i + 1][1] - P[i][1]) / dx[i]; }
+    t[0] = m[0]; t[n - 1] = m[n - 2];
+    for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (3 * (dx[i - 1] + dx[i])) / ((2 * dx[i] + dx[i - 1]) / m[i - 1] + (dx[i] + 2 * dx[i - 1]) / m[i]);
+    let d = `M${f(P[0][0])} ${f(P[0][1])}`;
+    for (let i = 0; i < n - 1; i++) d += ` C${f(P[i][0] + dx[i] / 3)} ${f(P[i][1] + (t[i] * dx[i]) / 3)} ${f(P[i + 1][0] - dx[i] / 3)} ${f(P[i + 1][1] - (t[i + 1] * dx[i]) / 3)} ${f(P[i + 1][0])} ${f(P[i + 1][1])}`;
+    return d;
+  }
+  /** Подъёмы за выбранный период и за такой же период перед ним — для сравнения. */
+  function period(st, range) {
+    const now = day0(new Date()), n = range === '7' ? 7 : range === '30' ? 30 : 0, ago = (x) => (now - x.d) / 864e5;
+    if (!n) { const h = st.h, k = Math.floor(h.length / 2); return { list: h, prev: h.length >= 6 ? h.slice(0, k) : [], cur: h.length >= 6 ? h.slice(k) : h }; }
+    const list = st.h.filter((x) => ago(x) < n);
+    return { list, prev: st.h.filter((x) => ago(x) >= n && ago(x) < 2 * n), cur: list };
+  }
+  /** Сводка над графиком: среднее за период и чем оно отличается от прошлого периода. Раньше и быстрее — зелёным. */
+  function chartSum(p, metric, range) {
+    const task = metric === 'task', v = (x) => (task ? x.secs : x.wake), mean = (l) => l.reduce((a, x) => a + v(x), 0) / l.length;
+    if (!p.list.length) return '';
+    const avg = mean(p.list), d = p.prev.length >= 2 ? Math.round(mean(p.cur) - mean(p.prev)) : null;
+    const was = range === '7' ? 'чем неделей раньше' : range === '30' ? 'чем месяцем раньше' : 'чем в начале';
+    const chip = d == null ? '' : !d ? `<em>как и ${was.replace('чем ', '')}</em>`
+      : `<em class="${d < 0 ? 'good' : 'bad'}">${ic(d < 0 ? 'trending-down' : 'trending-up', 14, 2.6)}${task ? `${d < 0 ? 'быстрее' : 'медленнее'} на ${Math.abs(d)} с` : `на ${Math.abs(d)} мин ${d < 0 ? 'раньше' : 'позже'}`}</em>`;
+    return `<div class="ap-ch-sum"><div><b>${task ? `${Math.round(avg)}<u>с</u>` : fmtMin(Math.round(avg))}</b><small>${task ? 'в среднем на задание' : 'в среднем подъём'}</small></div>${chip ? `<span>${chip}<small>${was}</small></span>` : ''}</div>`;
+  }
   function chart(list, metric) {
-    const vals = list.map((x) => (metric === 'task' ? x.secs : x.wake));
-    const lo = Math.min(...vals), hi = Math.max(...vals), gap = Math.max(2, (hi - lo) * 0.35), y0 = lo - gap, y1 = hi + gap;
-    const W = 302, H = 156, L = 46, R = 10, T = 12, B = 28;
-    const X = (i) => L + (list.length === 1 ? (W - L - R) / 2 : (i * (W - L - R)) / (list.length - 1));
-    const Y = (v) => T + (1 - (v - y0) / (y1 - y0)) * (H - T - B);
-    const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-    const lab = (v) => (metric === 'task' ? `${Math.round(v)} с` : fmtMin(Math.round(v)));
-    const pts = vals.map((v, i) => `${X(i).toFixed(1)} ${Y(v).toFixed(1)}`);
-    return `<svg class="ap-chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${metric === 'task' ? 'Время на задание по дням' : 'Время подъёма по дням'}">
-      <defs><linearGradient id="apArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD12E" stop-opacity=".42"/><stop offset="1" stop-color="#FFD12E" stop-opacity="0"/></linearGradient></defs>
-      ${[hi, lo].map((v) => `<line class="g" x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text class="yl" x="${L - 9}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${lab(v)}</text>`).join('')}
-      <path class="ar" d="M${pts.join(' L')} L${X(vals.length - 1).toFixed(1)} ${H - B} L${X(0).toFixed(1)} ${H - B} Z"/>
-      <line class="avg" x1="${L}" x2="${W - R}" y1="${Y(avg).toFixed(1)}" y2="${Y(avg).toFixed(1)}"/>
-      <path class="ln" d="M${pts.join(' L')}"/>
-      ${vals.map((v, i) => `<circle class="pt${i === vals.length - 1 ? ' last' : ''}" cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${i === vals.length - 1 ? 5.5 : 3.5}"/>`).join('')}
-      ${list.map((x, i) => (list.length <= 7 || i === 0 || i === list.length - 1 ? `<text class="xl" x="${X(i).toFixed(1)}" y="${H - 7}" text-anchor="${list.length <= 7 ? 'middle' : i ? 'end' : 'start'}">${list.length <= 7 ? DAYS[(x.d.getDay() + 6) % 7] : x.d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '')}</text>` : '')).join('')}
-    </svg>`;
+    const task = metric === 'task', vals = list.map((x) => (task ? x.secs : x.wake)), n = vals.length;
+    const lo = Math.min(...vals), hi = Math.max(...vals), gap = Math.max(task ? 3 : 2, (hi - lo) * 0.3), y0 = lo - gap, y1 = hi + gap;
+    const L = 44, R = 8, T = 16, B = 26;
+    const X = (i) => L + (n === 1 ? (CW - L - R) / 2 : (i * (CW - L - R)) / (n - 1));
+    const Y = (v) => T + (1 - (v - y0) / (y1 - y0)) * (CH - T - B);
+    const avg = vals.reduce((a, b) => a + b, 0) / n;
+    const lab = (v) => (task ? `${Math.round(v)} с` : fmtMin(Math.round(v)));
+    const P = vals.map((v, i) => [X(i), Y(v)]), line = smooth(P), best = vals.indexOf(lo);
+    /* Подписи по оси X: за неделю — все дни, за месяц — четыре даты на равном расстоянии. */
+    const xs = n <= 7 ? list.map((_, i) => i) : [...new Set([0, 1, 2, 3].map((k) => Math.round((k * (n - 1)) / 3)))];
+    const data = list.map((x, i) => `${P[i][0].toFixed(1)}|${P[i][1].toFixed(1)}|${cap(DAYS[(x.d.getDay() + 6) % 7].toLowerCase())}, ${dShort(x.d)}|${lab(vals[i])}`).join(';');
+    return `<div class="ap-ch js-chart" data-p="${data}"><svg class="ap-chart-svg" viewBox="0 0 ${CW} ${CH}" role="img" aria-label="${task ? 'Время на задание по дням' : 'Время подъёма по дням'}">
+      <defs><linearGradient id="apArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD12E" stop-opacity=".4"/><stop offset="1" stop-color="#FFD12E" stop-opacity="0"/></linearGradient></defs>
+      ${[hi, lo].map((v) => `<line class="g" x1="${L}" x2="${CW - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text class="yl" x="${L - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${lab(v)}</text>`).join('')}
+      <path class="ar" d="${line} L${X(n - 1).toFixed(1)} ${CH - B} L${X(0).toFixed(1)} ${CH - B} Z"/>
+      <line class="avg" x1="${L}" x2="${CW - R}" y1="${Y(avg).toFixed(1)}" y2="${Y(avg).toFixed(1)}"/>
+      <path class="ln" pathLength="1" d="${line}"/>
+      ${n <= 10 ? P.slice(0, -1).map(([x, y]) => `<circle class="pt" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.2"/>`).join('') : ''}
+      ${best !== n - 1 ? `<circle class="pt best" cx="${P[best][0].toFixed(1)}" cy="${P[best][1].toFixed(1)}" r="4.6"/>` : ''}
+      <circle class="pt last" cx="${P[n - 1][0].toFixed(1)}" cy="${P[n - 1][1].toFixed(1)}" r="5.6"/>
+      ${xs.map((i) => `<text class="xl" x="${X(i).toFixed(1)}" y="${CH - 6}" text-anchor="${n <= 7 ? 'middle' : i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}">${n <= 7 ? DAYS[(list[i].d.getDay() + 6) % 7] : dShort(list[i].d)}</text>`).join('')}
+      <line class="gd" x1="0" x2="0" y1="${T - 6}" y2="${CH - B}"/><circle class="sel" r="6" cx="-20" cy="-20"/>
+    </svg><div class="ap-tip" aria-live="polite"><small></small><b></b></div></div>
+    <div class="ap-ch-key"><span><i class="k-last"></i>последний</span>${best !== n - 1 ? `<span><i class="k-best"></i>${task ? 'быстрее всего' : 'раньше всего'}</span>` : ''}<span><i class="k-avg"></i>среднее</span></div>`;
+  }
+  /** Касание или курсор над графиком: линия, точка и подсказка с днём и значением. */
+  function chartScrub(root) {
+    const wrap = root.querySelector('.js-chart');
+    if (!wrap) return;
+    const svg = wrap.querySelector('svg'), tip = wrap.querySelector('.ap-tip'), gd = svg.querySelector('.gd'), dot = svg.querySelector('.sel');
+    const pts = wrap.dataset.p.split(';').map((r) => { const [x, y, d, v] = r.split('|'); return { x: +x, y: +y, d, v }; });
+    let hide = 0;
+    const show = (e) => {
+      const r = svg.getBoundingClientRect(), x = ((e.clientX - r.left) / r.width) * CW;
+      const p = pts.reduce((a, b) => (Math.abs(b.x - x) < Math.abs(a.x - x) ? b : a));
+      clearTimeout(hide);
+      wrap.classList.add('scrub');
+      gd.setAttribute('x1', p.x); gd.setAttribute('x2', p.x);
+      dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y);
+      tip.firstChild.textContent = p.d; tip.lastChild.textContent = p.v;
+      tip.style.left = `${Math.max(14, Math.min(86, (p.x / CW) * 100))}%`;
+      tip.style.top = `${(p.y / CH) * 100}%`;
+    };
+    const off = (ms) => { clearTimeout(hide); hide = setTimeout(() => wrap.classList.remove('scrub'), ms); };
+    svg.addEventListener('pointerdown', (e) => { show(e); try { svg.setPointerCapture(e.pointerId); } catch (er) { /* указатель уже отпущен */ } });
+    svg.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse' || wrap.classList.contains('scrub')) show(e); });
+    svg.addEventListener('pointerup', (e) => off(e.pointerType === 'mouse' ? 2500 : 1600));
+    svg.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') off(200); });
   }
 
   /* ── Части экранов ───────────────────────────────────────── */
@@ -133,13 +197,16 @@
     <button class="ap-plus lg" data-lg="bar" data-act="new" aria-label="Новый будильник">${ic('plus', 27, 2.3)}</button></nav>`;
 
   /** Неделя кружками: выполненные подъёмы, сегодняшний день и дни, на которые стоит будильник. */
-  function weekCard(s, st, i) {
+  function weekOf(s, st) {
     const now = new Date(), t = (now.getDay() + 6) % 7;
     const plan = (d) => s.alarms.some((a) => a.on && !a.once && a.days.includes(d));
-    const week = DAYS.map((d, k) => {
+    return DAYS.map((d, k) => {
       const date = day0(new Date(now.getFullYear(), now.getMonth(), now.getDate() + k - t)).getTime();
       return { d, done: st.h.some((x) => x.d.getTime() === date), today: k === t, plan: plan(k), past: k < t };
     });
+  }
+  function weekCard(s, st, i) {
+    const week = weekOf(s, st);
     return `<div class="ap-card ap-week" data-in style="--i:${i}"><div class="ap-card-h"><b>Эта неделя</b><span>${week.filter((w) => w.done).length} из ${week.filter((w) => w.plan).length}</span></div>
       <div class="ap-week-d">${week.map((w) => `<i class="${w.done ? 'done' : w.plan && !w.past ? 'plan' : 'off'}${w.today ? ' today' : ''}"><u>${w.done ? ic('check', 15, 3.2) : ''}</u>${w.d}</i>`).join('')}</div></div>`;
   }
@@ -277,6 +344,30 @@
     if (Sonly.partner && Sonly.partner.mount) Sonly.partner.mount(flow);
   }
 
+  /**
+   * Виджеты в настройках — как они выглядят на телефоне: маленькие «Серия» и «Следующий будильник», широкий «Утро целиком»
+   * и виджеты экрана блокировки. Листаются вбок; небо следующего будильника — того же цвета, что карточка утра в это время.
+   */
+  function widgets(s, st, now) {
+    const nx = nextRing(s, now), nt = nx && taskOf(nx.a), wk = weekOf(s, st), M = Sonly.morning;
+    const sky = nx && M && M.sky ? M.sky(nx.a.h * 60 + nx.a.m) : null, tone = sky ? ` style="--a:${sky.a};--b:${sky.b};--t:${sky.ink}"` : '';
+    const rw = M ? M.rewards(s) : [], gift = rw.find((r) => !r.open), left = gift ? Math.max(1, gift.n - st.streak) : 0;
+    const dots = `<span class="wd-week">${wk.map((w) => `<i class="${w.done ? 'on' : w.today && w.plan ? 'now' : ''}"></i>`).join('')}</span>`;
+    const when = nx ? `<small>${cap(dayWord(nx.at, now))}</small><b>${hm(nx.a)}</b><span><i class="tb cat-${nt.cat}">${tic(nt, 12)}</i>${nt.name}</span>` : '<small>Будильник</small><b>—</b><span>не стоит</span>';
+    const days = `${st.streak} ${pl(st.streak, 'день', 'дня', 'дней')}`;
+    const C = 2 * Math.PI * 21, p = gift ? Math.min(1, st.streak / gift.n) : 1;
+    const page = (inner, cap2, cls = '') => `<figure class="ap-wg-page${cls}">${inner}${cap2 ? `<figcaption>${cap2}</figcaption>` : ''}</figure>`;
+    return `<div class="bf ap-wg"><div class="bf-track">
+      ${page(`<div><div class="wd wd-streak${st.streak ? '' : ' cold'}">${FLAME}<b>${st.streak}</b><small>${pl(st.streak, 'день', 'дня', 'дней')} подряд</small>${dots}</div><figcaption>Серия</figcaption></div>
+        <div><div class="wd wd-next"${tone}><i class="wd-sun"></i>${when}</div><figcaption>Следующий будильник</figcaption></div>`, '', ' duo')}
+      ${page(`<div class="wd wd-wide"><div class="wd-next"${tone}><i class="wd-sun"></i>${when}</div>
+        <div class="wd-r${st.streak ? '' : ' cold'}"><span>${FLAME}<b>${st.streak}</b></span><small>${pl(st.streak, 'день', 'дня', 'дней')} подряд</small>${dots}${gift ? `<em>${Sonly.si('gift', 12)}«${gift.name}» через ${left}</em>` : ''}</div></div>`, 'Утро целиком')}
+      ${page(`<div class="wd-lock"><small>${cap(now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }))}</small><b>9:41</b>
+        <div><span class="wl-ring"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="bg" cx="24" cy="24" r="21"/><circle class="fg" cx="24" cy="24" r="21" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - p)).toFixed(1)}"/></svg><i>${Sonly.si('flame', 13)}<b>${st.streak}</b></i></span>
+          <span class="wl-rect">${Sonly.si('alarm', 17)}<b>${nx ? `${cap(dayWord(nx.at, now))}, ${hm(nx.a)}` : 'Будильник не стоит'}</b><small>${nx ? nt.name : `Серия ${days}`}</small></span></div></div>`, 'Экран блокировки')}
+    </div><div class="bf-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></div></div>`;
+  }
+
   const soon = (flow, title) => flow.sheet(`<div class="msg"><b>${esc(title)}</b><p>В прототипе этот раздел пока не подключён.</p><button class="msg-ok" data-act="sheet-close">Понятно</button></div>`, 'center');
 
   /* ── Экраны ──────────────────────────────────────────────── */
@@ -293,7 +384,7 @@
       chrome: false,
       render: (c) => {
         const s = c.s, st = stats(s), now = new Date(), bd = badges(s), got = bd.filter((b) => b.on).length;
-        const list = st.h.filter((x) => s.range !== '7' || (day0(now) - x.d) / 864e5 <= 7);
+        const per = period(st, s.range), list = per.list;
         const band = st.score == null ? null : RANGES.find((r) => st.score >= r[0]);
         return `<div class="ap-scroll scroll"><h1 class="ap-h1" data-in>Статистика</h1>
           <div class="ap-duo" data-in style="--i:1">
@@ -303,8 +394,8 @@
             <div class="ap-card ap-stat"><i>${ic('sunrise', 20, 2.1)}</i><b>${st.h.length}</b><small>${pl(st.h.length, 'подъём', 'подъёма', 'подъёмов')} всего</small></div>
             <div class="ap-card ap-stat"><i>${ic('timer', 20, 2.1)}</i><b>${st.h.length ? Math.round(st.h.reduce((a, x) => a + x.secs, 0) / st.h.length) : '—'}<u>${st.h.length ? 'с' : ''}</u></b><small>в среднем на\u00a0задание</small></div></div>
           ${weekCard(s, st, 3)}
-          <div class="ap-card ap-chart" data-in style="--i:4"><div class="ap-card-h">${seg('st-metric', s.metric, [['wake', 'Подъём'], ['task', 'Задание']])}<span class="ap-avg"><i></i>среднее</span></div>
-            ${list.length >= 3 ? chart(list, s.metric) : `<div class="ap-empty">${ic('chart-spline', 26, 1.8)}<span>График появится после трёх подъёмов</span></div>`}
+          <div class="ap-card ap-chart" data-in style="--i:4"><div class="ap-card-h">${seg('st-metric', s.metric, [['wake', 'Подъём'], ['task', 'Задание']])}</div>
+            ${list.length >= 3 ? chartSum(per, s.metric, s.range) + chart(list, s.metric) : `<div class="ap-empty">${ic('chart-spline', 26, 1.8)}<span>${st.h.length >= 3 ? 'За эти дни мало подъёмов — выбери период длиннее' : 'График появится после трёх подъёмов'}</span></div>`}
             ${seg('st-range', s.range, [['7', '7 дней'], ['30', '30 дней'], ['all', 'Всё время']])}</div>
           <div class="ap-card ap-cons" data-in style="--i:5"><div class="ap-card-h"><b>Стабильность подъёма</b><button class="ap-q" data-act="st-info" aria-label="Как считается стабильность">?</button></div>
             ${band ? `<div class="ap-cons-v"><b>${st.score}</b><span style="--c:${band[3]}">${band[1]}</span><small>разброс ${st.spread} ${pl(st.spread, 'минута', 'минуты', 'минут')}</small></div>` : `<div class="ap-cons-v none"><b>—</b><small>Нужно три подъёма</small></div>`}
@@ -312,12 +403,13 @@
             <div class="ap-cons-t"><span>0</span><span style="left:30%">30</span><span style="left:50%">50</span><span style="left:70%">70</span><span style="left:100%">100</span></div></div>
         </div>`;
       },
+      mount: (el) => chartScrub(el),
     },
 
     settings: {
       chrome: false,
       render: (c) => {
-        const s = c.s, st = stats(s), now = new Date(), nx = nextRing(s, now), nt = nx && taskOf(nx.a);
+        const s = c.s, st = stats(s), now = new Date();
         return `<div class="ap-scroll scroll"><h1 class="ap-h1" data-in>Настройки</h1>
           <button class="ap-card ap-gift" data-act="page:share" data-in style="--i:1"><i>${Sonly.mark()}</i><span><b>${Sonly.partner.title}</b><small>${Sonly.partner.sub}</small></span>${chev()}</button>
           <button class="ap-card ap-sub" data-act="page:sub" data-in style="--i:2"><i>${ic('check', 20, 3)}</i><span><b>Подписка активна</b><small>Год · продление ${renew()}</small></span>${chev()}</button>
@@ -327,11 +419,7 @@
           <h3>Оформление</h3>
           <div class="ap-card ap-list"><div class="ap-row col"><div><i class="ap-row-i c" style="--c:#AF52DE">${Sonly.si('theme')}</i><span>Тема</span></div>${seg('theme', s.theme, [['system', 'Как в системе'], ['dark', 'Тёмная'], ['light', 'Светлая']])}</div>
             ${row(Sonly.si('globe'), 'Язык', 'Русский', 'page:lang', '#0A84FF')}${row(Sonly.si('bell'), 'Уведомления', `${1 + (s.nEve ? 1 : 0) + (s.nWeek ? 1 : 0)} из 3`, 'page:notify', '#FF3B30')}</div>
-          <h3>Виджеты</h3>
-          <div class="ap-wid">
-            <figure><div class="wd wd-streak${st.streak ? '' : ' cold'}">${FLAME}<b>${st.streak}</b><small>${pl(st.streak, 'день', 'дня', 'дней')} подряд</small></div><figcaption>Серия</figcaption></figure>
-            <figure><div class="wd wd-next"><i class="wd-sun"></i>${nx ? `<small>${dayWord(nx.at, now)}</small><b>${hm(nx.a)}</b><span>${tic(nt, 13)}${nt.name}</span>` : '<small>будильник</small><b>—</b><span>не стоит</span>'}</div><figcaption>Следующий будильник</figcaption></figure>
-          </div>
+          <h3>Виджеты</h3>${widgets(s, st, now)}
           <button class="ap-link" data-act="page:widgets">Как добавить виджет${ic('chevron-right', 14, 2.6)}</button>
           <h3>Подписка</h3>
           <div class="ap-card ap-list">${row(Sonly.si('card'), 'Управлять подпиской', '', 'page:sub', '#34C759')}${row(Sonly.si('restore'), 'Восстановить покупки', '', 'restore-app', '#0A84FF')}${row(Sonly.si('ticket'), 'Ввести промокод', s.promo === 'ok' ? '−25 %' : '', 'page:promo', '#FF9500')}</div>

@@ -845,14 +845,26 @@
       return `<div class="ck js-ck" style="--l:${(left / 60).toFixed(3)}"><i class="tk-dawn" style="--p:.3"></i><div class="wk-logo">${Sonly.logo()}</div>
         <div class="ck-sky"><i class="ck-glow"></i><i class="ck-sun">${Sonly.mark()}</i><u></u></div>
         <h1>Ты не спишь?</h1>
+        <p class="ck-p">Не ответишь за минуту — будильник зазвонит снова</p>
         <div class="ck-n"><b class="js-left">${left}</b><small>сек</small></div>
-        <button class="ap-btn" data-act="check-ok">Я не сплю</button></div>`;
+        <button class="ap-btn ck-hold js-hold" data-act="check-hold" aria-label="Я не сплю — нажми и подержи секунду"><i class="ck-fill"></i><span class="ck-t">Я не сплю</span><span class="ck-d">${ic('check', 22, 3.2)}Доброе утро</span></button>
+        <small class="ck-hint">Нажми и подержи секунду</small></div>`;
     },
+    /* Подержать, а не просто нажать: сонное касание не считается. Засчитывается, когда палец отпущен после заполнения. */
+    on(act) { return act === 'check-hold'; },
     /* Счёт идёт по часам, а не по числу тиков: если вкладка спала, проверка всё равно закончится вовремя.
        Солнце садится вместе с минутой: не ответил — будильник звонит снова. */
     mount(el, c) {
       if (c.shot) return;
-      const k = c.s._check, out = c.q('.js-left'), root = c.q('.js-ck');
+      const k = c.s._check, out = c.q('.js-left'), root = c.q('.js-ck'), btn = c.q('.js-hold');
+      let held = 0;
+      const done = () => { btn.classList.add('done'); btn.dataset.act = 'check-ok'; sound.tick(1175); if (navigator.vibrate) navigator.vibrate(30); };
+      const press = (e) => { if (btn.classList.contains('done') || (e.button && e.button !== 0)) return; btn.classList.add('hold'); clearTimeout(held); held = setTimeout(done, 1000); };
+      const lift = () => { clearTimeout(held); if (!btn.classList.contains('done')) btn.classList.remove('hold'); };
+      btn.addEventListener('pointerdown', press);
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach((t) => btn.addEventListener(t, lift));
+      /* С клавиатуры удерживать нечем: Enter и пробел засчитывают сразу. */
+      btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') btn.dataset.act = 'check-ok'; });
       const tick = () => {
         const ms = Math.max(0, 60000 - (Date.now() - k.t0)), left = Math.ceil(ms / 1000);
         out.textContent = left;

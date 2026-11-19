@@ -36,7 +36,7 @@
 .rg-card>small{display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;color:#FFD86A}
 .rg-task{display:flex;align-items:center;gap:14px}
 .rg-task i{width:54px;height:54px;border-radius:17px;display:grid;place-items:center;flex:none}
-.rg .tb{background:#232328;color:#FFC700}
+
 .rg-task span{display:grid;gap:2px;min-width:0;text-align:left}
 .rg-task b{font-size:19px;font-weight:700;letter-spacing:-.3px}
 .rg-task em{font-style:normal;font-size:14px;color:#8C8C96}
@@ -235,13 +235,29 @@
 .wk-row b{font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:820;font-size:28px;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
 .wk-row small{font-size:12.5px;font-weight:500;color:var(--mut)}
 .wk>p.wk-chk,.wk>p.wk-note{margin:14px 0 0;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px 0 11px;border-radius:16px;background:var(--card);box-shadow:var(--elev);font-size:13.5px;font-weight:600;color:var(--mut2)}
-.wk-brief{width:100%;margin-top:12px;text-align:left}
-.wk-brief .br-head{padding:8px 0}
-.wk-brief .br-in{padding-bottom:11px}
+/* Сводка после подъёма — те же карточки, что во вкладке «Утро», от края до края экрана. */
+.wk-brief{align-self:stretch;width:auto;margin:12px -22px 0;text-align:left}
+.wk-brief .bf-track{padding:2px 22px 24px;scroll-padding:0 22px}
+.wk-brief .bf-card{min-height:160px}
 .wk:has(.wk-brief) .wk-sun{width:110px;margin-top:22px}
 .wk:has(.wk-brief) h1{margin-top:12px;font-size:34px}
 .wk:has(.wk-brief) .wk-row{margin-top:16px;padding:12px 6px}
 .wk .ap-btn{margin-top:auto;flex:none}
+.wk-brief{margin-bottom:14px}
+/* Невысокий экран (iPhone SE): солнце и заголовок меньше, карточки ниже — кнопка остаётся на экране. */
+@media (max-height:740px){
+  .wk{padding-top:50px;padding-bottom:28px}
+  .wk:has(.wk-brief) .wk-sun{width:80px;margin-top:10px}
+  .wk:has(.wk-brief) h1{margin-top:6px;font-size:29px}
+  .wk:has(.wk-brief) .wk-row{margin-top:12px;padding:9px 6px}
+  .wk:has(.wk-brief) .wk-row b{font-size:23px}
+  .wk:has(.wk-brief)>p.wk-chk,.wk:has(.wk-brief)>p.wk-note{margin-top:9px;height:28px;font-size:13px}
+  .wk-brief{margin-top:10px}
+  .wk-brief .bf-card{min-height:146px;padding:12px 14px 11px;gap:6px}
+  .wk-brief .bf-wx>b{font-size:42px}
+  .wk-brief .bf-hours span{padding:5px 0 4px;gap:2px}
+  .wk-brief .bf-dots{margin-top:6px}
+}
 
 /* ── Повторы через камеру: человек в кадре, скелет поверх, счёт идёт сам ── */
 .ps .cam-pill{gap:6px}
@@ -284,11 +300,24 @@
 .ck-sun .mark path{fill:color-mix(in oklab,#FEC704 calc(var(--l) * 100%),#6A6A74)}
 .ck-glow{position:absolute;left:50%;bottom:-170px;width:340px;height:340px;margin-left:-170px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,204,51,.5),rgba(255,170,40,0) 72%);opacity:var(--l);transition:opacity .3s linear}
 .ck h1{margin-top:30px;font-family:var(--disp);font-stretch:118%;font-variation-settings:'wdth' 118;font-weight:850;font-size:40px;letter-spacing:-1.2px;line-height:1.05}
-.ck-n{margin-top:16px;display:flex;align-items:baseline;gap:8px}
+.ck-p{margin:10px 0 0;max-width:290px;font-size:15.5px;line-height:1.42;color:#9A9AA4}
+.ck-n{margin-top:14px;display:flex;align-items:baseline;gap:8px}
 .ck-n b{font-family:var(--disp);font-stretch:118%;font-variation-settings:'wdth' 118;font-weight:850;font-size:78px;letter-spacing:-2.4px;line-height:1;font-variant-numeric:tabular-nums}
 .ck-n small{font-size:19px;font-weight:600;color:#8C8C96}
 .ck-n{margin-bottom:auto}
 .ck .ap-btn{flex:none;background:#FFC700;color:#0D0D0F}
+/* Кнопка «подержи»: пока палец на ней, слева направо идёт заливка; заполнилась — кнопка зеленеет, отпустил — готово. */
+.ck-hold{position:relative;overflow:hidden;isolation:isolate;touch-action:none;-webkit-user-select:none;user-select:none;transition:background .25s,transform .15s}
+.ck-fill{position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#FFE680,#FFF3B8);transform-origin:0 50%;transform:scaleX(0);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+.ck-hold.hold{transform:scale(.97)}
+.ck-hold.hold .ck-fill{transform:scaleX(1);transition:transform 1s linear}
+.ck-hold .ck-d{display:none;align-items:center;justify-content:center;gap:8px}
+.ck .ck-hold.done{background:#30D158;color:#05230F;transform:none}
+.ck-hold.done .ck-fill{opacity:0}
+.ck-hold.done .ck-t{display:none}
+.ck-hold.done .ck-d{display:flex;animation:ck-pop .35s cubic-bezier(.3,1.5,.5,1)}
+@keyframes ck-pop{from{transform:scale(.7);opacity:0}}
+.ck-hint{margin-top:10px;font-size:13px;font-weight:600;color:#6E6E78}
 
 /* ── Задание выполнено: восход и переход к «Доброе утро» ──── */
 .ap{--app-bg:var(--bg)}
