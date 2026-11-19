@@ -148,9 +148,9 @@
       log(`распознавание предметов: модель скачана (${Math.round(bytes.length / 1e6)} МБ)`);
       const session = await ort.InferenceSession.create(bytes, { executionProviders: ['wasm'], graphOptimizationLevel: 'all', enableCpuMemArena: false });
       log(`распознавание предметов готово за ${Math.round(performance.now() - t)} мс`);
-      const bin = atob(text.emb), raw = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) raw[i] = bin.charCodeAt(i);
-      return { ort, session, E: new Float32Array(raw.buffer), labels: text.labels, dim: text.dim, scale: text.scale };
+      const f32 = (b64) => { const bin = atob(b64), raw = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) raw[i] = bin.charCodeAt(i); return new Float32Array(raw.buffer); };
+      /* emb — векторы классов (дообученные на снимках, если есть голова), bias — её сдвиги. */
+      return { ort, session, E: f32(text.emb), B: text.bias ? f32(text.bias) : null, labels: text.labels, dim: text.dim, scale: text.scale };
     })();
     clipP.catch((e) => { clipP = null; log(`распознавание предметов не загрузилось: ${e && (e.message || e)}`, 'ОШИБКА'); });
     return clipP;
@@ -193,7 +193,7 @@
     for (const r of list) {
       const { e, lum: l } = await embed(m, source, r);
       lum = Math.min(lum, l);
-      const p = V.probs(e, m.E, m.labels, m.dim, m.scale);
+      const p = V.probs(e, m.E, m.labels, m.dim, m.scale, m.B);
       seen.push(V.ranked(p).slice(0, 3).map((k) => `${k} ${Math.round(p[k] * 100)}%`).join(', '));
       Object.keys(p).forEach((k) => { acc[k] = (acc[k] || 0) + p[k] / list.length; });
     }

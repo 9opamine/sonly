@@ -20,27 +20,27 @@
   /* Подсказки на камере повторов: что сделать, чтобы счёт пошёл. Одна строка. */
   const PLACE = { squat: 'Поставь телефон и отойди на 2 шага', jump: 'Поставь телефон и отойди на 2 шага', pushup: 'Положи телефон сбоку и прими упор' };
   const HINT = { wait: 'Включаем камеру…', load: 'Загружаем ИИ…', body: 'Отойди — нужно видеть тебя целиком', floor: 'Прими упор лёжа боком к камере', deeper: 'Приседай чуть глубже', go: 'Камера считает сама' };
-  const hintOf = (h, id) => (h === 'none' ? PLACE[id] : HINT[h] || HINT.go);
+  const hintOf = (h, id) => (h === 'none' ? PLACE[id] : h === 'deeper' && id === 'pushup' ? 'Опускайся ниже' : HINT[h] || HINT.go);
   /* Почему камера не включилась — коротко, одной строкой. */
   const NOCAM_SAY = { insecure: 'Камера недоступна в этом окне', denied: 'Нет доступа к камере', none: 'Камера не найдена', busy: 'Камера занята', model: 'ИИ не загрузился' };
   /* Как назвать то, что ИИ увидел вместо нужного: «Похоже на …». */
-  const SEEN_ACC = { bed_made: 'кровать', bed_unmade: 'кровать', sky: 'небо', pills: 'таблетки' };
 
   /* Как проверяется задание: math, quiz, memory, pairs, phrase — по-настоящему; cam и pose — камерой и ИИ, count — датчиками; voice — с заменой. */
   const KIND = { math: 'math', quiz: 'quiz', memory: 'memory', pairs: 'pairs', phrase: 'phrase', hunt: 'cam', bed: 'cam', sky: 'cam', pills: 'cam', qr: 'cam', squat: 'pose', pushup: 'pose', jump: 'pose', steps: 'count', shake: 'count', rhythm: 'rhythm', tongue: 'voice' };
   /* Что снимать в остальных фото-заданиях. Картинок для них пока нет — показываем эмодзи. */
-  const SHOT = { bed: { emo: '🛏️', acc: 'заправленную кровать' }, sky: { emo: '🌤️', acc: 'небо за окном' }, pills: { emo: '💊', acc: 'свои витамины' } };
+  const SHOT = { bed: { emo: '🛏️', acc: 'заправленную кровать', nom: 'кровать' }, sky: { emo: '🌤️', acc: 'небо за окном', nom: 'небо' }, pills: { emo: '💊', acc: 'свои витамины', nom: 'таблетки' } };
   /* Картинки — эмодзи Apple: одинаково на любом телефоне. */
   Object.values(SHOT).forEach((x) => { x.img = Sonly.emoSrc(x.emo); });
-  /* Викторина: флаг, страна, «чья столица» и столица. */
+  /* Викторина: флаг, страна, «чья столица», столица и край. Неверные ответы берутся из того же края —
+     «Столица Норвегии?» с Осло, Стокгольмом и Хельсинки, а не с Каиром и Токио, которые отбрасываются сразу. */
   const LANDS = [
-    ['🇫🇷', 'Франция', 'Франции', 'Париж'], ['🇩🇪', 'Германия', 'Германии', 'Берлин'], ['🇮🇹', 'Италия', 'Италии', 'Рим'], ['🇪🇸', 'Испания', 'Испании', 'Мадрид'],
-    ['🇯🇵', 'Япония', 'Японии', 'Токио'], ['🇧🇷', 'Бразилия', 'Бразилии', 'Бразилиа'], ['🇨🇦', 'Канада', 'Канады', 'Оттава'], ['🇺🇦', 'Украина', 'Украины', 'Киев'],
-    ['🇵🇱', 'Польша', 'Польши', 'Варшава'], ['🇬🇧', 'Великобритания', 'Великобритании', 'Лондон'], ['🇺🇸', 'США', 'США', 'Вашингтон'], ['🇸🇪', 'Швеция', 'Швеции', 'Стокгольм'],
-    ['🇳🇴', 'Норвегия', 'Норвегии', 'Осло'], ['🇰🇷', 'Южная Корея', 'Южной Кореи', 'Сеул'], ['🇲🇽', 'Мексика', 'Мексики', 'Мехико'], ['🇦🇺', 'Австралия', 'Австралии', 'Канберра'],
-    ['🇬🇷', 'Греция', 'Греции', 'Афины'], ['🇵🇹', 'Португалия', 'Португалии', 'Лиссабон'], ['🇨🇭', 'Швейцария', 'Швейцарии', 'Берн'], ['🇹🇷', 'Турция', 'Турции', 'Анкара'],
-    ['🇳🇱', 'Нидерланды', 'Нидерландов', 'Амстердам'], ['🇮🇳', 'Индия', 'Индии', 'Нью-Дели'], ['🇦🇷', 'Аргентина', 'Аргентины', 'Буэнос-Айрес'], ['🇫🇮', 'Финляндия', 'Финляндии', 'Хельсинки'],
-    ['🇨🇿', 'Чехия', 'Чехии', 'Прага'], ['🇪🇬', 'Египет', 'Египта', 'Каир'],
+    ['🇫🇷', 'Франция', 'Франции', 'Париж', 'w'], ['🇩🇪', 'Германия', 'Германии', 'Берлин', 'w'], ['🇮🇹', 'Италия', 'Италии', 'Рим', 's'], ['🇪🇸', 'Испания', 'Испании', 'Мадрид', 's'],
+    ['🇯🇵', 'Япония', 'Японии', 'Токио', 'a'], ['🇧🇷', 'Бразилия', 'Бразилии', 'Бразилиа', 'm'], ['🇨🇦', 'Канада', 'Канады', 'Оттава', 'm'], ['🇺🇦', 'Украина', 'Украины', 'Киев', 'e'],
+    ['🇵🇱', 'Польша', 'Польши', 'Варшава', 'e'], ['🇬🇧', 'Великобритания', 'Великобритании', 'Лондон', 'w'], ['🇺🇸', 'США', 'США', 'Вашингтон', 'm'], ['🇸🇪', 'Швеция', 'Швеции', 'Стокгольм', 'n'],
+    ['🇳🇴', 'Норвегия', 'Норвегии', 'Осло', 'n'], ['🇰🇷', 'Южная Корея', 'Южной Кореи', 'Сеул', 'a'], ['🇲🇽', 'Мексика', 'Мексики', 'Мехико', 'm'], ['🇦🇺', 'Австралия', 'Австралии', 'Канберра', 'a'],
+    ['🇬🇷', 'Греция', 'Греции', 'Афины', 's'], ['🇵🇹', 'Португалия', 'Португалии', 'Лиссабон', 's'], ['🇨🇭', 'Швейцария', 'Швейцарии', 'Берн', 'w'], ['🇹🇷', 'Турция', 'Турции', 'Анкара', 's'],
+    ['🇳🇱', 'Нидерланды', 'Нидерландов', 'Амстердам', 'w'], ['🇮🇳', 'Индия', 'Индии', 'Нью-Дели', 'a'], ['🇦🇷', 'Аргентина', 'Аргентины', 'Буэнос-Айрес', 'm'], ['🇫🇮', 'Финляндия', 'Финляндии', 'Хельсинки', 'n'],
+    ['🇨🇿', 'Чехия', 'Чехии', 'Прага', 'e'], ['🇪🇬', 'Египет', 'Египта', 'Каир', 's'],
   ];
   const COUNT = { squat: 'приседаний', pushup: 'отжиманий', jump: 'прыжков', steps: 'шагов', shake: 'встряхиваний', rhythm: 'ударов ритма' };
   /* Скелет для заданий с повторами: 14 точек тела и кости между ними. a — верхняя точка движения, b — нижняя; ms — один повтор.
@@ -61,26 +61,54 @@
   const STEP = 150, MID = 195;
   const reelX = (i) => (MID - (i + 0.5) * STEP).toFixed(1);
 
+  /** Число без «круглых» и лёгких значений: не делится на 10 и не 11, 22, 33… */
+  const odd = (a, b) => { let x; do x = rnd(a, b); while (x % 10 === 0 || (x > 10 && x < 100 && x % 11 === 0)); return x; };
+  /**
+   * Пример по уровню. Лёгкие — с переходом через десяток и таблица умножения без ×1, ×2 и ×10; средние — двузначные с переносом,
+   * умножение на однозначное и деление нацело; сложные — два действия. Ответ всегда целый и положительный.
+   */
   function problem(level) {
-    if (level === 'easy') { const a = rnd(3, 15), b = rnd(2, 12); return a > b && Math.random() < 0.5 ? { q: `${a} − ${b}`, a: a - b } : { q: `${a} + ${b}`, a: a + b }; }
-    if (level === 'hard') { const a = rnd(110, 199), b = rnd(21, 89), c = rnd(13, 49); return { q: `${a} − ${b} + ${c}`, a: a - b + c }; }
-    if (Math.random() < 0.5) { const a = rnd(12, 29), b = rnd(3, 8); return { q: `${a} × ${b}`, a: a * b }; }
-    const a = rnd(24, 79), b = rnd(13, 58);
-    return { q: `${a} + ${b}`, a: a + b };
+    const pick = (list) => list[rnd(0, list.length - 1)]();
+    if (level === 'easy') return pick([
+      () => { const a = rnd(6, 9), b = rnd(12 - a, 9); return { q: `${a} + ${b}`, a: a + b }; },
+      () => { const a = rnd(11, 18), b = rnd(a - 9, 9); return { q: `${a} − ${b}`, a: a - b }; },
+      () => { const a = rnd(3, 9), b = rnd(3, 9); return { q: `${a} × ${b}`, a: a * b }; },
+      () => { const a = odd(14, 49), b = rnd(10 - (a % 10), 9); return { q: `${a} + ${b}`, a: a + b }; },
+    ]);
+    if (level === 'hard') return pick([
+      () => { const a = odd(13, 29), b = rnd(4, 9), c = odd(17, 89); return { q: `${a} × ${b} + ${c}`, a: a * b + c }; },
+      () => { const a = odd(14, 29), b = rnd(4, 9), c = odd(13, a * b - 11); return { q: `${a} × ${b} − ${c}`, a: a * b - c }; },
+      () => { const a = odd(121, 389), b = odd(37, 98), c = odd(23, 89); return { q: `${a} − ${b} + ${c}`, a: a - b + c }; },
+      () => { const b = rnd(6, 9), x = rnd(12, 24), c = odd(17, 69); return { q: `${b * x} ÷ ${b} + ${c}`, a: x + c }; },
+      () => { const a = odd(13, 39), b = rnd(3, 9), c = rnd(3, 6); return { q: `(${a} + ${b}) × ${c}`, a: (a + b) * c }; },
+    ]);
+    return pick([
+      () => { const a = odd(12, 29), b = rnd(3, 9); return { q: `${a} × ${b}`, a: a * b }; },
+      () => { const a = odd(27, 68), b = rnd(1, 7) * 10 + rnd(10 - (a % 10), 9); return { q: `${a} + ${b}`, a: a + b }; },
+      () => { let a; do a = odd(52, 97); while (a % 10 === 9); const b = rnd(1, Math.floor(a / 10) - 1) * 10 + rnd((a % 10) + 1, 9); return { q: `${a} − ${b}`, a: a - b }; },
+      () => { const b = rnd(4, 9), x = rnd(12, 19); return { q: `${b * x} ÷ ${b}`, a: x }; },
+    ]);
   }
-  /** Вопросы викторины: страны не повторяются, у каждого вопроса четыре ответа. */
+  /** Несколько примеров без повторов. */
+  function problems(level, n) {
+    const out = [], seen = new Set();
+    for (let k = 0; out.length < n && k < 400; k++) { const p = problem(level); if (!seen.has(p.q)) { seen.add(p.q); out.push(p); } }
+    return out;
+  }
+  /** Вопросы викторины: страны не повторяются, у каждого вопроса четыре ответа; неверные — сперва из того же края. */
   function quizOf(topic, n) {
     return shuffle(LANDS.slice()).slice(0, n).map((land) => {
       const cap = topic === 'capitals' || (topic === 'mix' && Math.random() < 0.5), col = cap ? 3 : 1;
-      const opts = shuffle([land, ...shuffle(LANDS.filter((x) => x !== land)).slice(0, 3)]).map((x) => x[col]);
+      const near = shuffle(LANDS.filter((x) => x !== land && x[4] === land[4])), far = shuffle(LANDS.filter((x) => x !== land && x[4] !== land[4]));
+      const opts = shuffle([land, ...near.concat(far).slice(0, 3)]).map((x) => x[col]);
       return { flag: land[0], q: cap ? `Столица ${land[2]}?` : 'Чей это флаг?', opts, a: opts.indexOf(land[col]) };
     });
   }
-  /** Новый узор для задания «Память»: клеток на одну больше, чем сторона поля. */
+  /** Новый узор для задания «Память»: в первом раунде клеток на одну больше стороны поля, дальше — каждый раунд на одну больше. */
   function pattern(k) {
-    const cells = new Set();
-    while (cells.size < k.size + 1) cells.add(rnd(0, k.size * k.size - 1));
-    Object.assign(k, { cells: [...cells], hit: [], miss: -1, phase: 'show', showMs: 1400 + cells.size * 180 });
+    const cells = new Set(), want = Math.min(k.size * k.size - 2, k.size + 1 + (k.i || 0));
+    while (cells.size < want) cells.add(rnd(0, k.size * k.size - 1));
+    Object.assign(k, { cells: [...cells], hit: [], miss: -1, phase: 'show', showMs: 1300 + cells.size * 200 });
   }
   /** Крутка для «Найди предмет»: случайная лента предметов, на 22-м месте — тот, который надо снять. */
   function spin(k, list) {
@@ -93,16 +121,16 @@
   /** Готовит задание по настройкам будильника. */
   function begin(r) {
     const t = K.taskOf(r.a), o = TO.get(r.a, t.id), k = { kind: KIND[t.id], i: 0, n: 1 };
-    if (k.kind === 'math') Object.assign(k, { n: o.n, list: Array.from({ length: o.n }, () => problem(o.level)), input: '' });
+    if (k.kind === 'math') Object.assign(k, { n: o.n, list: problems(o.level, o.n), input: '' });
     else if (k.kind === 'quiz') Object.assign(k, { n: o.n, list: quizOf(o.topic, o.n), ok: null, bad: [] });
     else if (k.kind === 'memory') { k.size = +o.size; k.n = o.n; pattern(k); }
     else if (k.kind === 'pairs') { const pics = shuffle(TO.objects({ off: [] })).slice(0, o.n); k.n = o.n; k.cards = shuffle([...pics, ...pics]).map((p, id) => ({ id, p, open: false, done: false })); }
-    else if (k.kind === 'phrase') Object.assign(k, { text: TO.sample('phrase', 'len', o.len), val: '' });
-    else if (k.kind === 'voice') Object.assign(k, { text: TO.sample('tongue', 'level', o.level), phase: 'idle', got: [], heard: '' });
+    else if (k.kind === 'phrase') Object.assign(k, { text: TO.pick('phrase', o.len) || TO.sample('phrase', 'len', o.len), val: '' });
+    else if (k.kind === 'voice') Object.assign(k, { text: (TO.pick('tongue', o.level) || TO.sample('tongue', 'level', o.level)).replace(/\u00a0/g, ' '), phase: 'idle', got: [], heard: '' });
     else if (k.kind === 'rhythm') Object.assign(k, { beats: o.n, ref: Sonly.rhythm.make(o.n), phase: 'intro', taps: [], marks: null, tries: 0 });
     else if (k.kind === 'count' || k.kind === 'pose') { k.n = o.n; k.auto = { steps: 520, shake: 300 }[t.id] || 0; }
     else if (t.id === 'hunt') { k.list = TO.objects(o); k.rerolls = 1; spin(k, k.list); }
-    else if (t.id === 'qr') Object.assign(k, { phase: 'aim', qr: true, target: { acc: o.code === 'own' ? 'свой код sonly' : 'любой штрихкод' } });
+    else if (t.id === 'qr') Object.assign(k, { phase: 'aim', qr: true, own: o.code === 'own' ? TO.ownCode() : null, target: { acc: o.code === 'own' ? 'свой код sonly' : 'любой штрихкод' } });
     else Object.assign(k, { phase: 'aim', target: SHOT[t.id] });
     r.k = k;
   }
@@ -279,7 +307,9 @@
         <input class="tk-input js-in" value="${esc(k.val)}" placeholder="Печатай здесь" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="Фраза"></div>`;
     },
     /* Повторы: солнце из логотипа — сначала маленькое и серое, с каждым повтором больше и жёлтее. */
+    /* Шаги и встряска: над солнцем — что делать (идущий человек или трясущийся телефон, эмодзи Apple). */
     count: (k, t) => `<div class="tk-body tk-count"><h2 class="tk-h">${k.n} ${COUNT[t.id]}</h2>
+        <span class="tk-move ${t.id === 'steps' ? 'walk' : 'shake'}${k.i >= k.n ? ' stop' : ''}" aria-hidden="true">${Sonly.emo(t.id === 'steps' ? '🚶' : '📱')}</span>
         <div class="tk-grow${k.i >= k.n ? ' final' : ''}" style="--g:${(k.i / k.n).toFixed(3)}"><i class="tk-glow"></i>${Sonly.mark()}</div>
         <p class="tk-cnt"><b class="js-cnt">${k.i}</b><span>из ${k.n}</span></p>
         <p class="tk-live ${t.id}">${K.tic(t, 24)}<span>${k.sensors === 'off' ? 'Датчиков нет — пример' : t.id === 'steps' ? 'Шагай — телефон считает' : 'Тряси телефон'}</span></p></div>`,
@@ -417,15 +447,17 @@
       <g class="ps-skel">${BONES.map((b) => line('s', b)).join('')}${A.map((_, i) => (i ? dot('j', i, 4.6) : dot('h', 0, 19))).join('')}</g></svg>`;
   }
 
-  /** Что сказать, если снимок не засчитан: одна короткая строка. */
+  /** Что сказать, если снимок не засчитан: одна короткая строка. Сняли другое — просто «Это не …»:
+      гадать, на что похож снимок, ИИ не берётся — на незнакомую вещь он уверенно назвал бы что-то из своего списка. */
   function missSay(k, res) {
     const T = k.target || {};
+    if (res.why === 'notown') return 'Это не твой код sonly';
     if (res.why === 'screen') return 'Сними сам предмет, а не экран';
     if (res.why === 'unmade') return 'Кровать ещё не заправлена';
-    if (res.why === 'unsure') return 'Не разглядеть — подойди ближе';
+    if (res.why === 'unsure') return 'Не разглядеть — сними ближе';
     if (res.why === 'dark') return 'Темно — включи свет или вспышку';
-    const seen = res.seen && (SEEN_ACC[res.seen] || (TO.objects({ off: [] }).find((x) => x.id === res.seen) || {}).acc);
-    return seen ? `Это похоже на ${seen}` : `Не вижу ${T.acc}`;
+    const nom = T.nom || (T.name && T.name.toLowerCase());
+    return nom ? `Это не ${nom}` : `Не вижу ${T.acc}`;
   }
 
   /**
@@ -448,7 +480,7 @@
     return `<div class="cam${live ? ' live' : ''}${k.flash ? ' flash' : ''}${k.flip ? ' flip' : ''}${k.phase === 'scan' ? ' snap' : ''}${busy ? ' held' : ''}">
       ${live ? '' : FEED}${head(k, 'chevron-left')}${scene}
       <div class="cam-bar"><button class="cam-b lg" data-act="cam-flip" aria-label="Другая камера"${spinning || busy ? ' disabled' : ''}>${ic('switch-camera', 22, 2)}</button>
-        <button class="tk-shot" data-act="shot" aria-label="Снять"${k.phase === 'aim' && !loading ? '' : ' disabled'}><i></i></button>
+        <button class="tk-shot" data-act="shot" aria-label="Снять"${k.phase === 'aim' && !loading && !(k.qr && live) ? '' : ' disabled'}><i></i></button>
         <button class="cam-b lg${k.flash ? ' on' : ''}" data-act="cam-flash" aria-label="Вспышка"${spinning || busy ? ' disabled' : ''}>${ic('zap', 22, 2.2)}</button></div>
     </div>`;
   }
@@ -681,6 +713,8 @@
               k.sensors = 'on';
               const n = k.mc.push(a.x, a.y, a.z, e.timeStamp || performance.now());
               while (k.i < Math.min(n, k.n)) count(c.flow, k);
+              /* Трясут вместо того, чтобы идти, — шаги стоят, говорим почему. */
+              if (t.id === 'steps') { const s = c.q('.tk-live span'), say = k.mc.shaking ? 'Не тряси — просто иди' : 'Шагай — телефон считает'; if (s && s.textContent !== say) s.textContent = say; }
             };
             window.addEventListener('devicemotion', onM);
             c.flow.leave = () => window.removeEventListener('devicemotion', onM);
@@ -708,14 +742,27 @@
             const v = Sonly.vision.attach(box);
             /* Снятый кадр стоит поверх видео, пока его проверяют. */
             if (k.snap && v && ['scan', 'done', 'miss'].includes(k.phase)) box.insertBefore(k.snap, v.nextSibling);
-            if (k.qr && k.phase === 'aim' && 'BarcodeDetector' in window) {
-              /* Код ищется сам, без кнопки: как только в кадре штрихкод или QR — готово. */
-              const det = new window.BarcodeDetector(), el = c.el;
+            if (k.qr && k.phase === 'aim' && v) {
+              /* Код ищется сам, без кнопки, три-четыре раза в секунду. Где есть BarcodeDetector (Android) — им, он читает и QR;
+                 где нет (Safari на iPhone) — своим распознавателем EAN-13 / UPC-A / EAN-8 (js/barcode.js).
+                 Свой код sonly засчитывается только он сам; чужой штрихкод — «Это не твой код sonly». */
+              const el = c.el;
+              let det = 'BarcodeDetector' in window ? new window.BarcodeDetector() : null;
+              const got = (texts) => {
+                if (c.flow.cur !== el || k.phase !== 'aim' || !texts.length) return false;
+                const want = k.own && Sonly.barcode ? Sonly.barcode.full(k.own) : null;
+                if (!want || texts.some((x) => x === want)) { k.phase = 'done'; sound.tick(1175); again(); return true; }
+                /* Чужой код в кадре — говорим не чаще раза в 5 с, иначе подсказка мигала бы без конца. */
+                if (Date.now() - (k.wrongAt || 0) > 5000) { k.wrongAt = Date.now(); k.res = { ok: false, why: 'notown' }; k.phase = 'miss'; sound.tick(330); again(); return true; }
+                return false;
+              };
               const look = () => {
                 if (c.flow.cur !== el || k.phase !== 'aim') return;
-                det.detect(v).then((codes) => { if (codes.length && c.flow.cur === el && k.phase === 'aim') { k.phase = 'done'; sound.tick(1175); again(); } else c.wait(350, look); }, () => c.wait(700, look));
+                if (det) det.detect(v).then((codes) => { if (!got(codes.map((x) => String(x.rawValue || '').replace(/\D/g, '') || String(x.rawValue)))) c.wait(300, look); }, () => { det = null; c.wait(200, look); });
+                else if (Sonly.barcode) { let r = null; try { r = Sonly.barcode.decode(v); } catch (e) { r = null; } if (!got(r ? [r.text] : [])) c.wait(280, look); }
+                else c.wait(400, look);
               };
-              c.wait(400, look);
+              TO.needBarcode().then(() => c.wait(300, look));
             }
           }
           if (k.phase === 'spin') {
@@ -920,7 +967,8 @@
           if (key === 'flash') cam.querySelector('[data-act="cam-flash"]').classList.toggle('on', k.flash);
           return true;
         }
-        case 'shot': if (k.phase === 'aim' && !(k.live === 'on' && k.ai !== 'ok')) {
+        /* Живая камера в задании со штрихкодом: код ищется сам, кнопка ничего не засчитывает. */
+        case 'shot': if (k.phase === 'aim' && !(k.live === 'on' && k.ai !== 'ok') && !(k.qr && k.live === 'on')) {
           /* Живая камера: снимок — это кадр видео и квадрат видоискателя; дальше его проверяет ИИ. */
           const box = flow.cur && flow.cur.querySelector('.cam'), v = Sonly.vision && Sonly.vision.video;
           if (k.live === 'on' && !k.qr && box && v && v.videoWidth) { const sh = snapshot(box, v, box.querySelector('.js-frame')); k.snap = sh.cv; k.rects = sh.rects; }

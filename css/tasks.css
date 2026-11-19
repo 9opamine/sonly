@@ -1,7 +1,7 @@
 /* Настройка задания: предметы, сложность, количество. Один блок для онбординга и приложения; цвета берёт у того, где стоит. */
 .to{display:grid;gap:10px;--to-tile:var(--fill,#F3F3F6);--to-btn:#fff;--to-sel:var(--ink);--to-sel-ink:#fff}
 .ap .to{--to-tile:var(--card);--to-btn:var(--card2);--to-sel:var(--btn);--to-sel-ink:var(--btn-ink)}
-.to h4{margin:12px 2px 0;font-size:12.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--mut)}
+.to h4{margin:12px 4px 0;font-size:12.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--mut)}
 .to h4:first-child{margin-top:0}
 
 /* Предметы: всё выбрано заранее, лишнее убирают касанием. */
@@ -136,6 +136,10 @@
 .tp-track i{position:absolute;left:var(--x);top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:#FFC700;box-shadow:0 0 10px rgba(255,199,0,.5);animation:to-in .3s cubic-bezier(.3,1.5,.5,1) var(--d) both}
 .tp-track.play i{animation:tp-beat .45s cubic-bezier(.3,1.8,.5,1) calc(var(--t) + 50ms) both}
 @keyframes tp-beat{0%{transform:scale(1)}30%{transform:scale(1.7);box-shadow:0 0 0 6px rgba(255,199,0,.25),0 0 18px rgba(255,199,0,.8)}100%{transform:scale(1)}}
+/* Штрихкод: белая карточка с кодом на тёмном предпросмотре — как будет висеть распечатанным. */
+.tp-code small{font-size:13px;font-weight:600;color:#B7B7BF}
+.tp-bar{width:100%;max-width:270px;padding:10px 12px 6px;border-radius:16px;background:#fff;box-shadow:0 10px 24px -12px rgba(0,0,0,.6);animation:cam-in .4s cubic-bezier(.3,1.5,.5,1) both}
+.tp-bar svg{display:block;width:100%;height:auto}
 .tp-listen{display:flex;align-items:center;gap:7px;height:38px;padding:0 16px 0 13px;border-radius:19px;background:#FFC700;color:#0D0D0F;font-size:14px;font-weight:700}
 .tp-listen:active{transform:scale(.96)}
 

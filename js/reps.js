@@ -34,7 +34,7 @@
        Наклон без приседа не считается: таз должен опуститься сам (gate). Сдвинулись стопы — человек переходит, это не повтор (foot).
        Нужны плечи, таз и стопы. */
     squat: {
-      rel: true, down: 0.82, up: 0.92, gate: 0.9, gateOn: 'hip', shallow: 0.9, lower: true, minRep: 550,
+      rel: true, scaleOn: 'torso', relocate: 0.1, drift: 0.06, down: 0.82, up: 0.92, gate: 0.9, gateOn: 'hip', shallow: 0.9, lower: true, minRep: 550,
       measure(q) {
         const legs = [[P.lh, P.la], [P.rh, P.ra]].filter((ids) => ids.every((i) => q.vis(i)));
         const sh = [P.ls, P.rs].filter((i) => q.vis(i));
@@ -44,10 +44,14 @@
         return { c: { torso: foot.y - avg((i) => q.pt(i).y, sh), hip: foot.y - avg(([h]) => q.pt(h).y, legs) }, foot };
       },
     },
-    /* Отжимания: угол в локте (плечо — локоть — запястье). Наверху ≈ 165°, внизу ≈ 90°.
-       Человек должен быть в упоре: кисти ниже плеч, корпус не вертикальный — иначе это сгибание рук стоя. */
+    /* Отжимания: две мерки от верхней точки этого человека (rel), засчитывает та, что опустилась сильнее (min):
+       lift — насколько плечи над кистями (кисти стоят на полу), elbow — угол в локте. Сбоку хорошо видны обе;
+       когда телефон перед головой или у ног, а локти прижаты, сгиб локтя идёт прямо на камеру и угла почти не видно —
+       тогда считает lift. Повтор — опустился до 0,55 (локоть ~90°, плечи на полпути к полу) и выпрямился до 0,85.
+       Человек должен быть в упоре: кисти ниже плеч, предплечья смотрят в пол, корпус не вертикальный — иначе это
+       сгибание рук стоя или упор о стену (hint 'floor'). Кисти сдвинулись — человек перешёл, повтор не считается (foot). */
     pushup: {
-      down: 105, up: 150, lower: true, minRep: 600,
+      rel: true, combine: 'min', scaleOn: 'lift', relocate: 0.5, drift: 0.3, down: 0.55, up: 0.85, shallow: 0.72, lower: true, minRep: 600,
       measure(q) {
         const arms = [[P.ls, P.le, P.lw], [P.rs, P.re, P.rw]].filter((ids) => ids.every((i) => q.vis(i)));
         if (!arms.length) return { hint: 'body' };
@@ -61,10 +65,14 @@
         if (hips.length) {
           const h = hips.map((i) => q.pt(i)), hp = { x: h.reduce((s, p) => s + p.x, 0) / h.length, y: h.reduce((s, p) => s + p.y, 0) / h.length };
           const s0 = { x: sh.reduce((s, p) => s + p.x, 0) / sh.length, y: shY };
-          if (hp.y - s0.y > Math.abs(hp.x - s0.x) * 1.4 && hp.y - s0.y > upper * 1.2) return { hint: 'floor' };
+          /* Корпус вертикальный — человек стоит. Когда телефон перед головой, корпус в кадре сильно укорочен и таз
+             тоже оказывается прямо под плечами, но совсем близко — меньше ширины плеч; у стоящего — намного дальше. */
+          const shW = q.vis(P.ls) && q.vis(P.rs) ? dist(q.pt(P.ls), q.pt(P.rs)) : 0;
+          if (hp.y - s0.y > Math.abs(hp.x - s0.x) * 1.4 && hp.y - s0.y > Math.max(upper * 1.2, shW * 0.9)) return { hint: 'floor' };
         }
-        const a = arms.map(([s, e, w]) => angle(q.pt(s), q.pt(e), q.pt(w)));
-        return { v: Math.min(...a) };
+        const elbow = Math.min(...arms.map(([s, e, w]) => angle(q.pt(s), q.pt(e), q.pt(w))));
+        const foot = { x: wr.reduce((s, p) => s + p.x, 0) / wr.length, y: wrY };
+        return { c: { lift: wrY - shY, elbow }, foot };
       },
     },
     /* Прыжки «ноги врозь, руки вверх»: раскрытие = руки над плечами и стопы шире бёдер. 0 — собран, 1 — раскрыт полностью.
@@ -115,18 +123,20 @@
         else if (phase === 'up' && s > base[n] * 0.9) base[n] += (s - base[n]) * fall;
         r[n] = base[n] > 0.05 ? s / base[n] : 1;
       });
-      const v = Object.values(r).reduce((x, y) => x + y, 0) / Object.keys(r).length, g = r[K.gateOn] != null ? r[K.gateOn] : v;
+      const list = Object.values(r);
+      const v = K.combine === 'min' ? Math.min(...list) : list.reduce((x, y) => x + y, 0) / list.length, g = r[K.gateOn] != null ? r[K.gateOn] : v;
       return { v, g, gateOk: K.gate == null || g < K.gate };
     }
-    /* Где стоят стопы. Ушли больше чем на десятую часть роста в кадре — человек перешёл (или телефон сдвинули):
-       стойка запоминается заново, начатый повтор не считается. Отошёл подальше — иначе выглядело бы как присед. */
+    /* Где стоят стопы (у отжиманий — кисти). Ушли дальше relocate (доля мерки scaleOn: у приседаний — десятая часть роста,
+       у отжиманий — половина руки) — человек перешёл или телефон сдвинули: стойка запоминается заново, начатый повтор
+       не считается. Отошёл подальше — иначе выглядело бы как присед. За повтор опора не должна уезжать дальше drift. */
     let foot = null, home = null, footAt = null, drift = 0;
     function moved(f, dt) {
       const a = 1 - Math.exp(-dt / 70);
       foot = foot ? { x: foot.x + (f.x - foot.x) * a, y: foot.y + (f.y - foot.y) * a } : { ...f };
-      const scale = base.torso || cs.torso || 0;
+      const scale = base[K.scaleOn] || cs[K.scaleOn] || 0;
       if (!home || !scale) { home = { ...foot }; return false; }
-      if (Math.hypot(foot.x - home.x, foot.y - home.y) > scale * 0.1) { home = { ...foot }; return true; }
+      if (Math.hypot(foot.x - home.x, foot.y - home.y) > scale * K.relocate) { home = { ...foot }; return true; }
       const b = 1 - Math.exp(-dt / 1500);
       home.x += (foot.x - home.x) * b;
       home.y += (foot.y - home.y) * b;
@@ -134,7 +144,7 @@
     }
     return {
       get count() { return count; },
-      reset() { count = 0; phase = 'up'; sm = null; reachedDown = false; cs = {}; base = {}; dip = 1; foot = home = null; },
+      reset() { count = 0; phase = 'up'; sm = null; reachedDown = false; cs = {}; base = {}; dip = 1; foot = home = footAt = null; drift = 0; },
       push(lm, t) {
         const dt = lastT ? Math.min(200, t - lastT) : 33;
         lastT = t;
@@ -156,18 +166,18 @@
         let gateOk = true, g = 1;
         if (m.foot && moved(m.foot, dt)) { cs = {}; base = {}; phase = 'up'; reachedDown = false; repStart = 0; dip = 1; }
         if (m.c) ({ v: sm, g, gateOk } = relative(m.c, dt));
-        /* Насколько уехали стопы с начала повтора (самое дальнее место, а не только конец: отошёл и вернулся — тоже не повтор). */
-        if (repStart && footAt && foot) drift = Math.max(drift, Math.hypot(foot.x - footAt.x, foot.y - footAt.y));
         else {
           /* Сглаживание дрожания точек: чем дольше кадр, тем сильнее верим новому значению. */
           const a = 1 - Math.exp(-dt / 70);
           sm = sm == null ? m.v : sm + (m.v - sm) * a;
         }
+        /* Насколько уехали стопы с начала повтора (самое дальнее место, а не только конец: отошёл и вернулся — тоже не повтор). */
+        if (repStart && footAt && foot) drift = Math.max(drift, Math.hypot(foot.x - footAt.x, foot.y - footAt.y));
         const isDown = (K.lower ? sm < K.down : sm > K.down) && gateOk, isUp = K.lower ? sm > K.up : sm < K.up;
         const depth = Math.max(0, Math.min(1, K.lower ? (K.up - sm) / (K.up - K.down) : (sm - K.up) / (K.down - K.up)));
         /* Присел, но не до середины, и встал — подсказываем «глубже» (только у мерок от стойки; наклон без приседа — не попытка). */
         if (K.shallow != null && phase === 'up') {
-          if (g < K.gate + 0.05) dip = Math.min(dip, sm);
+          if (K.gate == null || g < K.gate + 0.05) dip = Math.min(dip, sm);
           if (isUp && sm > K.up + 0.03) { if (dip < K.shallow) deeperTill = t + 2500; dip = 1; }
         }
         const begin = () => { repStart = t; footAt = foot && { ...foot }; drift = 0; };
@@ -177,7 +187,7 @@
           since = t;
           /* Слишком быстрый повтор — дёрнулась точка, а не человек: не засчитываем.
              Повтор — на месте: если стопы за это время уезжали, человек отходил или подходил к телефону. */
-          if (reachedDown && t - repStart >= K.minRep && drift < (base.torso || 1) * 0.06) count++;
+          if (reachedDown && t - repStart >= K.minRep && (K.drift == null || drift < (base[K.scaleOn] || 1) * K.drift)) count++;
           reachedDown = false;
           repStart = 0;
         } else if (phase === 'up' && !isUp && !repStart) begin();

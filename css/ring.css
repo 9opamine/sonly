@@ -100,7 +100,17 @@
 
 /* Повторы без камеры (шаги, встряска, ритм): солнце из логотипа растёт снизу — от маленького серого до большого жёлтого. */
 .tk-body.tk-count{gap:6px}
-.tk-count .tk-h{margin-bottom:26px}
+.tk-count .tk-h{margin-bottom:10px}
+/* Что делать — над солнцем: человек шагает на месте, телефон качается в руке. Сделал — замирает. */
+.tk-move{display:block;height:136px;margin-bottom:-38px;position:relative;z-index:4}
+.tk-move .emj{width:128px;height:128px;filter:drop-shadow(0 16px 20px rgba(0,0,0,.55))}
+.tk-move.walk .emj{animation:tk-move-walk 1.04s ease-in-out infinite alternate}
+.tk-move.shake .emj{animation:tk-move-shake .46s ease-in-out infinite;transform-origin:50% 80%}
+.tk-move.stop .emj{animation:none}
+@keyframes tk-move-walk{0%{transform:translateX(-22px) translateY(0)}25%{transform:translateX(-11px) translateY(-6px)}50%{transform:translateX(0) translateY(0)}75%{transform:translateX(11px) translateY(-6px)}100%{transform:translateX(22px) translateY(0)}}
+@keyframes tk-move-shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-14deg) translateX(-4px)}75%{transform:rotate(14deg) translateX(4px)}}
+@media (prefers-reduced-motion:reduce){.tk-move .emj{animation:none!important}}
+@media (max-height:720px){.tk-move{height:100px;margin-bottom:-34px}.tk-move .emj{width:96px;height:96px}.tk-count .tk-h{margin-bottom:4px}}
 .tk-grow{position:relative;z-index:3;width:230px;height:190px;display:grid;place-items:end center}
 .tk-grow .mark{position:relative;display:block;width:230px;height:auto;transform:scale(calc(.3 + var(--g) * .7));transform-origin:50% 100%;transition:transform .7s cubic-bezier(.3,1.25,.5,1)}
 .tk-grow .mark path{fill:color-mix(in oklab,#FEC704 calc(var(--g) * 100%),#56565F);transition:fill .7s ease}

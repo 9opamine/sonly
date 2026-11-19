@@ -12,12 +12,17 @@
    * Тяжесть вычитается плавающим средним, поэтому неважно, как держат телефон.
    */
   function make(kind) {
-    let g = null, sm = 0, armed = true, last = -1e9, count = 0, lastT = 0, peak = 0;
+    let g = null, sm = 0, armed = true, last = -1e9, count = 0, lastT = 0, peak = 0, rough = -1e9;
+    /* Шаги: рывки сильнее 11 м/с² при ходьбе с телефоном в руке не бывают — это тряска. Пока трясут (и ещё 1,2 с после),
+       шаги не считаются: иначе 20 «шагов» набирались бы встряской за пять секунд, не вставая с кровати. */
+    const ROUGH = 11, CALM = 1200;
     const S = kind === 'shake'
       ? { hi: 13, lo: 4, gap: 160, smooth: 25 }
       : { hi: 1, lo: 0.3, gap: 260, smooth: 35 };
     return {
       get count() { return count; },
+      /** Сейчас телефон трясут, а не идут с ним (только для шагов). */
+      get shaking() { return kind !== 'shake' && lastT - rough < CALM; },
       push(ax, ay, az, t) {
         const m = Math.hypot(ax || 0, ay || 0, az || 0), dt = lastT ? Math.min(100, t - lastT) : 16;
         lastT = t;
@@ -26,7 +31,9 @@
         const dyn = m - g;
         sm += (dyn - sm) * (1 - Math.exp(-dt / S.smooth));
         const v = kind === 'shake' ? Math.abs(dyn) : sm;
-        if (armed && v > S.hi && t - last > S.gap) { count++; last = t; armed = false; peak = v; }
+        if (kind !== 'shake' && Math.abs(dyn) > ROUGH) { rough = t; armed = false; }
+        const calm = kind === 'shake' || t - rough >= CALM;
+        if (armed && calm && v > S.hi && t - last > S.gap) { count++; last = t; armed = false; peak = v; }
         else if (!armed && v < S.lo) armed = true;
         else if (!armed) peak = Math.max(peak, v);
         return count;

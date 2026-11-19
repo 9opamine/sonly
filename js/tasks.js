@@ -22,6 +22,20 @@
   const lvl = (a, b, c) => [[a, 'Легко'], [b, 'Обычно'], [c, 'Всерьёз']];
   const choice = (key, def, opts, title) => ({ kind: 'choice', key, def, opts, title });
 
+  /* Тексты на каждое утро: в меню — пример уровня, а утром выпадает любой текст того же уровня, чтобы не заучить один. */
+  const BANK = {
+    phrase: {
+      short: ['Доброе утро, я встаю', 'Я проснулся и встаю', 'Новый день начался', 'Встаю без отговорок', 'Сегодня мой день', 'Я бодр и полон сил'],
+      mid: ['Сегодня я встаю с первого звонка', 'Я встаю, потому что мне это важно', 'Подушка подождёт, а день не будет', 'Хорошее утро начинается с меня', 'Я сильнее желания поспать ещё'],
+      long: ['Каждое утро начинается с одного решения — встать', 'Чем раньше я встану, тем больше успею за этот день', 'Я выбираю встать сейчас, а не через пять минут', 'Сон закончился, впереди новый день и новые дела'],
+    },
+    tongue: {
+      easy: ['Шла Саша по шоссе и сосала сушку', 'Мама мыла Милу мылом', 'У ежа ежата, у ужа ужата', 'Шесть мышат в шалаше шуршат', 'На дворе трава, на траве дрова'],
+      mid: ['Карл у Клары украл кораллы, а Клара у Карла украла кларнет', 'Ехал Грека через реку, видит Грека — в реке рак', 'От топота копыт пыль по полю летит', 'Расскажите про покупки, про какие про покупки', 'Бык тупогуб, тупогубенький бычок, у быка бела губа была тупа'],
+      hard: ['Сшит колпак не по-колпаковски, вылит колокол не по-колоколовски', 'Четыре чёрненьких чумазеньких чертёнка чертили чёрными чернилами чертёж', 'Тридцать три корабля лавировали, лавировали, да не вылавировали', 'Всех скороговорок не перескороговоришь, не перевыскороговоришь'],
+    },
+  };
+
   /* ask — заголовок экрана настройки, hint — пояснение под ним, ctl — что именно настраивается. */
   const OPTS = {
     hunt: { ask: 'Что будем искать?', hint: 'Убери то, чего у тебя нет.', ctl: [{ kind: 'objects', key: 'off', min: 5 }] },
@@ -33,15 +47,15 @@
     shake: { ask: 'Сколько встряхиваний?', hint: '', ctl: [count('n', 30, 10, 60, 10, ['встряхивание', 'встряхивания', 'встряхиваний'], '', lvl(20, 30, 50))] },
     math: {
       ask: 'Какие примеры решать?', hint: '',
-      ctl: [choice('level', 'mid', [['easy', 'Лёгкие', '7 + 5'], ['mid', 'Средние', '24 × 3'], ['hard', 'Сложные', '148 − 59 + 27']], 'Сложность'), count('n', 3, 1, 10, 1, ['пример', 'примера', 'примеров'], 'Сколько примеров')],
+      ctl: [choice('level', 'mid', [['easy', 'Лёгкие', '8 + 7'], ['mid', 'Средние', '67 − 48'], ['hard', 'Сложные', '19 × 8 + 29']], 'Сложность'), count('n', 3, 1, 10, 1, ['пример', 'примера', 'примеров'], 'Сколько примеров')],
     },
     memory: {
       ask: 'Какое поле запоминать?', hint: '',
       ctl: [choice('size', '3', [['3', '3 × 3', '9 клеток'], ['4', '4 × 4', '16 клеток'], ['5', '5 × 5', '25 клеток']], 'Поле'), count('n', 2, 1, 5, 1, ['раунд', 'раунда', 'раундов'], 'Сколько раундов')],
     },
     pairs: { ask: 'Сколько пар искать?', hint: '', ctl: [count('n', 6, 4, 10, 2, ['пара', 'пары', 'пар'], '', lvl(4, 6, 8))] },
-    phrase: { ask: 'Какую фразу набирать?', hint: '', ctl: [choice('len', 'mid', [['short', 'Короткая', 'Доброе утро, я встаю'], ['mid', 'Средняя', 'Сегодня я встаю с первого звонка'], ['long', 'Длинная', 'Каждое утро начинается с одного решения — встать']])] },
-    tongue: { ask: 'Какая скороговорка?', hint: '', ctl: [choice('level', 'mid', [['easy', 'Простая', 'Шла Саша по шоссе и сосала сушку'], ['mid', 'Средняя', 'Карл у Клары украл кораллы, а Клара у Карла украла кларнет'], ['hard', 'Сложная', 'Сшит колпак не по-колпаковски, вылит колокол не по-колоколовски']])] },
+    phrase: { ask: 'Какую фразу набирать?', hint: 'Каждое утро — новая фраза такой длины.', ctl: [choice('len', 'mid', [['short', 'Короткая', 'Доброе утро, я встаю'], ['mid', 'Средняя', 'Сегодня я встаю с первого звонка'], ['long', 'Длинная', 'Каждое утро начинается с одного решения — встать']])] },
+    tongue: { ask: 'Какая скороговорка?', hint: 'Каждое утро — новая, такой же сложности.', ctl: [choice('level', 'mid', [['easy', 'Простая', 'Шла Саша по шоссе и сосала сушку'], ['mid', 'Средняя', 'Карл у Клары украл кораллы, а Клара у Карла украла кларнет'], ['hard', 'Сложная', 'Сшит колпак не по-колпаковски, вылит колокол не по-колоколовски']])] },
     rhythm: { ask: 'Какой длины ритм?', hint: '', ctl: [count('n', 6, 4, 10, 2, ['удар', 'удара', 'ударов'], '', lvl(4, 6, 8))] },
     quiz: { ask: 'О чём вопросы?', hint: '', ctl: [choice('topic', 'flags', [['flags', 'Флаги', 'Чей это флаг?'], ['capitals', 'Столицы', 'Столица Франции?'], ['mix', 'Вперемешку', 'Всё подряд']], 'Тема'), count('n', 3, 1, 10, 1, ['вопрос', 'вопроса', 'вопросов'], 'Сколько вопросов')] },
   };
@@ -76,7 +90,7 @@
   /** Тёмная карточка «так будет утром»: задания всегда тёмные, поэтому и предпросмотр тёмный в любой теме. */
   const prev = (cls, inner) => `<div class="to-prev ${cls}">${inner}</div>`;
   const suns = (n) => `<span class="tp-suns">${[1, 2, 3].map((i) => `<i class="${i <= n ? 'on' : ''}">${Sonly.mark()}</i>`).join('')}</span>`;
-  const MATH = { easy: ['7 + 5', 1], mid: ['24 × 3', 2], hard: ['148 − 59 + 27', 3] };
+  const MATH = { easy: ['8 + 7', 1], mid: ['67 − 48', 2], hard: ['19 × 8 + 29', 3] };
   /* Образец вопроса викторины для предпросмотра: флаг, вопрос и четыре ответа, верный подсвечен. */
   const QUIZ = {
     flags: ['🇯🇵', 'Чей это флаг?', ['Япония', 'Корея', 'Китай', 'Вьетнам'], ['🇯🇵', '🇧🇷', '🇫🇷'], 'Флаги'],
@@ -125,6 +139,18 @@
     rhythm(o) {
       return prev('tp-rhythm', `${beatTrack(o.n)}<button class="tp-listen" data-act="to-beat:${o.n}">${ic('play', 15, 2.6)}Послушать</button>`) + stepper(C('rhythm', 'n'), o);
     },
+  };
+  /* Штрихкод: свой код sonly — настоящий EAN-13, его можно сохранить и распечатать; утром засчитывается только он.
+     Любой штрихкод — подойдёт любой товар. Картинка рисуется js/barcode.js; пока он не подгрузился — образец полосами. */
+  const BAR = (code) => (Sonly.barcode ? Sonly.barcode.svg(code, { module: 2.4, height: 56 }) : '');
+  VIEW.qr = (o) => {
+    const own = o.code === 'own', code = TO.ownCode();
+    /* Распознаватель ещё не подгружен — карточка пустая, код впишется в неё, как только он загрузится. */
+    if (!Sonly.barcode && typeof document !== 'undefined') TO.needBarcode().then((bc) => { if (bc) document.querySelectorAll('.js-bar:empty').forEach((el) => { el.innerHTML = BAR(TO.ownCode()); }); });
+    const body = own
+      ? `<div class="tp-bar js-bar">${BAR(code)}</div><small>Распечатай и повесь подальше от кровати</small><button class="tp-listen" data-act="to-code">${ic('download', 15, 2.6)}Сохранить картинку</button>`
+      : `<span class="tp-pics n3">${['shampoo', 'book', 'mug'].map((id) => `<img class="emj" src="img/obj/${id}.webp" alt="" draggable="false">`).join('')}</span><small>Подойдёт штрихкод любого товара</small>`;
+    return prev('tp-code', body) + ctlOf('qr').map((c) => ctl(c, o)).join('');
   };
   /* Шаги и встряска: телефон считает сам — показываем, что делать. */
   VIEW.steps = (o) => prev('tp-move', `<span class="tp-emo walk">${emo('🚶')}</span><small>Шагай с телефоном в руке</small>`) + stepper(ctlOf('steps')[0], o);
@@ -181,6 +207,30 @@
     },
     /** Текст выбранного варианта: сама фраза или скороговорка. */
     sample(id, key, val) { const c = ctlOf(id).find((x) => x.key === key); return ((c && c.opts.find((x) => x[0] === val)) || [0, 0, ''])[2]; },
+    /** Текст на это утро: любой из набора уровня (без пары пробелов и неразрывных — их ставит только меню), иначе — пример из меню. */
+    /** Свой код sonly: 12 цифр, создаётся один раз и хранится на телефоне (в начале 2 — внутренний код, не совпадёт с товаром). */
+    ownCode() {
+      const KEY = 'sonly-own-code';
+      try {
+        let c = localStorage.getItem(KEY);
+        if (!/^\d{12}$/.test(c || '')) { c = '27665' + String(Math.floor(Math.random() * 1e7)).padStart(7, '0'); localStorage.setItem(KEY, c); }
+        return c;
+      } catch (e) { return '276659000417'; }
+    },
+    /** Подгружает распознаватель штрихкодов (js/barcode.js) один раз; меню перерисуется само, когда он готов. */
+    needBarcode() {
+      if (typeof document === 'undefined') return Promise.resolve(null);
+      if (Sonly.barcode) return Promise.resolve(Sonly.barcode);
+      if (!TO._bc) TO._bc = new Promise((ok) => { const el = document.createElement('script'); el.src = 'js/barcode.js'; el.onload = () => ok(Sonly.barcode || null); el.onerror = () => ok(null); document.head.appendChild(el); });
+      return TO._bc;
+    },
+    pick(id, val, rnd = Math.random) {
+      const list = BANK[id] && BANK[id][val];
+      if (!list || !list.length) return '';
+      /* ?example=1 — всегда пример из меню (он в наборе первый): проверки речи и снимки состояний. */
+      if (typeof location !== 'undefined' && /[?&]example=1/.test(location.search)) return list[0];
+      return list[Math.floor(rnd() * list.length)];
+    },
     /** Короткая строка о выборе: «24 предмета», «средние · 3 примера». */
     summary(id, o) {
       return ctlOf(id).map((c) => {
@@ -201,6 +251,27 @@
         /* Читаем скороговорку вслух голосом телефона, чтобы было понятно, как её говорить. */
         const text = TO.sample('tongue', 'level', arg);
         if (canSpeak() && text) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'ru-RU'; u.rate = 0.95; speechSynthesis.speak(u); }
+        return 'keep';
+      }
+      if (act === 'to-code') {
+        /* Картинка своего кода для печати: SVG → PNG крупно, белый фон, скачивается файлом. */
+        TO.needBarcode().then((bc) => {
+          if (!bc || typeof document === 'undefined') return;
+          const svg = bc.svg(TO.ownCode(), { module: 8, height: 190 }), img = new Image();
+          img.onload = () => {
+            const cv = document.createElement('canvas'), pad = 60;
+            cv.width = img.width + pad * 2; cv.height = img.height + pad * 2 + 70;
+            const g = cv.getContext('2d');
+            g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
+            g.drawImage(img, pad, pad);
+            g.fillStyle = '#0D0D0F'; g.font = '600 34px Inter, system-ui, sans-serif'; g.textAlign = 'center';
+            g.fillText('sonly — отсканируй утром', cv.width / 2, cv.height - 40);
+            const a = document.createElement('a');
+            a.href = cv.toDataURL('image/png'); a.download = 'sonly-kod.png';
+            document.body.appendChild(a); a.click(); a.remove();
+          };
+          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+        });
         return 'keep';
       }
       if (act === 'to-beat') {

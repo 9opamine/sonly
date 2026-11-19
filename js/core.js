@@ -55,7 +55,7 @@ window.Sonly = (() => {
     { id: 'bed', cat: 'camera', name: 'Заправь кровать', desc: 'Сними заправленную кровать', lu: 'bed-double', ms: 'bed' },
     { id: 'sky', cat: 'camera', name: 'Утреннее небо', desc: 'Сними небо за окном', lu: 'cloud-sun', ms: 'partly_cloudy_day' },
     { id: 'pills', cat: 'camera', name: 'Витамины', desc: 'Сними свои витамины', lu: 'pill', ms: 'pill' },
-    { id: 'qr', cat: 'camera', name: 'QR-код', desc: 'Отсканируй код вдали от кровати', lu: 'qr-code', ms: 'qr_code_scanner' },
+    { id: 'qr', cat: 'camera', name: 'Штрихкод', desc: 'Отсканируй штрихкод вдали от кровати', lu: 'qr-code', ms: 'qr_code_scanner' },
     { id: 'squat', cat: 'move', name: 'Приседания', desc: 'Камера считает повторы', lu: 'activity', ms: 'sports_gymnastics' },
     { id: 'pushup', cat: 'move', name: 'Отжимания', desc: 'Камера считает повторы', lu: 'dumbbell', ms: 'fitness_center' },
     { id: 'jump', cat: 'move', name: 'Прыжки', desc: 'Камера считает прыжки', lu: 'chevrons-up', ms: 'keyboard_double_arrow_up' },

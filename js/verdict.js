@@ -17,24 +17,22 @@
   /* Предмет на фоне: хватит LOW, если он в LEAD раз вероятнее следующего предмета. */
   const LOW = 0.25, LEAD = 1.8;
 
-  /** Вероятности классов: косинус снимка с каждым описанием, softmax с масштабом CLIP. */
-  function probs(emb, E, labels, dim, scale) {
+  /** Вероятности классов: косинус снимка с каждым вектором класса, softmax с масштабом CLIP. bias — сдвиги дообученной головы (tools/clip-train.cjs). */
+  function probs(emb, E, labels, dim, scale, bias) {
     let len = 0;
     for (let i = 0; i < dim; i++) len += emb[i] * emb[i];
     len = Math.sqrt(len) || 1;
-    const logit = labels.map((_, li) => { let s = 0; for (let i = 0; i < dim; i++) s += emb[i] * E[li * dim + i]; return (s / len) * scale; });
+    const logit = labels.map((_, li) => { let s = 0; for (let i = 0; i < dim; i++) s += emb[i] * E[li * dim + i]; return (s / len) * scale + (bias ? bias[li] : 0); });
     const mx = Math.max(...logit), ex = logit.map((x) => Math.exp(x - mx)), sum = ex.reduce((a, b) => a + b, 0);
     const out = {};
     labels.forEach((l, i) => { out[l] = ex[i] / sum; });
     return out;
   }
   const ranked = (p) => Object.keys(p).sort((a, b) => p[b] - p[a]);
-  /** Что видно на снимке, если это не то, что просили: «предметный» класс, только если ИИ в нём правда уверен —
-      среди двух первых и не меньше 0,3. Иначе на белую стену было бы «похоже на небо». */
-  const seen = (p, not) => ranked(p).slice(0, 2).find((k) => k !== not && !GENERIC.includes(k) && p[k] >= 0.3) || null;
 
   /**
-   * Засчитано ли задание. task — id предмета или фото-задания. Возвращает { ok, why, seen, p }:
+   * Засчитано ли задание. task — id предмета или фото-задания. Возвращает { ok, why, seen, p }
+   * (seen — только засчитанный предмет: что на снимке вместо нужного, мы не угадываем).
    * why — 'screen' (снят экран или бумага), 'unmade' (кровать не заправлена), 'other' (на снимке другое), 'unsure' (не уверены),
    * 'dark' (темно — на снимке почти ничего не видно). o.lum — средняя яркость снимка 0…1, если известна.
    */
@@ -43,7 +41,7 @@
     const res = (ok, why) => {
       /* Не засчитано, а снимок почти чёрный или ИИ видит в основном темноту — просим свет, а не «не вижу». */
       if (!ok && why !== 'screen' && (top === 'dark' || (o.lum != null && o.lum < 0.07))) why = 'dark';
-      return { ok, why: ok ? '' : why, seen: ok ? want : why === 'dark' ? null : seen(p, want), p: p[want] || 0 };
+      return { ok, why: ok ? '' : why, seen: ok ? want : null, p: p[want] || 0 };
     };
     if ((top === 'screen' && task !== 'tv') || top === 'paper') return res(false, 'screen');
     if (task === 'bed') {
@@ -56,7 +54,9 @@
     const things = order.filter((k) => !GENERIC.includes(k));
     const first = things[0], second = p[things[1]] || 0;
     if ((top === want && p[want] >= MIN) || (first === want && p[want] >= LOW && p[want] >= second * LEAD)) return res(true);
-    return res(false, p[want] > 0.12 ? 'unsure' : 'other');
+    /* «Не разглядеть» — только если нужный предмет почти выиграл (второй и не меньше 0,2): тогда есть смысл снять ближе.
+       Иначе на снимке просто другое. */
+    return res(false, order.slice(0, 2).includes(want) && p[want] >= 0.2 ? 'unsure' : 'other');
   }
 
   return { OBJECTS, TASKS, GENERIC, MIN, probs, check, ranked };

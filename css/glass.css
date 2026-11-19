@@ -31,6 +31,29 @@
 .ap-tabs-pill button{transition:color .3s}
 .ap-tabs-pill .ui-on{transition:opacity .3s}
 .ap-tabs-pill button:not(.on) .ui-on{opacity:0}
+/* Значки вкладок как в iOS: в покое контур, у выбранной — заливка; контур уходит, заливка проявляется. */
+.ap-tabs-pill .ui-off{transition:opacity .22s}
+.ap-tabs-pill button.on .ui-off{opacity:0}
+.ap-tabs-pill .ui-i{overflow:visible;transform-origin:50% 60%;transition:transform .14s cubic-bezier(.3,.7,.4,1)}
+/* Нажатие: значок чуть утапливается под пальцем — сразу, ещё до перехода. */
+.ap-tabs-pill button:active .ui-i{transform:scale(.84)}
+/* Выбор вкладки: у каждой своё движение — дом подпрыгивает, солнце встаёт, столбики растут, шестерёнка проворачивается. */
+.ap-tabs-pill button.on .ui-home{animation:ui-pop .5s cubic-bezier(.3,1.6,.5,1)}
+.ap-tabs-pill button.on .ui-sun{animation:ui-rise .55s cubic-bezier(.2,1.3,.4,1)}
+.ap-tabs-pill .ui-rays path{stroke-dasharray:3;stroke-dashoffset:0}
+.ap-tabs-pill button.on .ui-rays{animation:ui-rays .5s .12s ease-out both}
+.ap-tabs-pill .ui-bar{transform-box:fill-box;transform-origin:50% 100%}
+.ap-tabs-pill button.on .ui-bar{animation:ui-grow .5s cubic-bezier(.25,1.4,.5,1) both}
+.ap-tabs-pill button.on .ui-bar.b1{animation-delay:.06s}
+.ap-tabs-pill button.on .ui-bar.b2{animation-delay:.12s}
+.ap-tabs-pill .ui-gear{transform-box:view-box;transform-origin:50% 50%}
+.ap-tabs-pill button.on .ui-gear{animation:ui-turn .6s cubic-bezier(.3,1.25,.45,1)}
+@keyframes ui-pop{0%{transform:scale(.8)}55%{transform:scale(1.14)}100%{transform:scale(1)}}
+@keyframes ui-rise{0%{transform:translateY(5px);opacity:.3}100%{transform:none;opacity:1}}
+@keyframes ui-rays{0%{opacity:0;transform:translateY(2px)}100%{opacity:1;transform:none}}
+@keyframes ui-grow{0%{transform:scaleY(.25)}100%{transform:scaleY(1)}}
+@keyframes ui-turn{0%{transform:rotate(-45deg)}100%{transform:rotate(0)}}
+@media (prefers-reduced-motion:reduce){.ap-tabs-pill .ui-i,.ap-tabs-pill .ui-i *{animation:none!important;transition:opacity .2s!important}}
 .phone.instant .ap-tab-ind,.phone.instant .ap-lens{transition:none}
 
 /* Панель вкладок плотнее остального стекла: под ней текст и цветные значки, они должны читаться как мягкий отсвет. */

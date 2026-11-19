@@ -196,15 +196,15 @@
         <h3>Пробуждение</h3>
         <div class="ap-card ap-list">
           <button class="ap-row" data-act="ed-task"><i class="ap-row-i tb cat-${t.cat}">${tic(t, 19)}</i><span>Задание</span><em>${t.name}</em>${chev()}</button>
-          ${t.id === 'random' ? row(ic('shuffle', 17, 2.1), 'Набор заданий', `${poolOf(e).length} из ${TASKS.length}`, 'ed-pool') : TO.has(t.id) ? row(ic('sliders-horizontal', 17, 2.1), 'Настройка', TO.summary(t.id, TO.get(e, t.id)), 'ed-opts') : ''}
-          ${row(ic('music-2', 17, 2.1), 'Звук', e.sound, 'ed-sound')}
+          ${t.id === 'random' ? row(Sonly.si('shuffle'), 'Набор заданий', `${poolOf(e).length} из ${TASKS.length}`, 'ed-pool') : TO.has(t.id) ? row(Sonly.si('sliders'), 'Настройка', TO.summary(t.id, TO.get(e, t.id)), 'ed-opts') : ''}
+          ${row(Sonly.si('music'), 'Звук', e.sound, 'ed-sound')}
         </div>
         <h3>Правила</h3>
         <div class="ap-card ap-list">
-          <div class="ap-row"><i class="ap-row-i">${ic('alarm-clock-off', 17, 2.1)}</i><span>Отложить</span><em>${ic('lock', 13, 2.5)}Нельзя</em></div>
-          ${row(ic('eye', 17, 2.1), 'Проверка подъёма', e.check ? `${e.check}\u00a0мин` : 'выключена', 'ed-check')}
-          <div class="ap-row"><i class="ap-row-i">${ic('volume-2', 17, 2.1)}</i><span>Громкость нарастает</span><button class="ap-tg sm${e.rise ? ' on' : ''}" data-act="ed-flag:rise" role="switch" aria-checked="${e.rise}" aria-label="Громкость нарастает"></button></div>
-          <div class="ap-row"><i class="ap-row-i">${ic('vibrate', 17, 2.1)}</i><span>Вибрация</span><button class="ap-tg sm${e.vibro ? ' on' : ''}" data-act="ed-flag:vibro" role="switch" aria-checked="${e.vibro}" aria-label="Вибрация"></button></div>
+          <div class="ap-row"><i class="ap-row-i">${Sonly.si('snooze')}</i><span>Отложить</span><em>${ic('lock', 13, 2.5)}Нельзя</em></div>
+          ${row(Sonly.si('eye'), 'Проверка подъёма', e.check ? `${e.check}\u00a0мин` : 'выключена', 'ed-check')}
+          <div class="ap-row"><i class="ap-row-i">${Sonly.si('volume')}</i><span>Громкость нарастает</span><button class="ap-tg sm${e.rise ? ' on' : ''}" data-act="ed-flag:rise" role="switch" aria-checked="${e.rise}" aria-label="Громкость нарастает"></button></div>
+          <div class="ap-row"><i class="ap-row-i">${Sonly.si('vibrate')}</i><span>Вибрация</span><button class="ap-tg sm${e.vibro ? ' on' : ''}" data-act="ed-flag:vibro" role="switch" aria-checked="${e.vibro}" aria-label="Вибрация"></button></div>
         </div>
         <button class="ap-card ap-try" data-act="ed-test">${ic('play', 17, 2.6)}<span>Проверить звонок</span><em>как утром</em></button>
       </div>
@@ -259,7 +259,7 @@
     const e = flow.state._ed;
     flow.sheet(`${back('Проверка подъёма')}
       <div class="ap-sh-body scroll"><div class="ap-setup-h"><b>Не дать уснуть снова</b><p>Спросим «Ты не спишь?» после задания.</p></div>
-        <div class="ap-card ap-list">${CHECKS.map(([n, name, note]) => `<button class="ap-row ap-snd${note ? ' tall' : ''}${(e.check || 0) === n ? ' on' : ''}" data-act="ed-chk:${n}"><i class="ap-row-i">${ic(n ? 'eye' : 'eye-off', 17, 2.1)}</i><span>${name}${note ? `<small>${note}</small>` : ''}</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></button>`).join('')}</div></div>`, `ap-sheet ${enter}`);
+        <div class="ap-card ap-list">${CHECKS.map(([n, name, note]) => `<button class="ap-row ap-snd${note ? ' tall' : ''}${(e.check || 0) === n ? ' on' : ''}" data-act="ed-chk:${n}"><i class="ap-row-i">${Sonly.si(n ? 'eye' : 'eyeoff')}</i><span>${name}${note ? `<small>${note}</small>` : ''}</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></button>`).join('')}</div></div>`, `ap-sheet ${enter}`);
   }
 
   /** Звуки по группам. Звуки-награды открываются, когда серия доходит до нужной длины. */
@@ -267,8 +267,8 @@
     const rw = Sonly.morning ? Sonly.morning.rewards(s) : [];
     const groups = SOUNDS.map(([g, list]) => [g, list.map((n) => ({ name: n, open: true }))]).concat(rw.length ? [['Награды за серию', rw]] : []);
     return groups.map(([g, list]) => `<h3>${g}</h3><div class="ap-card ap-list">${list.map((x) => (x.open
-      ? `<button class="ap-row ap-snd${cur === x.name ? ' on' : ''}" data-act="${act}:${x.name}"><i class="ap-row-i">${ic('audio-lines', 17, 2.1)}</i><span>${x.name}</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></button>`
-      : `<div class="ap-row ap-snd locked"><i class="ap-row-i">${ic('lock', 16, 2.2)}</i><span>${x.name}</span><em>серия ${x.n}</em></div>`)).join('')}</div>`).join('');
+      ? `<button class="ap-row ap-snd${cur === x.name ? ' on' : ''}" data-act="${act}:${x.name}"><i class="ap-row-i">${Sonly.si('wave')}</i><span>${x.name}</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></button>`
+      : `<div class="ap-row ap-snd locked"><i class="ap-row-i">${Sonly.si('lock')}</i><span>${x.name}</span><em>серия ${x.n}</em></div>`)).join('')}</div>`).join('');
   }
   function soundPicker(flow, enter = 'push') {
     const s = flow.state, e = s._ed, top = keepTop(flow, enter);
@@ -322,11 +322,11 @@
           <button class="ap-card ap-gift" data-act="page:share" data-in style="--i:1"><i>${Sonly.mark()}</i><span><b>${Sonly.partner.title}</b><small>${Sonly.partner.sub}</small></span>${chev()}</button>
           <button class="ap-card ap-sub" data-act="page:sub" data-in style="--i:2"><i>${ic('check', 20, 3)}</i><span><b>Подписка активна</b><small>Год · продление ${renew()}</small></span>${chev()}</button>
           <h3>Будильник</h3>
-          <div class="ap-card ap-list">${row(ic('volume-2', 17, 2.2), 'Громкость', `${s.volume} %`, 'page:volume', '#F0453A')}${row(ic('music-2', 17, 2.2), 'Звук по умолчанию', s.sndDef, 'page:sound', '#E84A9C')}${row(ic('shield-check', 17, 2.2), 'Готовность к звонку', '', 'page:help', '#12A871')}</div>
-          ${Sonly.lock ? `<h3>Фокус</h3><div class="ap-card ap-list"><button class="ap-row tall" data-act="page:lock"><i class="ap-row-i c" style="--c:${Sonly.lock.COLORS.lock}">${ic('lock', 17, 2.2)}</i><span>Блокировка приложений<small>${Sonly.lock.status(s)}</small></span>${chev()}</button></div>` : ''}
+          <div class="ap-card ap-list">${row(Sonly.si('volume'), 'Громкость', `${s.volume} %`, 'page:volume', '#FF3B30')}${row(Sonly.si('music'), 'Звук по умолчанию', s.sndDef, 'page:sound', '#FF2D55')}${row(Sonly.si('ready'), 'Готовность к звонку', '', 'page:help', '#34C759')}</div>
+          ${Sonly.lock ? `<h3>Фокус</h3><div class="ap-card ap-list"><button class="ap-row tall" data-act="page:lock"><i class="ap-row-i c" style="--c:${Sonly.lock.COLORS.lock}">${Sonly.si('lock')}</i><span>Блокировка приложений<small>${Sonly.lock.status(s)}</small></span>${chev()}</button></div>` : ''}
           <h3>Оформление</h3>
-          <div class="ap-card ap-list"><div class="ap-row col"><div><i class="ap-row-i c" style="--c:#6B5CE6">${ic('contrast', 17, 2.2)}</i><span>Тема</span></div>${seg('theme', s.theme, [['system', 'Как в системе'], ['dark', 'Тёмная'], ['light', 'Светлая']])}</div>
-            ${row(ic('globe', 17, 2.2), 'Язык', 'Русский', 'page:lang', '#2F7BF6')}${row(ic('bell', 17, 2.2), 'Уведомления', `${1 + (s.nEve ? 1 : 0) + (s.nWeek ? 1 : 0)} из 3`, 'page:notify', '#F0453A')}</div>
+          <div class="ap-card ap-list"><div class="ap-row col"><div><i class="ap-row-i c" style="--c:#AF52DE">${Sonly.si('theme')}</i><span>Тема</span></div>${seg('theme', s.theme, [['system', 'Как в системе'], ['dark', 'Тёмная'], ['light', 'Светлая']])}</div>
+            ${row(Sonly.si('globe'), 'Язык', 'Русский', 'page:lang', '#0A84FF')}${row(Sonly.si('bell'), 'Уведомления', `${1 + (s.nEve ? 1 : 0) + (s.nWeek ? 1 : 0)} из 3`, 'page:notify', '#FF3B30')}</div>
           <h3>Виджеты</h3>
           <div class="ap-wid">
             <figure><div class="wd wd-streak${st.streak ? '' : ' cold'}">${FLAME}<b>${st.streak}</b><small>${pl(st.streak, 'день', 'дня', 'дней')} подряд</small></div><figcaption>Серия</figcaption></figure>
@@ -334,11 +334,11 @@
           </div>
           <button class="ap-link" data-act="page:widgets">Как добавить виджет${ic('chevron-right', 14, 2.6)}</button>
           <h3>Подписка</h3>
-          <div class="ap-card ap-list">${row(ic('credit-card', 17, 2.2), 'Управлять подпиской', '', 'page:sub', '#12A871')}${row(ic('rotate-ccw', 17, 2.2), 'Восстановить покупки', '', 'restore-app', '#0E9F9A')}${row(ic('ticket', 17, 2.2), 'Ввести промокод', s.promo === 'ok' ? '−25 %' : '', 'page:promo', '#D9A300')}</div>
+          <div class="ap-card ap-list">${row(Sonly.si('card'), 'Управлять подпиской', '', 'page:sub', '#34C759')}${row(Sonly.si('restore'), 'Восстановить покупки', '', 'restore-app', '#0A84FF')}${row(Sonly.si('ticket'), 'Ввести промокод', s.promo === 'ok' ? '−25 %' : '', 'page:promo', '#FF9500')}</div>
           <h3>Поддержка</h3>
-          <div class="ap-card ap-list">${row(ic('message-circle', 17, 2.2), 'Написать в поддержку', '', 'page:msg:support', '#2F7BF6')}${row(ic('lightbulb', 17, 2.2), 'Предложить идею', '', 'page:msg:idea', '#D9A300')}${row(ic('bug', 17, 2.2), 'Сообщить об ошибке', '', 'page:msg:bug', '#E5484D')}</div>
+          <div class="ap-card ap-list">${row(Sonly.si('message'), 'Написать в поддержку', '', 'page:msg:support', '#0A84FF')}${row(Sonly.si('idea'), 'Предложить идею', '', 'page:msg:idea', '#FFAA00')}${row(Sonly.si('bug'), 'Сообщить об ошибке', '', 'page:msg:bug', '#FF3B30')}</div>
           <h3>Документы</h3>
-          <div class="ap-card ap-list">${row(ic('file-text', 17, 2.2), 'Условия использования', '', 'page:doc:terms', '#7A7A85')}${row(ic('shield', 17, 2.2), 'Конфиденциальность', '', 'page:doc:privacy', '#7A7A85')}</div>
+          <div class="ap-card ap-list">${row(Sonly.si('doc'), 'Условия использования', '', 'page:doc:terms', '#8E8E93')}${row(Sonly.si('privacy'), 'Конфиденциальность', '', 'page:doc:privacy', '#8E8E93')}</div>
           <p class="ap-ver"><span>Сделано с ${Sonly.mark()} для ранних пташек</span>sonly 1.0 · сборка 1</p>
         </div>`;
       },
@@ -361,16 +361,16 @@
     switch (id) {
       case 'volume': return ['Громкость', `<div class="ap-card ap-vol"><div class="ap-vol-n"><b class="js-vn">${s.volume}</b><u>%</u></div>
           <div class="ap-vol-r">${ic('volume-1', 20, 2)}<input type="range" class="js-vol" min="10" max="100" step="5" value="${s.volume}" aria-label="Громкость будильника" style="--p:${((s.volume - 10) / 90) * 100}%">${ic('volume-2', 20, 2)}</div></div>
-        <div class="ap-card ap-list gap">${tgRow(ic('trending-up', 17, 2.1), 'Нарастание', 'За 10 секунд', s.riseDef, 'set-flag:riseDef')}${tgRow(ic('bell-ring', 17, 2.1), 'В беззвучном режиме', '', true, '')}</div>`,
+        <div class="ap-card ap-list gap">${tgRow(Sonly.si('trend'), 'Нарастание', 'За 10 секунд', s.riseDef, 'set-flag:riseDef')}${tgRow(Sonly.si('ring'), 'В беззвучном режиме', '', true, '')}</div>`,
         '<button class="ap-btn" data-act="vol-test">Проверить звук</button>'];
       case 'sound': return ['Звук по умолчанию', `${soundRows(s, s.sndDef, 'set-snd')}`, ''];
       case 'help': return ['Готовность к звонку', `<div class="ap-card ap-list">${check('ok', 'Уведомления включены', '')}${check(s.volume < 40 ? 'warn' : 'ok', `Громкость ${s.volume} %`, s.volume < 40 ? 'Тихо — можно проспать' : '')}${check('ok', 'Беззвучный режим не мешает', '')}${Sonly.lock && Sonly.lock.ready(s) ? check('ok', 'Приложения закроются до подъёма', '') : ''}${check('info', 'Не смахивай приложение', '')}</div>`,
         '<button class="ap-btn" data-act="ring-test">Проверить звонок</button>'];
-      case 'lang': return ['Язык', `<div class="ap-card ap-list"><div class="ap-row ap-snd on"><i class="ap-row-i">${ic('globe', 17, 2.1)}</i><span>Русский</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></div><div class="ap-row"><i class="ap-row-i">${ic('globe', 17, 2.1)}</i><span>English</span><em>скоро</em></div></div>`, ''];
-      case 'notify': return ['Уведомления', `<div class="ap-card ap-list">${tgRow(ic('alarm-clock', 17, 2.1), 'Звонок будильника', '', true, '')}${tgRow(ic('moon', 17, 2.1), 'Напоминание вечером', 'В 22:00', s.nEve, 'set-flag:nEve')}${tgRow(ic('calendar-check', 17, 2.1), 'Итоги недели', 'По воскресеньям', s.nWeek, 'set-flag:nWeek')}</div>`, ''];
+      case 'lang': return ['Язык', `<div class="ap-card ap-list"><div class="ap-row ap-snd on"><i class="ap-row-i">${Sonly.si('globe')}</i><span>Русский</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></div><div class="ap-row"><i class="ap-row-i">${ic('globe', 17, 2.1)}</i><span>English</span><em>скоро</em></div></div>`, ''];
+      case 'notify': return ['Уведомления', `<div class="ap-card ap-list">${tgRow(Sonly.si('alarm'), 'Звонок будильника', '', true, '')}${tgRow(Sonly.si('moon'), 'Напоминание вечером', 'В 22:00', s.nEve, 'set-flag:nEve')}${tgRow(Sonly.si('calendar'), 'Итоги недели', 'По воскресеньям', s.nWeek, 'set-flag:nWeek')}</div>`, ''];
       case 'sub': return ['Подписка', `<div class="ap-card ap-plan"><span>${ic('check', 13, 3.4)}Активна</span><b>Подписка на год</b><div><u>39,99 €</u> в год</div><small>Следующее списание — ${renew()}</small></div>
         <h3>Что входит</h3><div class="ap-card ap-list">${check('ok', 'Нельзя отложить', '')}${check('ok', `Все ${TASKS.length} заданий`, '')}${check('ok', 'Серия и статистика', '')}</div>
-        <div class="ap-card ap-list gap">${row(ic('credit-card', 17, 2.2), 'Управлять в App Store', '', 'soon:Управление подпиской', '#12A871')}${row(ic('rotate-ccw', 17, 2.2), 'Восстановить покупки', '', 'restore-app', '#0E9F9A')}</div>`, ''];
+        <div class="ap-card ap-list gap">${row(Sonly.si('card'), 'Управлять в App Store', '', 'soon:Управление подпиской', '#34C759')}${row(Sonly.si('restore'), 'Восстановить покупки', '', 'restore-app', '#0A84FF')}</div>`, ''];
       case 'promo': return ['Промокод', `<p class="ap-note first">Скидка — со следующего продления.</p>
         <div class="ap-coupon${s.promo === 'ok' ? ' ok' : s.promo ? ' err' : ''}"><i>${ic('ticket', 21, 1.9)}</i><input class="js-promo" maxlength="7" value="${esc(s.promoCode || '')}" placeholder="Промокод" aria-label="Промокод" autocomplete="off" spellcheck="false"${s.promo === 'ok' ? ' disabled' : ''}>${s.promo === 'ok' ? `<em>${ic('check', 18, 3)}</em>` : '<button data-act="promo-go">Применить</button>'}</div>
         <p class="ap-coupon-msg ${s.promo === 'ok' ? 'ok' : s.promo ? 'bad' : ''}">${PROMO_MSG[s.promo] || ''}</p>`, ''];
