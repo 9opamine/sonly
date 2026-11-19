@@ -337,7 +337,8 @@
         <div class="tk-say${ph === 'ok' ? ' ok' : ''}">${sayGroups(shown, (w, i) => `<span class="tk-w${k.got[i] ? ' got' : ph === 'retry' && k.tried ? ' miss' : ''}" data-i="${i}">${esc(w).replace(/-/g, '‑')}</span>`)}</div>
         <p class="tk-heard js-heard">${k.heard ? `«${esc(k.heard.length > 44 ? '…' + k.heard.slice(-43) : k.heard)}»` : ' '}</p>
         <button class="tk-mic${rec ? ' rec' : ''}${ph === 'ok' ? ' ok' : ''}" data-act="mic" aria-label="${rec ? 'Остановить' : 'Говорить'}"${ph === 'ok' ? ' disabled' : ''}><i class="tk-micw"></i><i class="tk-micw w2"></i>${ic(ph === 'ok' ? 'check' : rec ? 'square' : 'mic', rec ? 26 : 34, 2.4)}</button>
-        <p class="tk-st js-st${['denied', 'nomic', 'network', 'none', 'error', 'silence'].includes(ph) ? ' warn' : ''}">${VOICE[ph] || VOICE.idle}</p></div>`;
+        <p class="tk-st js-st${['denied', 'nomic', 'network', 'none', 'error', 'silence'].includes(ph) ? ' warn' : ''}">${VOICE[ph] || VOICE.idle}</p>
+        ${(k.deaf || 0) >= 2 && ph !== 'listen' && ph !== 'ok' ? `<button class="tk-again" data-act="say-type">${ic('keyboard', 16, 2.3)}Не слышит — набрать текстом</button>` : ''}</div>`;
     },
     /* Угадай мелодию: сначала бит — удары в такт нотам, без самих нот, — потом выбор из четырёх. Верный — играет сама мелодия. */
     rhythm: (k) => {
@@ -384,7 +385,11 @@
       onEnd(reason) {
         k.eng = null;
         if (k.phase !== 'listen') return;
-        k.phase = reason === 'end' || reason === 'stopped' ? 'retry' : reason;
+        /* Не услышано ни слова: «Не слышно», а не «Почти». Два раза подряд — распознавание у человека не работает,
+           и под микрофоном появляется «Набрать текстом»: иначе будильник было бы не выключить. */
+        const deaf = !k.heard && (reason === 'end' || reason === 'stopped');
+        k.deaf = deaf ? (k.deaf || 0) + 1 : 0;
+        k.phase = deaf ? 'silence' : reason === 'end' || reason === 'stopped' ? 'retry' : reason;
         if (!VOICE[k.phase]) k.phase = 'error';
         flow.rerender();
       },
@@ -990,6 +995,8 @@
           k.phase = 'scan'; sound.tick(1800); flow.rerender();
         } return true;
         case 'mic': micTap(flow, k); return true;
+        /* Распознавание не слышит: та же скороговорка, но набором — с той же строгой проверкой, что у «Фразы». */
+        case 'say-type': if (k.eng) k.eng.stop(); k.eng = null; k.kind = 'phrase'; k.val = ''; k.fin = false; flow.rerender(); return true;
         case 'tn-replay': if (k.phase === 'pick') { k.phase = 'play'; flow.rerender(); } return true;
         /* Ответ можно дать и пока идёт бит. Неверный — гаснет и выбывает: в худшем случае останется один, верный. */
         case 'tn': {
