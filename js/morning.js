@@ -2,7 +2,7 @@
    открытки утра с пейзажами, подарки за серию (новые пейзажи для открыток) и группа подъёма с друзьями. */
 (() => {
   'use strict';
-  const { ic, esc, TASKS, appKit: K } = Sonly;
+  const { ic, esc, pad, TASKS, appKit: K } = Sonly;
   const si = (id, size) => Sonly.si(id, size);
   const app = Sonly.concepts.app;
   const doy = (d = new Date()) => Math.round((K.day0(d) - new Date(d.getFullYear(), 0, 0)) / 864e5);
@@ -279,7 +279,7 @@
     const [name, lvl, draw] = FIND[id], g = `<g class="mo-find f-${id}">${draw(r, t)}</g>`, front = FRONT.includes(id);
     return { id, name, lvl, back: front ? '' : g, front: front ? g : '' };
   }
-  const findNote = (f) => (f.lvl === 2 ? 'очень редкая — примерно раз в месяц' : 'редкая — раз в одну-две недели');
+  const findNote = (f) => (f.lvl === 2 ? 'Очень редкая находка — примерно раз в месяц' : 'Редкая находка — раз в одну-две недели');
   /** Солнце над горизонтом: чем раньше встал, тем ниже оно стоит. Пейзаж лежит поверх — солнце встаёт из-за него. */
   const sunSvg = (t) => (t.k.sun ? `<g class="mo-sun"><circle cx="${f1(t.x)}" cy="${f1(130 - t.k.sun * 34)}" r="17" fill="#FFE9A6" opacity=".28"/><circle cx="${f1(t.x)}" cy="${f1(130 - t.k.sun * 34)}" r="7.5" fill="#FFF3C4"/></g>` : '');
   const landSvg = (x, land, t, f = findOf(x, land, t)) => `<svg class="mo-land" viewBox="0 0 120 160" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${sunSvg(t)}${f ? f.back : ''}${LAND[land](rnd(x.d.getTime() + 3), t)}${f ? f.front : ''}</svg>`;
@@ -414,7 +414,7 @@
       <div class="ap-card ap-list">
         <div class="ap-row tall"><i class="ap-row-i c" style="--c:#FF9500">${si('rise', 20)}</i><span>Подъём в ${K.fmtMin(x.wake)}<small>${vs}</small></span></div>
         ${tk ? `<div class="ap-row tall"><i class="ap-row-i c tb cat-${tk.cat}">${Sonly.ti(tk.id, 19)}</i><span>${tk.name}<small>${x.secs ? `выполнено за ${x.secs} с` : 'выполнено'}</small></span></div>` : ''}
-        <div class="ap-row tall"><i class="ap-row-i c" style="--c:#AF52DE">${si('cards', 20)}</i><span>Пейзаж «${sc[1]}»<small>${sc[2] ? `открыт за ${sc[2]} ${utr(sc[2])} подряд` : 'есть сразу'} · № ${i + 1} из ${h.length}</small></span></div>${f && f.lvl ? `<div class="ap-row tall"><i class="ap-row-i c" style="--c:#FFB020">${ic('sparkles', 19, 2.3)}</i><span>${f.name}<small>Находка: ${findNote(f)}</small></span></div>` : ''}</div>
+        <div class="ap-row tall"><i class="ap-row-i c" style="--c:#AF52DE">${si('cards', 20)}</i><span>Пейзаж «${sc[1]}»<small>${sc[2] ? `открыт за ${sc[2]} ${utr(sc[2])} подряд` : 'есть сразу'} · № ${i + 1} из ${h.length}</small></span></div>${f && f.lvl ? `<div class="ap-row tall"><i class="ap-row-i c" style="--c:#FFB020">${ic('sparkles', 19, 2.3)}</i><span>${f.name}<small>${findNote(f)}</small></span></div>` : ''}</div>
       <p class="ap-note mo-msg">${s._copied || ''}</p></div>
       <div class="ap-sh-foot mo-two"><button class="ap-btn ghost" data-act="mo-save:${t}">${si('save', 19)}Сохранить</button><button class="ap-btn" data-act="mo-share:${t}">${si('share', 19)}Поделиться</button></div>`, `ap-sheet ${enter}`);
   }
@@ -559,7 +559,8 @@
             if (!url) { msg('Не получилось собрать картинку'); return; }
             const a = document.createElement('a');
             a.href = url;
-            a.download = `sonly-${x.d.toISOString().slice(0, 10)}.png`;
+            /* Дата в имени — местная: toISOString дал бы вчерашний день (UTC) для утра до полуночи по Гринвичу. */
+            a.download = `sonly-${x.d.getFullYear()}-${pad(x.d.getMonth() + 1)}-${pad(x.d.getDate())}.png`;
             document.body.appendChild(a);
             a.click();
             a.remove();
