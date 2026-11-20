@@ -864,7 +864,6 @@
         const note = r.test ? (r.direct ? 'Пробный запуск — в альбом не идёт' : 'Проверка — в серию не идёт') : r.a.check ? `Проверим через ${r.a.check} мин` : '';
         return `<div class="wk${r.morph ? ' morph' : ''}">${Sonly.morning ? Sonly.morning.hero(c.s, r) : '<div class="wk-news"><h1>Доброе утро</h1></div>'}
           ${note ? `<p class="${r.test ? 'wk-note' : 'wk-chk'}">${ic(r.test ? 'info' : 'eye', 15, 2.3)}${note}</p>` : ''}
-          ${Sonly.morning ? Sonly.morning.blocks(c.s) : ''}
           <button class="ap-btn" data-act="ring-done">${r.from === 'picker' ? 'К заданиям' : r.from === 'editor' ? 'К будильнику' : 'На главную'}</button></div>`;
       },
       /*

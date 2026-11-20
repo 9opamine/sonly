@@ -468,7 +468,7 @@
     const early = Math.min(...prev.map((y) => y.wake)), fast = Math.min(...prev.map((y) => y.secs || 1e9));
     if (x.wake < early) return { kind: 'record', h: 'Самое раннее утро', p: `На ${early - x.wake} мин раньше прошлого рекорда` };
     if (x.secs && fast < 1e9 && x.secs < fast) return { kind: 'record', h: 'Рекорд скорости', p: `Задание за ${x.secs} с — быстрее, чем когда-либо` };
-    if (o.f && o.f.lvl) return { kind: 'rare', h: o.f.lvl === 2 ? `Очень редкая открытка: ${o.f.name.toLowerCase()}` : `Редкая открытка: ${o.f.name.toLowerCase()}`, p: o.f.lvl === 2 ? 'Уже в альбоме — такая выпадает раз в месяц' : 'Уже в альбоме — такие выпадают раз в одну-две недели' };
+    if (o.f && o.f.lvl) return { kind: 'rare', h: o.f.lvl === 2 ? 'Очень редкая открытка' : 'Редкая открытка', p: `${o.f.name} — уже в альбоме. ${o.f.lvl === 2 ? 'Такая выпадает раз в месяц' : 'Такие — раз в одну-две недели'}` };
     if (st.streak >= 2) return { kind: 'streak', h: `${st.streak} ${utr(st.streak)} подряд`, p: goal ? `До пейзажа «${sceneOf(goal[1])[1]}» — ${goal[0] - st.streak} ${utr(goal[0] - st.streak)}` : 'Все пейзажи открыты — серия просто растёт' };
     const last = prev.slice(-14), usual = Math.round(last.reduce((a, y) => a + y.wake, 0) / last.length), dw = usual - x.wake;
     if (dw >= 5) return { kind: 'early', h: `На ${dw} мин раньше обычного`, p: 'Лишние минуты утра — тебе в подарок' };
@@ -542,20 +542,30 @@
     const fresh = mine && SCENES.find((sc) => sc[2] && sc[2] > before && sc[2] <= best);
     /* s._wkScene — только для снимков и проверок: показать нужную сценку. */
     const nw = newsOf(s, r, x, { mine, fresh, f, best, h }), scene = s._wkScene || wakeScene(nw.kind);
-    /* Цифры утра. Серия — главная: широкая оранжевая плитка, крупный огонёк и большая цифра. Подъём и время на задание —
-       плитки по центру: значок над цифрой, подпись снизу. Без серии (проба, проверка) — только две плитки. */
-    const tile = (cls, icon, val, label) => `<div class="ws ${cls}"><i class="ws-ic">${icon}</i><b>${val}</b><small>${label}</small></div>`;
-    const chips = (mine && st.streak ? `<div class="ws fire"><i class="ws-ic">${ic('flame', 20, 2.5)}</i><span><b>${st.streak}</b><small>${K.pl(st.streak, 'день', 'дня', 'дней')} подряд</small></span></div>` : '')
-      + tile('sun', si('rise', 18), K.fmtMin(x.wake), 'подъём') + (x.secs ? tile('time', ic('timer', 17, 2.5), `${x.secs} с`, 'на задание') : '');
-    return `<div class="wk-logo js-wklogo">${logoParts()}</div>
-      <div class="wb wb-${scene}" data-scene="${scene}" aria-hidden="true"><i class="wb-glow"></i>${props(scene)}<i class="m-brain wb-br">${brainOf(scene)}</i></div>
-      <div class="wk-news"><h1>${nb(nw.h)}</h1><p>${nb(nw.p)}</p></div>
-      <div class="wk-stats">${chips}</div>`;
+    /* Метка в карточке мозга — о чём новость. */
+    const TAG = { record: ['zap', 'Рекорд'], new: ['sparkles', 'Новый пейзаж'], rare: ['sparkles', 'Редкая открытка'], first: ['sunrise', 'Первое утро'], streak: ['flame', 'Серия'], early: ['sunrise', 'Раньше обычного'], greet: ['sun', 'Новый день'], try: ['sun', 'Пробное утро'] };
+    const [tagIc, tagText] = TAG[nw.kind] || TAG.greet;
+    /* Размер заголовка — по самому длинному куску, который не переносится (склеенные слова): он должен влезть в колонку. */
+    const seg = Math.max(...nb(nw.h).split(' ').map((w) => w.length)), hcls = seg > 15 ? 'xxl' : seg > 12 ? 'xl' : seg > 9 ? 'l' : '';
+    const date = cap(new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }));
+    /* Плитки: серия — оранжевая и первая; подъём и время на задание — рядом. Без серии (проба, проверка) — две плитки. */
+    const sq = (cls, icon, val, label) => `<div class="ws ${cls}"><i class="ws-ic">${icon}</i><b>${val}</b><small>${label}</small></div>`;
+    const tiles = (mine && st.streak ? sq('fire', ic('flame', 17, 2.6), st.streak, `${K.pl(st.streak, 'день', 'дня', 'дней')} подряд`) : '')
+      + sq('sun', si('rise', 17), K.fmtMin(x.wake), 'подъём') + (x.secs ? sq('time', ic('timer', 16, 2.6), `${x.secs} с`, 'на задание') : '');
+    /* Погода — широкая карточка; нажатие открывает истории утра (погода, слово дня, поговорка). */
+    const wx = `<button class="wk-wx" data-act="mo-story:weather" aria-label="Погода и истории утра"><header><small>${si('weather', 15)}Погода</small><span>сейчас</span></header>
+      <div class="wx-row"><b>+${W.now}°</b><span><i>${W.text}</i>днём до +${W.hi}°</span><em>${W.hours.slice(1, 4).map(([hh, g, t]) => `<u><small>${hh}</small><b>+${t}°</b></u>`).join('')}</em></div></button>`;
+    return `<header class="wk-top"><div><h1 class="wk-hi">Доброе утро</h1><small>${date}</small></div><div class="wk-logo js-wklogo">${logoParts()}</div></header>
+      <div class="wk-hero">
+        <div class="wb wb-${scene}" data-scene="${scene}" aria-hidden="true"><i class="wb-glow"></i>${props(scene)}<i class="m-brain wb-br">${brainOf(scene)}</i></div>
+        <div class="wk-news">${nw.kind === 'streak' ? `<h2>${nw.h.replace(/ подряд$/, '').replace(' ', ' ')}<br>подряд</h2>` : `<h2 class="${hcls}">${nb(nw.h).replace(/^(\d+) /, '$1 ')}</h2>`}<p>${nb(nw.p)}</p><span class="wk-tag">${ic(tagIc, 13, 2.6)}${tagText}</span></div>
+      </div>
+      <div class="wk-stats">${tiles}</div>${wx}`;
   }
 
   Sonly.morning = {
     rewards,
-    /** Верх экрана «Доброе утро»: логотип, просыпающийся мозг, новость дня и цифры утра. */
+    /** Экран «Доброе утро» (раскладка «Бенто»): приветствие и логотип, карточка мозга с новостью, плитки цифр, погода. */
     hero,
     /** Небо для минуты суток — им же красится виджет следующего будильника. */
     sky: skyOf,
