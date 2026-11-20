@@ -339,7 +339,7 @@
           <button class="ap-card mo-tile" data-act="mo-gifts">${ring(nx ? Math.min(1, st.streak / nx.n) : 1, `<i class="mo-gift">${si('gift', 30)}</i>`)}<b>${nx ? 'Новый пейзаж' : 'Все пейзажи твои'}</b><small>${nx ? `ещё ${left} ${utr(left)} подряд` : 'Они уже на открытках'}</small></button>
           <button class="ap-card mo-tile" data-act="mo-album"><span class="mo-stack${mini.length ? '' : ' empty'}">${mini.length ? mini.map((x) => cardOf(x, { tag: 'div', best: bestAt.get(x.d.getTime()) })).join('') : ghostStack()}</span><b>Открытки утра</b><small>${st.h.length ? `${st.h.length} в коллекции` : 'Первая — после подъёма'}</small></button>
         </div>
-        <button class="ap-card mo-group" data-act="mo-group" data-in style="--i:3">${faces(s)}<span><b>${s.group ? esc(s.group.name) : 'Вставайте вместе'}</b><small>${s.group ? `Код ${s.group.code}` : 'Утром видно, кто уже встал'}</small></span>${K.chev()}</button>
+        ${Sonly.people ? Sonly.people.card(s) : ''}
         <div class="ap-sec mo-sec" data-in style="--i:4"><h2>После подъёма</h2><button class="mo-link" data-act="mo-brief">Изменить</button></div>
         ${briefCards(s) ? `<div data-in style="--i:5">${briefCards(s)}</div>` : `<button class="ap-add" data-act="mo-brief" data-in style="--i:5">${si('sliders', 18)}Выбрать, что показывать</button>`}
       </div>`;
@@ -351,7 +351,6 @@
     const C = 2 * Math.PI * 44;
     return `<span class="mo-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="bg" cx="50" cy="50" r="44"/><circle class="fg" cx="50" cy="50" r="44" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - p)).toFixed(1)}"/></svg>${inner}</span>`;
   }
-  const faces = (s, big) => `<span class="mo-faces${big ? ' big' : ''}"><i class="me">${Sonly.mark()}</i><i>${si('people', big ? 24 : 18)}</i></span>`;
   const head = (title, close = 'sheet-close', icon = 'x') => `<div class="ap-sh-head"><button class="ap-x lg" data-act="${close}" aria-label="${icon === 'x' ? 'Закрыть' : 'Назад'}">${ic(icon === 'x' ? 'x' : 'chevron-left', icon === 'x' ? 20 : 22, 2.3)}</button><b>${title}</b><span class="ap-x ghost"></span></div>`;
 
   /* ── Листы ───────────────────────────────────────────────── */
@@ -422,30 +421,6 @@
       <p class="ap-note mo-msg">${s._copied || ''}</p></div>
       <div class="ap-sh-foot mo-two"><button class="ap-btn ghost" data-act="mo-save:${t}">${si('save', 19)}Сохранить</button><button class="ap-btn" data-act="mo-share:${t}">${si('share', 19)}Поделиться</button></div>`, `ap-sheet ${enter}`);
   }
-
-  /* Утро группы: кто во сколько встал. Пока группы нет — пример с вымышленными именами (так и подписан), чтобы было видно, зачем она. */
-  const EXAMPLE = [{ n: 'Аня', t: '06:48', c: '#FF9F0A' }, { n: 'Макс', t: '07:02', c: '#30B0C7' }, { n: 'Ты', t: '07:30', me: true }, { n: 'Лена', t: '07:41', c: '#AF52DE' }, { n: 'Дима', t: '', c: '#5E5CE6' }];
-  function board(rows, title, tag, slots = 0) {
-    const up = rows.filter((r) => r.t).length, total = rows.length;
-    return `<div class="ap-card mo-board"><div class="mo-bd-h"><b>${title}</b>${tag ? `<span class="mo-tag">${tag}</span>` : `<span class="mo-bd-n">${up} из ${total}</span>`}</div>
-      <div class="mo-bd-bar"><i style="--p:${total ? up / total : 0}"></i></div>
-      <div class="mo-bd-l">${rows.map((r) => `<div class="mo-bd-r${r.t ? '' : ' zz'}"><i class="mo-av${r.me ? ' me' : ''}"${r.c ? ` style="--c:${r.c}"` : ''}>${r.me ? Sonly.mark() : r.n[0]}</i><span>${r.n}</span>${r.t ? `<em>${r.t}</em><b class="mo-st ok">${ic('check', 13, 3.4)}</b>` : `<em>${r.wait || 'спит'}</em><b class="mo-st">${si('moon', 14)}</b>`}</div>`).join('')}
-        ${Array.from({ length: slots }, () => `<button class="mo-bd-r slot" data-act="mo-invite"><i class="mo-av">${ic('plus', 16, 2.6)}</i><span>Позвать друга</span></button>`).join('')}</div></div>`;
-  }
-  function groupSheet(flow) {
-    const s = flow.state, g = s.group, now = K.stats(s).h.find((x) => x.d.getTime() === today());
-    const me = { n: 'Ты', me: true, t: now ? K.fmtMin(now.wake) : '', wait: 'ещё не встал' };
-    const body = g
-      ? `<div class="ap-card mo-grp">${faces(s, true)}<b>${esc(g.name)}</b><small>Код приглашения</small><div class="mo-code">${g.code}</div></div>
-        ${board([me], 'Сегодня', '', 2)}
-        <p class="ap-note">${s._copied || ''}</p>`
-      : `<div class="mo-grp-empty">${faces(s, true)}<b>Вставайте вместе</b><p>Утром видно, кто уже встал.</p></div>
-        ${board(EXAMPLE, 'Утро группы', 'Пример')}
-        <label class="ap-card mo-name"><small>Название группы</small><input class="js-gname" value="Утренний клуб" maxlength="24" aria-label="Название группы"></label>`;
-    const foot = g ? '<button class="ap-btn" data-act="mo-invite">Позвать друзей</button><button class="ap-btn ghost" data-act="mo-leave">Выйти из группы</button>' : '<button class="ap-btn" data-act="mo-create">Создать группу</button>';
-    flow.sheet(`${head('Группа подъёма')}<div class="ap-sh-body scroll">${body}</div><div class="ap-sh-foot">${foot}</div>`, 'ap-sheet');
-  }
-
 
   /* ── Верх экрана «Доброе утро» ───────────────────────────── */
 
@@ -624,7 +599,7 @@
     blocks: (s) => briefCards(s, 'wk-brief'),
     preview(flow, what) {
       flow.go('morning', 0);
-      if (what === 'album') albumSheet(flow); else if (what === 'gifts') giftsSheet(flow); else if (what === 'group') groupSheet(flow);
+      if (what === 'album') albumSheet(flow); else if (what === 'gifts') giftsSheet(flow); else if (what === 'group' && Sonly.people) Sonly.people.together(flow);
       else if (what === 'brief') briefSheet(flow);
       else if (what === 'card') { const h = K.stats(flow.state).h; if (h.length) cardSheet(flow, h[h.length - 1].d.getTime()); else albumSheet(flow); }
       else if (what.startsWith('item') || what.startsWith('story')) story(flow, Math.max(0, BRIEF.findIndex((x) => x[0] === (what.split('-')[1] || 'weather'))));
@@ -675,18 +650,6 @@
           });
           return true;
         }
-        case 'mo-group': s._copied = ''; groupSheet(flow); return true;
-        case 'mo-create': {
-          const input = flow.sheets.querySelector('.js-gname');
-          s.group = { name: ((input && input.value) || '').trim() || 'Утренний клуб', code: 'GRP-' + K.code4() };
-          if (flow.id === 'morning') flow.rerender(true);
-          groupSheet(flow);
-          return true;
-        }
-        case 'mo-invite':
-          K.shareText(`Вставай со мной в sonly: группа «${s.group.name}», код ${s.group.code}.`, true, (msg) => { s._copied = msg; groupSheet(flow); });
-          return true;
-        case 'mo-leave': s.group = null; if (flow.id === 'morning') flow.rerender(true); groupSheet(flow); return true;
         default: return false;
       }
     },

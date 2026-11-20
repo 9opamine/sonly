@@ -258,7 +258,7 @@
   function homeHtml(s) {
     const now = new Date(), st = stats(s), ring = nextRing(s, now), rt = ring && taskOf(ring.a);
     return `<div class="ap-scroll scroll">
-      <header class="ap-top" data-in><div class="ap-brand">${Sonly.logo()}</div><button class="ap-chip lg" data-act="tab:stats" aria-label="Серия подъёмов">${ic('flame', 16, 2.3)}${st.streak}</button></header>
+      <header class="ap-top" data-in><div class="ap-brand">${Sonly.logo()}</div><span class="ap-top-r"><button class="ap-chip lg" data-act="tab:stats" aria-label="Серия подъёмов">${ic('flame', 16, 2.3)}${st.streak}</button>${Sonly.people ? `<button class="ap-me" data-act="pp-profile" aria-label="Профиль">${Sonly.people.avatar(s, 38)}</button>` : ''}</span></header>
       ${ring ? `<section class="ap-hero" data-in style="--i:1"><i class="ap-sun"></i><i class="ap-rise">${Sonly.mark()}</i><small>Зазвонит через</small><div class="ap-hero-n">${until(ring.at, now)}</div>
           <div class="ap-hero-row"><span>${ic('alarm-clock', 15, 2.3)}${dayWord(ring.at, now)} в ${hm(ring.a)}</span><span>${tic(rt, 16)}${rt.name}</span></div></section>`
         : `<section class="ap-hero idle" data-in style="--i:1"><i class="ap-sun"></i><i class="ap-rise">${Sonly.mark()}</i><small>${s.alarms.length ? 'Все будильники выключены' : 'Будильников пока нет'}</small><div class="ap-hero-n t">Поставь будильник</div>
@@ -444,6 +444,7 @@
       render: (c) => {
         const s = c.s, st = stats(s), now = new Date();
         return `<div class="ap-scroll scroll"><h1 class="ap-h1" data-in>Настройки</h1>
+          ${Sonly.people ? `<button class="ap-card ap-prof" data-act="pp-profile" data-in style="--i:1">${Sonly.people.avatar(s, 54)}<span><b>${esc(Sonly.people.name(s) || 'Профиль')}</b><small>Друзья, значки и твои цифры</small></span>${chev()}</button>` : ''}
           <button class="ap-card ap-gift" data-act="page:share" data-in style="--i:1"><i>${Sonly.mark()}</i><span><b>${Sonly.partner.title}</b><small>${Sonly.partner.sub}</small></span>${chev()}</button>
           <button class="ap-card ap-sub" data-act="page:sub" data-in style="--i:2"><i>${ic('check', 20, 3)}</i><span><b>Подписка активна</b><small>Год · продление ${renew()}</small></span>${chev()}</button>
           <h3>Будильник</h3>
@@ -583,7 +584,7 @@
   Sonly.appPreview = (st) => `<div class="ap" data-theme="${sysDark() ? 'dark' : 'light'}"><div class="statusbar"><span>9:41</span><i class="sb-island"></i><span class="sb-right">${SB_ICONS}</span></div>
     <section class="screen">${homeHtml({ data: 'new', shareHidden: true, alarms: [alarmFrom(st)] })}</section><div class="dock">${tabbar('home')}</div><div class="homebar"></div></div>`;
 
-  Sonly.appKit = { taskOf, tic, hm, fmtMin, stats, pl, day0, copy, blank, editor, taskPicker, poolOf, nextRing, dayWord, chev, row, FLAME, keepTop, setTop, shareText, code4, refOf, openPage, soundPicker };
+  Sonly.appKit = { taskOf, tic, hm, fmtMin, stats, pl, day0, copy, blank, editor, taskPicker, poolOf, nextRing, dayWord, chev, row, FLAME, keepTop, setTop, shareText, code4, refOf, openPage, soundPicker, badges, hex };
 
   Sonly.register({
     id: 'app', name: 'Приложение', cls: 'ap',
@@ -621,6 +622,7 @@
       if (what === 'badges') { this.on(flow, 'st-badges'); return; }
       if (/^(ring|task|woke|streak|check)(:|$)/.test(what)) { Sonly.ringer.preview(flow, what); return; }
       if (what.startsWith('mo-')) { Sonly.morning.preview(flow, what.slice(3)); return; }
+      if (what.startsWith('pp-') && Sonly.people) { Sonly.people.preview(flow, what.slice(3)); return; }
       if (what.startsWith('page-')) { const [id, arg] = what.slice(5).split('.'); openPage(flow, id, arg || ''); return; }
       s._ed = what === 'edit' ? copy(s.alarms[0]) : blank(s);
       if (what.startsWith('setup')) { s._ed.task = what.split('-')[1] || 'hunt'; taskSetup(flow, ''); } else if (what === 'tasks') taskPicker(flow, '');
@@ -749,6 +751,7 @@
         default:
           if (Sonly.ringer && Sonly.ringer.on(flow, act, arg)) return true;
           if (Sonly.morning && Sonly.morning.on(flow, act, arg, el)) return true;
+          if (Sonly.people && Sonly.people.on(flow, act, arg, el)) return true;
           if (Sonly.partner && Sonly.partner.on(flow, act, arg, el)) return true;
           if (Sonly.lock && Sonly.lock.on(flow, act, arg, el)) return true;
           if (Sonly.mysnd && Sonly.mysnd.on(flow, act, arg, el)) return true;
