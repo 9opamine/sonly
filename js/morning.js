@@ -507,6 +507,21 @@
   /* Кружка в руке (coffee) и корона (flex) — прямо в рисунке мозга, чтобы двигались вместе с ним. */
   const MUG = '<g class="wb-mug"><path class="wb-steam s1" d="M186 126q-4-5 0-10t0-10"/><path class="wb-steam s2" d="M195 124q-4-5 0-10t0-10"/><path class="wb-handle" d="M199 140q9 0 9 8t-9 8"/><rect class="wb-cup" x="177" y="133" width="23" height="27" rx="6"/><rect class="wb-cof" x="180" y="136" width="17" height="4.5" rx="2.2"/></g>';
   const CROWN = '<g class="wb-crown"><path d="M89 24L92 2l10 11 8-13 8 13 10-11 3 22z"/><circle cx="92" cy="2" r="3.4"/><circle cx="110" cy="0" r="3.8"/><circle cx="128" cy="2" r="3.4"/></g>';
+  /**
+   * Логотип по частям для экрана подъёма: те же контуры, что в Sonly.logo(), но «s» и «nly» — в своих окнах, чтобы выезжать
+   * из-за солнца в разные стороны, и свечение за солнцем. Где граница окон и свечение — меряет экран подъёма (ring.js).
+   */
+  function logoParts() {
+    const src = Sonly.logo(), ds = [...src.matchAll(/<path fill="([^"]+)" d="([^"]+)"/g)];
+    if (ds.length < 2) return src;
+    const word = ds[0][2], sunFill = ds[1][1], sun = ds[1][2];
+    return `<svg class="logo wk-lg" viewBox="0 0 1748 620" role="img" aria-label="sonly"><defs><clipPath id="wkLl"><rect class="js-lcl" x="-200" y="-200" width="1070" height="1020"/></clipPath><clipPath id="wkLr"><rect class="js-lcr" x="870" y="-200" width="1200" height="1020"/></clipPath>
+      <radialGradient id="wkLg"><stop offset="0" stop-color="#FFD24A" stop-opacity=".75"/><stop offset=".5" stop-color="#FFC21A" stop-opacity=".25"/><stop offset="1" stop-color="#FFC21A" stop-opacity="0"/></radialGradient></defs>
+      <circle class="lg-glow js-lgl" cx="870" cy="300" r="380" fill="url(#wkLg)"/>
+      <g clip-path="url(#wkLl)"><g class="lg-l"><path fill="currentColor" d="${word}"/></g></g>
+      <g clip-path="url(#wkLr)"><g class="lg-r"><path fill="currentColor" d="${word}"/></g></g>
+      <path class="lg-sun js-lsun" fill="${sunFill}" d="${sun}"/></svg>`;
+  }
   function brainOf(scene) {
     let svg = Sonly.brain ? Sonly.brain('wkb') : '';
     const extra = scene === 'coffee' ? MUG : scene === 'flex' ? CROWN : '', at = svg.lastIndexOf('</g></svg>');
@@ -527,11 +542,12 @@
     const fresh = mine && SCENES.find((sc) => sc[2] && sc[2] > before && sc[2] <= best);
     /* s._wkScene — только для снимков и проверок: показать нужную сценку. */
     const nw = newsOf(s, r, x, { mine, fresh, f, best, h }), scene = s._wkScene || wakeScene(nw.kind);
-    /* Цифры утра — плитками со значками: серия — главная, яркая и шире; рядом подъём и время на задание. */
-    const tile = (cls, icon, val, label) => `<div class="ws ${cls}"><div><i class="ws-ic">${icon}</i><b>${val}</b></div><small>${label}</small></div>`;
-    const chips = (mine && st.streak ? tile('fire', ic('flame', 15, 2.6), st.streak, `${K.pl(st.streak, 'день', 'дня', 'дней')} подряд`) : '')
-      + tile('sun', si('rise', 15), K.fmtMin(x.wake), 'подъём') + (x.secs ? tile('time', ic('timer', 15, 2.6), `${x.secs} с`, 'на задание') : '');
-    return `<div class="wk-logo js-wklogo">${Sonly.logo()}</div>
+    /* Цифры утра. Серия — главная: широкая оранжевая плитка, крупный огонёк и большая цифра. Подъём и время на задание —
+       плитки по центру: значок над цифрой, подпись снизу. Без серии (проба, проверка) — только две плитки. */
+    const tile = (cls, icon, val, label) => `<div class="ws ${cls}"><i class="ws-ic">${icon}</i><b>${val}</b><small>${label}</small></div>`;
+    const chips = (mine && st.streak ? `<div class="ws fire"><i class="ws-ic">${ic('flame', 20, 2.5)}</i><span><b>${st.streak}</b><small>${K.pl(st.streak, 'день', 'дня', 'дней')} подряд</small></span></div>` : '')
+      + tile('sun', si('rise', 18), K.fmtMin(x.wake), 'подъём') + (x.secs ? tile('time', ic('timer', 17, 2.5), `${x.secs} с`, 'на задание') : '');
+    return `<div class="wk-logo js-wklogo">${logoParts()}</div>
       <div class="wb wb-${scene}" data-scene="${scene}" aria-hidden="true"><i class="wb-glow"></i>${props(scene)}<i class="m-brain wb-br">${brainOf(scene)}</i></div>
       <div class="wk-news"><h1>${nb(nw.h)}</h1><p>${nb(nw.p)}</p></div>
       <div class="wk-stats">${chips}</div>`;

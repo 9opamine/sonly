@@ -868,16 +868,26 @@
           <button class="ap-btn" data-act="ring-done">${r.from === 'picker' ? 'К заданиям' : r.from === 'editor' ? 'К будильнику' : 'На главную'}</button></div>`;
       },
       /*
-       * Солнце с экрана задания перелетает наверх и садится в логотип — становится солнцем в «sonly»; буквы
-       * проявляются вокруг него. Без перелёта (повтор экрана, уменьшение движения) логотип просто проявляется.
+       * Логотип появляется после анимации. С экрана задания солнце перелетает наверх и садится в логотип — с мягким толчком
+       * и вспышкой, а «s» и «nly» выезжают из-за него в разные стороны. Без перелёта (повтор экрана) то же самое
+       * начинается, когда мозг проснулся. Граница между «s» и «nly» — центр солнца в логотипе.
        */
       mount(el, c) {
-        const r = c.s._ring, m = r && r.morph, logo = c.q('.js-wklogo');
-        if (!m) return;
+        const r = c.s._ring, m = r && r.morph, logo = c.q('.js-wklogo'), host = c.flow.el;
+        const sun = logo && logo.querySelector('.js-lsun');
+        if (sun && sun.getBBox) {
+          try {
+            const b = sun.getBBox(), cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+            logo.querySelector('.js-lcl').setAttribute('width', (cx + 200).toFixed(0));
+            logo.querySelector('.js-lcr').setAttribute('x', cx.toFixed(0));
+            const g = logo.querySelector('.js-lgl');
+            g.setAttribute('cx', cx.toFixed(0)); g.setAttribute('cy', cy.toFixed(0)); g.setAttribute('r', (b.width * 1.25).toFixed(0));
+          } catch (e) { /* логотип не нарисован — покажется целиком */ }
+        }
+        const lit = (land) => { if (logo) logo.classList.add('lit', land ? 'land' : 'pop'); };
+        if (!m) { if (c.still || REDUCE()) lit(false); else c.at(1900, () => lit(false)); return; }
         r.morph = null;
-        const host = c.flow.el, sun = logo && logo.querySelector('.logo path:last-child');
-        const lit = () => { if (logo) logo.classList.add('lit'); };
-        if (c.still || !sun || !host || REDUCE()) { lit(); return; }
+        if (c.still || !sun || !host || REDUCE()) { lit(false); return; }
         const fly = document.createElement('i');
         fly.className = 'wk-fly';
         fly.innerHTML = Sonly.mark();
@@ -887,10 +897,10 @@
         const tw = to.width / k, tx = (to.left - p.left) / k + tw / 2, ty = (to.top - p.top) / k + to.height / k / 2;
         const fh = fly.offsetHeight, sc = tw / m.w, dx = tx - (m.x + m.w / 2), dy = ty - (m.y + fh / 2);
         fly.getBoundingClientRect();
-        fly.style.transition = 'transform 1.05s cubic-bezier(.5,0,.2,1)';
+        /* Летит по дуге: быстро вверх и плавно тормозит у логотипа. */
+        fly.style.transition = 'transform 1.1s cubic-bezier(.45,0,.15,1)';
         fly.style.transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${sc.toFixed(4)})`;
-        /* Сел — в логотипе загорается своё солнце, летящее убираем; буквы проявляются. */
-        setTimeout(() => { lit(); fly.remove(); }, 1080);
+        setTimeout(() => { lit(true); fly.remove(); }, 1120);
       },
     },
   });

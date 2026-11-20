@@ -224,11 +224,22 @@
 .wk{position:relative;flex:1;display:flex;flex-direction:column;align-items:stretch;padding:58px 20px 34px;text-align:center;overflow:hidden}
 .wk-logo{display:flex;justify-content:center;flex:none;height:26px}
 .wk-logo .logo{height:26px;width:auto;color:var(--ink)}
-/* Логотип — после анимации: без перелёта солнца проявляется, когда мозг проснулся; с перелётом — когда солнце в него село. */
-.wk:not(.morph) .wk-logo{animation:wk-in .6s cubic-bezier(.22,1,.36,1) 2.1s both}
-.wk.morph .wk-logo .logo path{opacity:0;transition:opacity .5s ease .12s}
-.wk.morph .wk-logo.lit .logo path{opacity:1}
-.wk.morph .wk-logo.lit .logo path:last-child{transition:none}
+/* Логотип — после анимации. До неё видно только место под него; потом солнце (с толчком, если прилетело с задания,
+   или вырастает само) и вспышка за ним, а «s» и «nly» выезжают из-за солнца в разные стороны. */
+.wk-lg .lg-sun,.wk-lg .lg-glow{transform-box:fill-box;transform-origin:50% 60%}
+.wk-logo:not(.lit) .wk-lg .lg-sun,.wk-logo:not(.lit) .wk-lg .lg-glow{opacity:0}
+.wk-logo:not(.lit) .wk-lg .lg-l,.wk-logo:not(.lit) .wk-lg .lg-r{opacity:0}
+.wk-logo.pop .wk-lg .lg-sun{animation:lg-grow .7s cubic-bezier(.3,1.5,.5,1) both}
+.wk-logo.land .wk-lg .lg-sun{animation:lg-land .55s cubic-bezier(.3,1.4,.5,1) both}
+.wk-logo.lit .wk-lg .lg-glow{animation:lg-glow 1.5s cubic-bezier(.2,.7,.3,1) both}
+.wk-logo.lit .wk-lg .lg-l{animation:lg-l .85s cubic-bezier(.22,1,.36,1) .22s both}
+.wk-logo.lit .wk-lg .lg-r{animation:lg-r .85s cubic-bezier(.22,1,.36,1) .22s both}
+@keyframes lg-grow{from{opacity:0;transform:scale(.3) translateY(60px)}}
+@keyframes lg-land{0%{transform:scale(1)}30%{transform:scale(1.26,1.14)}62%{transform:scale(.94,1.04)}100%{transform:none}}
+@keyframes lg-glow{0%{opacity:0;transform:scale(.3)}30%{opacity:1}100%{opacity:0;transform:scale(1.5)}}
+@keyframes lg-l{from{opacity:0;transform:translateX(300px)}to{opacity:1;transform:none}}
+@keyframes lg-r{from{opacity:0;transform:translateX(-420px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.wk-logo .wk-lg *{animation:none!important;opacity:1!important}.wk-lg .lg-glow{opacity:0!important}}
 .wk-fly{position:absolute;z-index:30;display:block;pointer-events:none;transform-origin:50% 50%}
 .wk-fly .mark{display:block;width:100%;height:auto}
 
@@ -369,25 +380,25 @@
 .wb-sp .s2{animation-delay:.85s}.wb-sp .s3{animation-delay:1.2s}.wb-sp .s4{animation-delay:1.55s}
 
 /* Новость утра и цифры. */
-.wk-news{margin-top:14px;padding:0 6px}
+.wk-news{margin-top:10px;padding:0 6px}
 .wk-news h1{margin:0;font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:830;font-size:30px;letter-spacing:-.7px;line-height:1.1;text-wrap:balance}
 .wk-news p{margin:7px 0 0;font-size:15.5px;font-weight:500;line-height:1.35;color:var(--mut2);text-wrap:balance}
-/* Цифры утра: три равные плитки, значок рядом с цифрой, подпись строкой ниже. Серия — первая, оранжевая, с огоньком. */
-.wk-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px;text-align:left}
-.wk-stats:not(:has(.fire)){grid-template-columns:repeat(2,minmax(0,1fr))}
-.ws{position:relative;display:grid;gap:3px;padding:10px 12px 10px;border-radius:20px;background:var(--card);box-shadow:var(--elev);min-width:0;overflow:hidden}
-.ws>div{display:flex;align-items:center;gap:6px;min-width:0}
-.ws-ic{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex:none}
-.ws-ic .ic,.ws-ic .si{width:15px;height:15px}
-.ws b{font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:830;font-size:20px;letter-spacing:-.4px;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap}
-.ws small{font-size:12px;font-weight:600;color:var(--mut);white-space:nowrap}
-.ws.sun .ws-ic{background:color-mix(in srgb,#FFC62B 24%,transparent);color:#E8A512}
-.ws.time .ws-ic{background:color-mix(in srgb,#4DABF7 22%,transparent);color:#3D8DFF}
-.ws.fire{background:linear-gradient(135deg,#FFA43A 0%,#FF6A1F 60%,#F2491C 100%);box-shadow:0 12px 24px -14px rgba(255,106,31,.9),inset 0 1px 0 rgba(255,255,255,.35);color:#fff}
-.ws.fire .ws-ic{background:#fff;color:#FF6A1F;box-shadow:0 3px 8px -3px rgba(120,30,0,.5)}
+/* Цифры утра. Серия — широкая оранжевая плитка: огонёк в белом круге и большая цифра. Остальные — по центру, значок над цифрой. */
+.wk-stats{display:grid;grid-template-columns:1.62fr 1fr 1fr;gap:8px;margin-top:12px}
+.wk-stats:not(:has(.fire)){grid-template-columns:1fr 1fr}
+.ws{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;height:74px;padding:6px;border-radius:22px;background:var(--card);box-shadow:var(--elev);overflow:hidden}
+.ws-ic{display:grid;place-items:center;flex:none;margin-bottom:2px}
+.ws b{font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:830;font-size:21px;letter-spacing:-.4px;line-height:1.05;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ws small{font-size:12px;font-weight:600;line-height:1.2;color:var(--mut);white-space:nowrap}
+.ws.sun .ws-ic{color:#F5B400}
+.ws.time .ws-ic{color:#3D8DFF}
+.ws.fire{flex-direction:row;justify-content:flex-start;gap:10px;padding:0 10px 0 11px;background:linear-gradient(135deg,#FFAE42 0%,#FF6A1F 58%,#EE4519 100%);box-shadow:0 14px 26px -14px rgba(255,106,31,.95),inset 0 1px 0 rgba(255,255,255,.38);color:#fff;text-align:left}
+.ws.fire .ws-ic{width:38px;height:38px;margin:0;border-radius:50%;background:#fff;color:#FF5A1F;box-shadow:0 6px 14px -6px rgba(110,25,0,.6)}
 .ws.fire .ws-ic .ic{animation:ws-flame 1.6s ease-in-out infinite;transform-origin:50% 90%}
-.ws.fire small{color:rgba(255,255,255,.9)}
-.ws.fire::after{content:'';position:absolute;right:-26px;top:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.3),rgba(255,255,255,0));pointer-events:none}
+.ws.fire span{display:grid;gap:1px;min-width:0}
+.ws.fire b{font-size:28px;letter-spacing:-.8px;line-height:1}
+.ws.fire small{color:rgba(255,255,255,.92);font-size:12px}
+.ws.fire::after{content:'';position:absolute;right:-30px;top:-34px;width:104px;height:104px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.32),rgba(255,255,255,0));pointer-events:none}
 @keyframes ws-flame{0%,100%{transform:scale(1) rotate(-3deg)}50%{transform:scale(1.12,1.16) rotate(3deg)}}
 .wk>p.wk-chk,.wk>p.wk-note{align-self:center;margin:12px 0 0;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px 0 11px;border-radius:16px;background:var(--card);box-shadow:var(--elev);font-size:13.5px;font-weight:600;color:var(--mut2)}
 /* Текст приходит, когда мозг проснулся. */
@@ -416,19 +427,23 @@
   .wb-br{width:160px;height:149px;margin-left:-80px}
   .wb-glow{width:260px;height:260px;margin:-130px 0 0 -130px}
   .wb-say{font-size:13.5px;padding:6px 11px}
-  .wk-news{margin-top:8px}
+  .wk-news{margin-top:6px}
   .wk-news h1{font-size:24px}
   .wk-news p{margin-top:4px;font-size:14px}
   .wk-stats{margin-top:10px;gap:6px}
-  .ws{padding:8px 10px;border-radius:17px;gap:1px}
-  .ws-ic{width:21px;height:21px}
-  .ws-ic .ic,.ws-ic .si{width:13px;height:13px}
+  .ws{height:60px;border-radius:17px;gap:0}
+  .ws-ic .ic,.ws-ic .si{width:15px;height:15px}
   .ws b{font-size:17px}
   .ws small{font-size:11px}
-  .wb{height:142px}
-  .wb-br{width:140px;height:130px;margin-left:-70px}
+  .ws.fire{gap:7px;padding:0 8px 0 9px}
+  .ws.fire .ws-ic{width:30px;height:30px}
+  .ws.fire .ws-ic .ic{width:17px;height:17px}
+  .ws.fire b{font-size:22px}
+  .ws.fire small{font-size:10.5px}
+  .wb{height:134px}
+  .wb-br{width:134px;height:124px;margin-left:-67px}
   .wk-brief .bf-track{padding-bottom:16px}
-  .wk>p.wk-chk,.wk>p.wk-note{margin-top:8px;height:28px;font-size:13px}
+  .wk>p.wk-chk,.wk>p.wk-note{margin-top:6px;height:26px;font-size:12.5px}
   .wk-brief{margin-top:10px;margin-bottom:10px}
   .wk-brief .bf-card{min-height:140px;padding:12px 14px 11px;gap:6px}
   .wk-brief .bf-wx>b{font-size:40px}
