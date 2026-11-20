@@ -167,7 +167,7 @@
     if (a.task === 'random') { const pool = K.poolOf(alarm); a.task = pool[rnd(0, pool.length - 1)]; random = true; }
     clearTimeout(flow._chk);
     s._check = null;
-    s._ring = { a, test, random, direct: !!o.direct, t0: Date.now(), mute: false, from: from || (['ring', 'task', 'woke', 'check'].includes(flow.id) ? 'home' : flow.id) };
+    s._ring = { a, test, random, direct: !!o.direct, t0: Date.now(), mute: false, from: from || (['ring', 'task', 'woke', 'streak', 'check'].includes(flow.id) ? 'home' : flow.id) };
     flow.closeSheet(true);
     if (o.direct) { begin(s._ring); askMotion(s._ring.k); sound.unlock(); s._ring.t1 = Date.now(); flow.go('task', 1); return; }
     flow.go('ring', 1);
@@ -864,7 +864,7 @@
         const note = r.test ? (r.direct ? 'Пробный запуск — в альбом не идёт' : 'Проверка — в серию не идёт') : r.a.check ? `Проверим через ${r.a.check} мин` : '';
         return `<div class="wk${r.morph ? ' morph' : ''}">${Sonly.morning ? Sonly.morning.hero(c.s, r) : '<div class="wk-news"><h1>Доброе утро</h1></div>'}
           ${note ? `<p class="${r.test ? 'wk-note' : 'wk-chk'}">${ic(r.test ? 'info' : 'eye', 15, 2.3)}${note}</p>` : ''}
-          <button class="ap-btn" data-act="ring-done">${r.from === 'picker' ? 'К заданиям' : r.from === 'editor' ? 'К будильнику' : 'На главную'}</button></div>`;
+          <button class="ap-btn" data-act="ring-streak">Дальше</button></div>`;
       },
       /*
        * Логотип появляется после анимации. С экрана задания солнце перелетает наверх и садится в логотип — с мягким толчком
@@ -900,6 +900,23 @@
         fly.style.transition = 'transform 1.1s cubic-bezier(.45,0,.15,1)';
         fly.style.transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${sc.toFixed(4)})`;
         setTimeout(() => { lit(true); fly.remove(); }, 1120);
+      },
+    },
+
+    /* Серия — отдельный экран после «Доброе утро» (Sonly.morning.streak). Вся анимация — в CSS по классу go; отсюда
+       только звук и отклик вибрацией в миг, когда число перещёлкнулось и огонь вспыхнул, и щелчок, когда залился день. */
+    streak: {
+      chrome: false,
+      render: (c) => {
+        const r = ensure(c.s);
+        return Sonly.morning ? Sonly.morning.streak(c.s, r) : '<div class="sk"><button class="ap-btn" data-act="ring-done">Продолжить</button></div>';
+      },
+      mount(el, c) {
+        const root = c.q('.sk');
+        if (!root || c.still || REDUCE()) return;
+        root.classList.add('go');
+        c.at(1600, () => { sound.song([[784, 0.5], [988, 0.5], [1319, 1.4]], 0.085); if (navigator.vibrate) navigator.vibrate(35); });
+        c.at(2650, () => sound.tick(1175));
       },
     },
   });
@@ -942,18 +959,18 @@
       tick();
     },
   };
-  app.extra = ['ring', 'task', 'woke', 'check'];
-  Object.assign(app.titles, { ring: 'Звонок', task: 'Задание', woke: 'Подъём', check: 'Проверка' });
+  app.extra = ['ring', 'task', 'woke', 'streak', 'check'];
+  Object.assign(app.titles, { ring: 'Звонок', task: 'Задание', woke: 'Подъём', streak: 'Серия', check: 'Проверка' });
 
   Sonly.ringer = {
     start,
     anim,
     check: checkNow,
-    /** Готовит экран для снимка: «ring:math», «task:memory», «task:hunt.spin», «woke», «check». */
+    /** Готовит экран для снимка: «ring:math», «task:memory», «task:hunt.spin», «woke», «streak», «check». */
     preview(flow, what) {
       const [scr, spec] = what.split(':'), [task, phase] = (spec || '').split('.'), s = flow.state;
       if (scr === 'check') { s._check = { a: K.copy(s.alarms[0]), t0: Date.now() - 18000 }; flow.go('check', 0); return; }
-      s._ring = { a: K.copy(s.alarms[0]), test: scr !== 'woke', t0: Date.now() };
+      s._ring = { a: K.copy(s.alarms[0]), test: scr !== 'woke' && scr !== 'streak', t0: Date.now() };
       if (task) s._ring.a.task = task;
       if (scr === 'task') {
         begin(s._ring);
@@ -964,7 +981,7 @@
         if (k.kind === 'pairs') { k.cards.slice(0, 4).forEach((x, i) => { if (i < 2) { x.open = true; } }); const p = k.cards[0].p; k.cards.filter((x) => x.p === p).forEach((x) => { x.open = true; x.done = true; }); k.i = 1; }
       }
       /* Предпросмотр подъёма: сегодняшнее утро уже в истории, как после настоящего звонка. */
-      if (scr === 'woke') { const t = K.day0(new Date()).getTime(); if (!(s.log || []).some((x) => x.t === t)) s.log = (s.log || []).concat({ t, wake: new Date().getHours() * 60 + new Date().getMinutes(), secs: 42, task: s._ring.a.task }); }
+      if (scr === 'woke' || scr === 'streak') { const t = K.day0(new Date()).getTime(); if (!(s.log || []).some((x) => x.t === t)) s.log = (s.log || []).concat({ t, wake: new Date().getHours() * 60 + new Date().getMinutes(), secs: 42, task: s._ring.a.task }); }
       flow.go(scr, 0);
     },
     /** Нажатия на экранах звонка и задания. Возвращает true, если нажатие обработано. */
@@ -985,6 +1002,7 @@
           b.setAttribute('aria-label', r.mute ? 'Включить звук' : 'Заглушить');
           return true;
         }
+        case 'ring-streak': flow.go('streak', 1); return true;
         case 'ring-exit': case 'ring-done': exit(flow); return true;
         case 'key':
           if (k.solved) return true;

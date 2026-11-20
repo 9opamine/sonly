@@ -619,7 +619,7 @@
       const s = flow.state;
       if (what === 'info') { this.on(flow, 'st-info'); return; }
       if (what === 'badges') { this.on(flow, 'st-badges'); return; }
-      if (/^(ring|task|woke|check)(:|$)/.test(what)) { Sonly.ringer.preview(flow, what); return; }
+      if (/^(ring|task|woke|streak|check)(:|$)/.test(what)) { Sonly.ringer.preview(flow, what); return; }
       if (what.startsWith('mo-')) { Sonly.morning.preview(flow, what.slice(3)); return; }
       if (what.startsWith('page-')) { const [id, arg] = what.slice(5).split('.'); openPage(flow, id, arg || ''); return; }
       s._ed = what === 'edit' ? copy(s.alarms[0]) : blank(s);
