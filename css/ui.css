@@ -331,6 +331,10 @@
 .ap-coupon-msg.bad{color:var(--red)}
 .ap-area{display:block;width:100%;border:0;border-radius:22px;background:var(--card);box-shadow:var(--elev);padding:16px 18px;font:500 16px/1.45 'Inter',sans-serif;color:var(--ink);resize:none;outline:0}
 .ap-area::placeholder{color:var(--mut)}
+.ap-topics{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.ap-topics button{height:38px;padding:0 15px;border-radius:19px;background:var(--card);box-shadow:var(--elev);font-size:14.5px;font-weight:600;color:var(--mut2);transition:background .2s,color .2s,transform .15s}
+.ap-topics button:active{transform:scale(.96)}
+.ap-topics button.on{background:var(--btn);color:var(--btn-ink);box-shadow:none}
 .ap-area:focus{box-shadow:var(--elev),inset 0 0 0 2px var(--y-deep)}
 .ap-sent{display:grid;justify-items:center;gap:8px;padding:70px 20px 0;text-align:center}
 .ap-sent i{width:76px;height:76px;border-radius:50%;background:var(--y);color:#0D0D0F;display:grid;place-items:center;margin-bottom:10px}

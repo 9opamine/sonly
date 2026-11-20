@@ -173,7 +173,7 @@
     },
     sea(r, c) {
       const ix = r() > 0.5 ? 8 + r() * 20 : 78 + r() * 24, lines = [130, 135, 140, 146, 152].map((y, k) => `<path d="M${f1(c.x - 15 + k * 2.6 + r() * 3)} ${y}h${f1(28 - k * 4.4)}"/>`).join('');
-      return `<path d="M${f1(ix)} 124q9 -9 22 0z" fill="${c.far}"/><rect y="124" width="120" height="36" fill="${c.far}"/>
+      return `<path d="M${f1(ix)} 124q9 -9 22 0z" fill="${c.far}"/><rect y="124" width="120" height="36" fill="${c.water}"/><rect y="124" width="120" height="1.2" fill="${c.glow}" opacity=".35"/>
         <g stroke="${c.glow}" stroke-width="1.6" stroke-linecap="round" opacity=".75">${lines}</g><rect y="148" width="120" height="12" fill="${c.near}" opacity=".55"/>`;
     },
     mountains(r, c) {
@@ -228,11 +228,61 @@
     const k = skyOf(land === 'aurora' ? 300 : x.wake), r = rnd(x.d.getTime() + 7), sx = Math.round((r() - 0.5) * 44);
     if (land === 'aurora') Object.assign(k, { A: [8, 14, 38], B: [20, 52, 78], a: 'rgb(8,14,38)', b: 'rgb(20,52,78)', ink: '#fff', sun: 0 });
     const ground = [10, 12, 26];
-    return { k, sx, far: rgb(mixc(mixc(k.B, k.A, 0.45), ground, 0.38)), near: rgb(mixc(k.B, ground, 0.72)), warm: rgb(mixc(mixc(k.B, [214, 150, 90], 0.5), ground, 0.25)), glow: 'rgba(255,240,196,.95)', x: 60 + sx * 1.2 };
+    return { k, sx, far: rgb(mixc(mixc(k.B, k.A, 0.45), ground, 0.38)), near: rgb(mixc(k.B, ground, 0.72)), warm: rgb(mixc(mixc(k.B, [214, 150, 90], 0.5), ground, 0.25)), water: rgb(mixc(mixc(k.A, k.B, 0.3), ground, 0.28)), glow: 'rgba(255,240,196,.95)', x: 60 + sx * 1.2 };
   }
+  /* Находки на открытке: иногда в небе что-то есть. Выпадает по дате — у одного утра всегда одно и то же.
+     lvl 0 — обычная (птицы), 1 — редкая (примерно раз в неделю), 2 — очень редкая (примерно раз в месяц).
+     Рисунок в той же сетке 120 × 160; всё, что в небе, лежит под пейзажем — радуга выходит из-за холмов. */
+  const RAIN = ['#FF6B6B', '#FFA94D', '#FFE066', '#69DB7C', '#4DABF7', '#9775FA'];
+  const arcs = (cx, R, o) => `<g fill="none" stroke-width="1.9" opacity="${o}">${RAIN.map((c, i) => `<path d="M${f1(cx - R + i * 1.8)} 128A${f1(R - i * 1.8)} ${f1(R - i * 1.8)} 0 0 1 ${f1(cx + R - i * 1.8)} 128" stroke="${c}"/>`).join('')}</g>`;
+  const FIND = {
+    birds: ['Птицы', 0, (r, t) => {
+      let d = '';
+      const n = 3 + Math.floor(r() * 3), x0 = 16 + r() * 66, y0 = 102 + r() * 8;
+      for (let i = 0; i < n; i++) { const x = x0 + i * (5 + r() * 3), y = y0 + (i % 2) * 2.6 - r() * 3, w = 2 + r() * 1.1; d += `M${f1(x - w)} ${f1(y - w * 0.5)}Q${f1(x - w / 2)} ${f1(y - w)} ${f1(x)} ${f1(y)}Q${f1(x + w / 2)} ${f1(y - w)} ${f1(x + w)} ${f1(y - w * 0.5)}`; }
+      return `<g class="mo-fly"><path d="${d}" fill="none" stroke="${t.k.night ? 'rgba(255,255,255,.7)' : 'rgba(18,20,34,.62)'}" stroke-width=".8" stroke-linecap="round"/></g>`;
+    }],
+    rainbow: ['Радуга', 1, (r, t) => arcs(t.x > 60 ? 32 + r() * 8 : 80 + r() * 8, 30, 0.55)],
+    double: ['Двойная радуга', 2, (r, t) => { const cx = t.x > 60 ? 34 : 86; return arcs(cx, 27, 0.6) + arcs(cx, 38, 0.32); }],
+    balloon: ['Воздушный шар', 1, (r) => {
+      const x = 20 + r() * 80, y = 103 + r() * 5, c = ['#FF6B6B', '#FFA94D', '#4DABF7', '#9775FA'][Math.floor(r() * 4)];
+      return `<g class="mo-float"><ellipse cx="${f1(x)}" cy="${f1(y)}" rx="5.4" ry="6.6" fill="${c}"/><path d="M${f1(x)} ${f1(y - 6.6)}C${f1(x - 2.4)} ${f1(y - 3.6)} ${f1(x - 2.4)} ${f1(y + 3.6)} ${f1(x)} ${f1(y + 6.6)}C${f1(x + 2.4)} ${f1(y + 3.6)} ${f1(x + 2.4)} ${f1(y - 3.6)} ${f1(x)} ${f1(y - 6.6)}z" fill="#fff" opacity=".38"/>
+        <path d="M${f1(x - 2.8)} ${f1(y + 5.4)}L${f1(x - 1.1)} ${f1(y + 9.2)}M${f1(x + 2.8)} ${f1(y + 5.4)}L${f1(x + 1.1)} ${f1(y + 9.2)}" stroke="#3A2A20" stroke-width=".45"/><rect x="${f1(x - 1.4)}" y="${f1(y + 9)}" width="2.8" height="2.2" rx=".4" fill="#6B4A2E"/></g>`;
+    }],
+    kite: ['Воздушный змей', 1, (r) => {
+      const x = 24 + r() * 72, y = 104 + r() * 5;
+      return `<g class="mo-float"><path d="M${f1(x)} ${f1(y - 5)}L${f1(x + 3.6)} ${f1(y)}L${f1(x)} ${f1(y + 6)}L${f1(x - 3.6)} ${f1(y)}z" fill="#FF6B6B"/><path d="M${f1(x)} ${f1(y - 5)}V${f1(y + 6)}M${f1(x - 3.6)} ${f1(y)}H${f1(x + 3.6)}" stroke="#fff" stroke-width=".4" opacity=".75"/><path d="M${f1(x)} ${f1(y + 6)}q-3 4 0 7t0 7" stroke="#FFE066" stroke-width=".7" fill="none"/></g>`;
+    }],
+    plane: ['Самолёт', 1, (r) => {
+      const y1 = 108 + r() * 5, y2 = y1 - 4 - r() * 5, left = r() > 0.5, xa = left ? -6 : 126, xb = left ? 62 + r() * 30 : 58 - r() * 30;
+      return `<path d="M${xa} ${f1(y1)}L${f1(xb)} ${f1(y2)}" stroke="#fff" stroke-width=".9" opacity=".6" stroke-linecap="round"/><circle cx="${f1(xb)}" cy="${f1(y2)}" r="1" fill="#fff"/>`;
+    }],
+    shooting: ['Падающая звезда', 1, (r) => {
+      const x = 40 + r() * 56, y = 104 + r() * 5;
+      return `<g class="mo-shoot"><path d="M${f1(x - 20)} ${f1(y - 8)}L${f1(x)} ${f1(y)}" stroke="#fff" stroke-width="1" stroke-linecap="round" opacity=".55"/><path d="M${f1(x - 8)} ${f1(y - 3.2)}L${f1(x)} ${f1(y)}" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/><circle cx="${f1(x)}" cy="${f1(y)}" r="1.2" fill="#fff"/></g>`;
+    }],
+    comet: ['Комета', 2, (r) => {
+      const x = 72 + r() * 26, y = 106 + r() * 5;
+      return `<path d="M${f1(x - 30)} ${f1(y - 11)}L${f1(x)} ${f1(y - 1.8)}L${f1(x)} ${f1(y + 1.8)}z" fill="#DDF7FF" opacity=".42"/><path d="M${f1(x - 16)} ${f1(y - 6)}L${f1(x)} ${f1(y - 1)}L${f1(x)} ${f1(y + 1)}z" fill="#fff" opacity=".55"/><circle cx="${f1(x)}" cy="${f1(y)}" r="3" fill="#E9FBFF" opacity=".45"/><circle cx="${f1(x)}" cy="${f1(y)}" r="1.5" fill="#fff"/>`;
+    }],
+  };
+  /* Случайность находок: перемешивание номера дня (у соседних дней числа не идут по кругу, как у rnd). */
+  const hash = (n) => { n = Math.imul(n ^ (n >>> 16), 0x45d9f3b); n = Math.imul(n ^ (n >>> 16), 0x45d9f3b); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; };
+  const mix = (seed, salt) => { let i = 0; const d = Math.floor(seed / 864e5); return () => hash(d * 7919 + salt * 104729 + (i++) * 15485863); };
+  /* Что летает — птицы, шар, змей, самолёт — рисуется поверх пейзажа; радуга, звёзды и комета — за ним. */
+  const FRONT = ['birds', 'balloon', 'kite', 'plane'];
+  /** Находка этого утра (или null). Свой ряд случайных чисел — не тот, что выбирает пейзаж и солнце. */
+  function findOf(x, land, t) {
+    const r = mix(x.d.getTime(), 977), p = r(), dark = land === 'aurora' || t.k.night;
+    const id = p < 0.035 ? (dark ? 'comet' : 'double') : p < 0.17 ? (dark ? ['shooting', 'shooting', 'balloon'] : ['rainbow', 'balloon', 'plane', 'kite'])[Math.floor(r() * (dark ? 3 : 4))] : p < 0.45 ? 'birds' : '';
+    if (!id) return null;
+    const [name, lvl, draw] = FIND[id], g = `<g class="mo-find f-${id}">${draw(r, t)}</g>`, front = FRONT.includes(id);
+    return { id, name, lvl, back: front ? '' : g, front: front ? g : '' };
+  }
+  const findNote = (f) => (f.lvl === 2 ? 'очень редкая — примерно раз в месяц' : 'редкая — раз в одну-две недели');
   /** Солнце над горизонтом: чем раньше встал, тем ниже оно стоит. Пейзаж лежит поверх — солнце встаёт из-за него. */
-  const sunSvg = (t) => (t.k.sun ? `<circle cx="${f1(t.x)}" cy="${f1(130 - t.k.sun * 34)}" r="17" fill="#FFE9A6" opacity=".28"/><circle cx="${f1(t.x)}" cy="${f1(130 - t.k.sun * 34)}" r="7.5" fill="#FFF3C4"/>` : '');
-  const landSvg = (x, land, t) => `<svg class="mo-land" viewBox="0 0 120 160" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${sunSvg(t)}${LAND[land](rnd(x.d.getTime() + 3), t)}</svg>`;
+  const sunSvg = (t) => (t.k.sun ? `<g class="mo-sun"><circle cx="${f1(t.x)}" cy="${f1(130 - t.k.sun * 34)}" r="17" fill="#FFE9A6" opacity=".28"/><circle cx="${f1(t.x)}" cy="${f1(130 - t.k.sun * 34)}" r="7.5" fill="#FFF3C4"/></g>` : '');
+  const landSvg = (x, land, t, f = findOf(x, land, t)) => `<svg class="mo-land" viewBox="0 0 120 160" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${sunSvg(t)}${f ? f.back : ''}${LAND[land](rnd(x.d.getTime() + 3), t)}${f ? f.front : ''}</svg>`;
   /** Рекорды коллекции: самый ранний подъём и самое быстрое задание. */
   const records = (h) => ({ early: Math.min(...h.map((x) => x.wake)), fast: Math.min(...h.filter((x) => x.secs).map((x) => x.secs)) });
   /**
@@ -240,11 +290,11 @@
    * На маленькой — только время и дата; рекорд — золотая рамка и значок.
    */
   function cardOf(x, o = {}) {
-    const land = o.land || landOf(x, o.best == null ? 0 : o.best), t = tone(x, land), k = t.k, tag = o.tag || 'button';
+    const land = o.land || landOf(x, o.best == null ? 0 : o.best), t = tone(x, land), k = t.k, tag = o.tag || 'button', f = findOf(x, land, t);
     const early = o.rec && x.wake === o.rec.early, fast = o.rec && x.secs === o.rec.fast;
     const act = tag === 'button' ? ` data-act="mo-card:${x.d.getTime()}" aria-label="Открытка за ${x.d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, подъём ${K.fmtMin(x.wake)}"` : '';
     return `<${tag} class="mo-card${early || fast ? ' gold' : ''}"${act} style="--a:${k.a};--b:${k.b};--t:${k.ink};--sun:${k.sun.toFixed(2)};--sx:${t.sx}%">
-      <i class="mo-card-sun"></i>${landSvg(x, land, t)}<small>${dShort(x.d)}</small><b>${K.fmtMin(x.wake)}</b>
+      <i class="mo-card-sun"></i>${landSvg(x, land, t, f)}<small>${dShort(x.d)}</small><b>${K.fmtMin(x.wake)}</b>${f && f.lvl ? `<i class="mo-find-tag${f.lvl === 2 ? ' top' : ''}" title="${f.name}">${ic('sparkles', 11, 2.6)}</i>` : ''}
       ${early || fast ? `<i class="mo-rec">${early ? `<b title="Самый ранний подъём">${si('rise', 12)}</b>` : ''}${fast ? `<b title="Быстрее всего задание">${ic('zap', 11, 2.6)}</b>` : ''}</i>` : ''}</${tag}>`;
   }
   /** Образец пейзажа для подарков: тот же рисунок на рассветном небе. */
@@ -257,7 +307,7 @@
     const cy = 160 - (160 * (-0.62 + 0.28 * k.sun) + 67.2);
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 120 160"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${k.a}"/><stop offset="1" stop-color="${k.b}"/></linearGradient>
       <radialGradient id="s"><stop offset="0" stop-color="#FFF8D6"/><stop offset=".4" stop-color="#FFD660" stop-opacity=".62"/><stop offset=".72" stop-color="#FFC850" stop-opacity="0"/><stop offset="1" stop-color="#FFC850" stop-opacity="0"/></radialGradient></defs>
-      <rect width="120" height="160" fill="url(#g)"/>${land === 'aurora' ? '' : `<circle cx="${f1(t.x)}" cy="${f1(cy)}" r="67.2" fill="url(#s)"/>`}${sunSvg(t)}${LAND[land](rnd(x.d.getTime() + 3), t)}</svg>`;
+      <rect width="120" height="160" fill="url(#g)"/>${land === 'aurora' ? '' : `<circle cx="${f1(t.x)}" cy="${f1(cy)}" r="67.2" fill="url(#s)"/>`}${sunSvg(t)}${(findOf(x, land, t) || {}).back || ''}${LAND[land](rnd(x.d.getTime() + 3), t)}${(findOf(x, land, t) || {}).front || ''}</svg>`;
     const img = new Image();
     img.onload = () => {
       const cv = document.createElement('canvas'), g = cv.getContext('2d'), w = 1080, h = 1440;
@@ -355,7 +405,7 @@
   function cardSheet(flow, t, enter = 'push') {
     const s = flow.state, h = K.stats(s).h, i = h.findIndex((x) => x.d.getTime() === +t), x = h[i];
     if (!x) { albumSheet(flow, 'back'); return; }
-    const best = bestByDay(s, h), land = landOf(x, best.get(x.d.getTime())), sc = sceneOf(land), tk = x.task && TASKS.find((y) => y.id === x.task);
+    const best = bestByDay(s, h), land = landOf(x, best.get(x.d.getTime())), sc = sceneOf(land), tk = x.task && TASKS.find((y) => y.id === x.task), f = findOf(x, land, tone(x, land));
     const wakes = h.map((y) => y.wake).sort((a, b) => a - b), med = wakes[Math.floor(wakes.length / 2)], dw = x.wake - med;
     const vs = !dw ? 'как обычно' : `на ${Math.abs(dw)} мин ${dw < 0 ? 'раньше' : 'позже'} обычного`;
     const nav = (j, dir) => (h[j] ? `<button class="mo-nav ${dir}" data-act="mo-card:${h[j].d.getTime()}:${dir}" aria-label="${dir === 'prev' ? 'Предыдущая' : 'Следующая'} открытка">${ic(dir === 'prev' ? 'chevron-left' : 'chevron-right', 22, 2.4)}</button>` : `<span class="mo-nav ${dir} off"></span>`);
@@ -364,25 +414,103 @@
       <div class="ap-card ap-list">
         <div class="ap-row tall"><i class="ap-row-i c" style="--c:#FF9500">${si('rise', 20)}</i><span>Подъём в ${K.fmtMin(x.wake)}<small>${vs}</small></span></div>
         ${tk ? `<div class="ap-row tall"><i class="ap-row-i c tb cat-${tk.cat}">${Sonly.ti(tk.id, 19)}</i><span>${tk.name}<small>${x.secs ? `выполнено за ${x.secs} с` : 'выполнено'}</small></span></div>` : ''}
-        <div class="ap-row tall"><i class="ap-row-i c" style="--c:#AF52DE">${si('cards', 20)}</i><span>Пейзаж «${sc[1]}»<small>${sc[2] ? `открыт за ${sc[2]} ${utr(sc[2])} подряд` : 'есть сразу'} · № ${i + 1} из ${h.length}</small></span></div></div>
+        <div class="ap-row tall"><i class="ap-row-i c" style="--c:#AF52DE">${si('cards', 20)}</i><span>Пейзаж «${sc[1]}»<small>${sc[2] ? `открыт за ${sc[2]} ${utr(sc[2])} подряд` : 'есть сразу'} · № ${i + 1} из ${h.length}</small></span></div>${f && f.lvl ? `<div class="ap-row tall"><i class="ap-row-i c" style="--c:#FFB020">${ic('sparkles', 19, 2.3)}</i><span>${f.name}<small>Находка: ${findNote(f)}</small></span></div>` : ''}</div>
       <p class="ap-note mo-msg">${s._copied || ''}</p></div>
       <div class="ap-sh-foot mo-two"><button class="ap-btn ghost" data-act="mo-save:${t}">${si('save', 19)}Сохранить</button><button class="ap-btn" data-act="mo-share:${t}">${si('share', 19)}Поделиться</button></div>`, `ap-sheet ${enter}`);
   }
 
+  /* Утро группы: кто во сколько встал. Пока группы нет — пример с вымышленными именами (так и подписан), чтобы было видно, зачем она. */
+  const EXAMPLE = [{ n: 'Аня', t: '06:48', c: '#FF9F0A' }, { n: 'Макс', t: '07:02', c: '#30B0C7' }, { n: 'Ты', t: '07:30', me: true }, { n: 'Лена', t: '07:41', c: '#AF52DE' }, { n: 'Дима', t: '', c: '#5E5CE6' }];
+  function board(rows, title, tag, slots = 0) {
+    const up = rows.filter((r) => r.t).length, total = rows.length;
+    return `<div class="ap-card mo-board"><div class="mo-bd-h"><b>${title}</b>${tag ? `<span class="mo-tag">${tag}</span>` : `<span class="mo-bd-n">${up} из ${total}</span>`}</div>
+      <div class="mo-bd-bar"><i style="--p:${total ? up / total : 0}"></i></div>
+      <div class="mo-bd-l">${rows.map((r) => `<div class="mo-bd-r${r.t ? '' : ' zz'}"><i class="mo-av${r.me ? ' me' : ''}"${r.c ? ` style="--c:${r.c}"` : ''}>${r.me ? Sonly.mark() : r.n[0]}</i><span>${r.n}</span>${r.t ? `<em>${r.t}</em><b class="mo-st ok">${ic('check', 13, 3.4)}</b>` : `<em>${r.wait || 'спит'}</em><b class="mo-st">${si('moon', 14)}</b>`}</div>`).join('')}
+        ${Array.from({ length: slots }, () => `<button class="mo-bd-r slot" data-act="mo-invite"><i class="mo-av">${ic('plus', 16, 2.6)}</i><span>Позвать друга</span></button>`).join('')}</div></div>`;
+  }
   function groupSheet(flow) {
     const s = flow.state, g = s.group, now = K.stats(s).h.find((x) => x.d.getTime() === today());
+    const me = { n: 'Ты', me: true, t: now ? K.fmtMin(now.wake) : '', wait: 'ещё не встал' };
     const body = g
       ? `<div class="ap-card mo-grp">${faces(s, true)}<b>${esc(g.name)}</b><small>Код приглашения</small><div class="mo-code">${g.code}</div></div>
-        <h3>Участники</h3><div class="ap-card ap-list"><div class="ap-row tall"><i class="ap-row-i c" style="--c:#FFC62B">${Sonly.mark()}</i><span>Ты<small>${now ? `встал в ${K.fmtMin(now.wake)}` : 'сегодня ещё не вставал'}</small></span>${now ? `<em class="mo-ok">${ic('check', 15, 3.2)}</em>` : ''}</div></div>
+        ${board([me], 'Сегодня', '', 2)}
         <p class="ap-note">${s._copied || ''}</p>`
       : `<div class="mo-grp-empty">${faces(s, true)}<b>Вставайте вместе</b><p>Утром видно, кто уже встал.</p></div>
+        ${board(EXAMPLE, 'Утро группы', 'Пример')}
         <label class="ap-card mo-name"><small>Название группы</small><input class="js-gname" value="Утренний клуб" maxlength="24" aria-label="Название группы"></label>`;
     const foot = g ? '<button class="ap-btn" data-act="mo-invite">Позвать друзей</button><button class="ap-btn ghost" data-act="mo-leave">Выйти из группы</button>' : '<button class="ap-btn" data-act="mo-create">Создать группу</button>';
     flow.sheet(`${head('Группа подъёма')}<div class="ap-sh-body scroll">${body}</div><div class="ap-sh-foot">${foot}</div>`, 'ap-sheet');
   }
 
+
+  /* ── Верх экрана «Доброе утро» ───────────────────────────── */
+
+  const hm = (v) => { const [a, b] = String(v || '0:0').split(':'); return (+a || 0) * 60 + (+b || 0); };
+  /* Когда ничего особенного: тёплая фраза дня — каждый день своя. */
+  const GREET = [
+    ['Утро уже твоё', 'Первое дело дня сделано — дальше легче'],
+    ['Ты встал — это главное', 'Самое трудное за сегодня уже позади'],
+    ['Хорошее начало', 'Стакан воды и свет из окна — и ты в строю'],
+    ['День начался с победы', 'Будильник выключен не кнопкой, а головой'],
+    ['С добрым утром', 'Пусть день будет таким же ясным, как эта открытка'],
+    ['Подъём засчитан', 'Открытка уже в альбоме — завтра будет другая'],
+    ['Мозг проснулся', 'Задание позади — голова уже в работе'],
+  ];
+  /**
+   * Новость утра — одна, самая яркая из правдивых: новый пейзаж, рекорд, редкая находка, серия, раньше обычного.
+   * Если ничего такого — тёплая фраза дня.
+   */
+  function newsOf(s, r, x, o) {
+    if (!o.mine) return r.direct ? { h: 'Так выглядит утро', p: 'После звонка — новая открытка: небо по времени подъёма, иногда редкие находки' } : { h: 'Проверка пройдена', p: 'Утром здесь будет новая открытка — каждый день своя' };
+    const st = K.stats(s), prev = o.h.filter((y) => y !== o.mine), goal = REWARDS.find(([n]) => n > o.best);
+    if (o.fresh) return { h: `Новый пейзаж — ${o.fresh[1]}`, p: goal ? `Его открыли ${o.fresh[2]} ${utr(o.fresh[2])} подряд. Следующий — ${sceneOf(goal[1])[1]}` : 'Открыты все пейзажи — теперь выпадает любой' };
+    if (!prev.length) return { h: 'Первое утро с sonly', p: 'Каждое утро — новая открытка в альбом, а серия открывает новые пейзажи' };
+    const early = Math.min(...prev.map((y) => y.wake)), fast = Math.min(...prev.map((y) => y.secs || 1e9));
+    if (x.wake < early) return { h: 'Самое раннее утро', p: `На ${early - x.wake} мин раньше прошлого рекорда` };
+    if (x.secs && fast < 1e9 && x.secs < fast) return { h: 'Рекорд скорости', p: `Задание за ${x.secs} с — быстрее, чем когда-либо` };
+    if (o.f && o.f.lvl) return { h: o.f.lvl === 2 ? `Очень редкая: ${o.f.name.toLowerCase()}` : `Редкая находка: ${o.f.name.toLowerCase()}`, p: o.f.lvl === 2 ? 'Такая открытка выпадает примерно раз в месяц' : 'Такие попадаются раз в одну-две недели' };
+    if (st.streak >= 2) return { h: `${st.streak} ${utr(st.streak)} подряд`, p: goal ? `До пейзажа «${sceneOf(goal[1])[1]}» — ${goal[0] - st.streak} ${utr(goal[0] - st.streak)}` : 'Все пейзажи открыты — серия просто растёт' };
+    const last = prev.slice(-14), usual = Math.round(last.reduce((a, y) => a + y.wake, 0) / last.length), dw = usual - x.wake;
+    if (dw >= 5) return { h: `На ${dw} мин раньше обычного`, p: 'Лишние минуты утра — тебе в подарок' };
+    if (x.wake < 390) return { h: 'Раньше солнца', p: 'Пока все спят, утро — только твоё' };
+    const g = GREET[doy() % GREET.length];
+    return { h: g[0], p: g[1] };
+  }
+  /** Рисунок крупной открытки: свечение солнца — в той же сетке, что и солнце, поэтому они всегда совпадают; до рассвета — звёзды. */
+  function heroSvg(x, land, t, f) {
+    const cy = 130 - t.k.sun * 34, r = mix(x.d.getTime(), 433);
+    const stars = t.k.night && land !== 'aurora' ? `<g fill="#fff" opacity=".8">${Array.from({ length: 12 }, () => `<circle cx="${f1(r() * 120)}" cy="${f1(86 + r() * 30)}" r="${f1(0.35 + r() * 0.5)}"/>`).join('')}</g>` : '';
+    const glow = land === 'aurora' || !t.k.sun ? '' : `<circle class="wk-glow" cx="${f1(t.x)}" cy="${f1(cy)}" r="46" fill="url(#wkGlow)"/>`;
+    return `<svg class="mo-land" viewBox="0 0 120 160" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs><radialGradient id="wkGlow"><stop offset="0" stop-color="#FFF8D6" stop-opacity=".95"/><stop offset=".32" stop-color="#FFD660" stop-opacity=".5"/><stop offset="1" stop-color="#FFC850" stop-opacity="0"/></radialGradient></defs>${stars}${glow}${sunSvg(t)}${f ? f.back : ''}${LAND[land](rnd(x.d.getTime() + 3), t)}${f ? f.front : ''}</svg>`;
+  }
+  /**
+   * Открытка этого утра крупно — каждое утро другая: пейзаж, небо по времени подъёма, иногда находка в небе, —
+   * и новость утра под ней. Проба и проверка показывают такую же открытку, но в альбом она не попадает.
+   */
+  function hero(s, r) {
+    const st = K.stats(s), h = st.h, day = K.day0(new Date()).getTime();
+    const mine = !r.test && h.find((y) => y.d.getTime() === day);
+    const x = mine || { d: new Date(day), wake: hm(r.at), secs: r.secs };
+    const by = bestByDay(s, h), best = (mine && by.get(day)) || st.best || 0;
+    const before = Math.max(0, ...[...by.entries()].filter(([t]) => t < day).map(([, v]) => v));
+    const land = landOf(x, best), t = tone(x, land), k = t.k, f = findOf(x, land, t);
+    const fresh = mine && SCENES.find((sc) => sc[2] && sc[2] > before && sc[2] <= best);
+    const nw = newsOf(s, r, x, { mine, fresh, f, best, h });
+    const date = x.d.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' });
+    const tag = fresh ? `<b class="wk-tag new">${ic('sparkles', 13, 2.6)}Новый пейзаж</b>` : f && f.lvl ? `<b class="wk-tag${f.lvl === 2 ? ' gold' : ''}">${ic('sparkles', 13, 2.6)}${f.lvl === 2 ? 'Очень редкая' : 'Редкая'}</b>` : '';
+    const card = `${heroSvg(x, land, t, f)}<i class="wk-shade"></i>
+      <span class="wk-hi"><b>Доброе утро</b><small>${mine ? `Утро №${h.indexOf(mine) + 1}` : 'Пробное утро'} · ${date}</small></span>${tag}
+      <span class="wk-at"><b>${K.fmtMin(x.wake)}</b><small>подъём</small></span>
+      <span class="wk-meta">${x.secs ? `<i>${ic('timer', 13, 2.5)}${x.secs} с</i>` : ''}${mine && st.streak ? `<i>${ic('flame', 13, 2.5)}${st.streak} ${K.pl(st.streak, 'день', 'дня', 'дней')}</i>` : ''}</span>`;
+    const style = `--a:${k.a};--b:${k.b};--t:${k.ink};--sun:${k.sun.toFixed(2)};--sx:${t.sx}%`;
+    return `${mine ? `<button class="wk-card${fresh || (f && f.lvl) ? ' shine' : ''}" data-act="mo-card:${day}" aria-label="Открытка этого утра" style="${style}">${card}</button>` : `<div class="wk-card" style="${style}">${card}</div>`}
+      <div class="wk-news"><h1>${nb(nw.h)}</h1><p>${nb(nw.p)}</p></div>`;
+  }
+
   Sonly.morning = {
     rewards,
+    /** Верх экрана «Доброе утро»: открытка утра и новость дня. */
+    hero,
     /** Небо для минуты суток — им же красится виджет следующего будильника. */
     sky: skyOf,
     /** Сводка для экрана «Доброе утро». */

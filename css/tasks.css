@@ -185,6 +185,10 @@
 }
 
 /* Угадай мелодию: нот много — точки бита мельче. */
-.tp-tune .tp-track i{width:11px;height:11px;margin:-5.5px 0 0 -5.5px}
+/* Столбики звука в меню «Угадай мелодию» (не путать с .tp-eq — пример в меню «Примеров»). */
+.tp-bars{display:flex;align-items:center;justify-content:center;gap:5px;height:46px}
+.tp-bars i{width:7px;height:var(--h);border-radius:4px;background:#FFC700;box-shadow:0 0 10px rgba(255,199,0,.4);animation:to-in .3s cubic-bezier(.3,1.5,.5,1) var(--d) both}
+.tp-bars.play i{animation:tp-bars .42s ease-in-out var(--d) 14 alternate}
+@keyframes tp-bars{to{height:calc(var(--h) * .3)}}
 .tp-tune .tp-ans{margin-top:4px}
-@media (max-height:720px){.tp-tune .tp-ans{margin-top:0}.tp-tune .tp-ans span{height:28px;font-size:13px}.tp-tune .tp-track{margin-block:0}}
+@media (max-height:720px){.tp-tune .tp-ans{margin-top:0}.tp-tune .tp-ans span{height:28px;font-size:13px}.tp-bars{height:36px}}

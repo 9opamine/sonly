@@ -16,6 +16,9 @@
     bar: { scale: -24, chroma: 0, border: 0.05, mapBlur: 8, blur: 10, saturate: 1.05 },
     lens: { scale: -64, chroma: 0, border: 0.14, mapBlur: 8, blur: 0, saturate: 1.05 },
   };
+  /* Где преломления нет (Safari, Telegram на iPhone), библиотека даёт матовое размытие. Капле размытие нельзя: она лежит
+     поверх подписей вкладок и превращала их в пятно, — у неё только лёгкая насыщенность. */
+  const FALLBACK = { btn: 12, pill: 14, bar: 16, lens: 0 };
   const tpl = new Map(), seen = new WeakSet();
   /** Фильтр для элемента такого размера: делается один раз на скрытой заготовке и потом переиспользуется. */
   function filterFor(el) {
@@ -29,7 +32,7 @@
       host.style.cssText = `position:fixed;left:-10000px;top:0;width:${w}px;height:${h}px;border-radius:${r};visibility:hidden;pointer-events:none`;
       host.setAttribute('aria-hidden', 'true');
       document.body.appendChild(host);
-      make(host, PRESET[name]);
+      make(host, { ...PRESET[name], fallbackBlur: FALLBACK[name] });
       t = host.style.backdropFilter;
       tpl.set(key, t);
       /* Заготовке фильтр больше не нужен: его забрали настоящие элементы. Скрытая копия с преломлением
@@ -101,13 +104,16 @@
       }
       if (drag.moved) lensAt(x);
     });
-    const up = (e) => {
-      if (!drag || e.pointerId !== drag.id) return;
+    /* Конец жеста. Отпускание может прийти не на панель (iPhone не всегда отдаёт захват указателя), его может отменить
+       система — тогда капля всё равно садится: на вкладку под пальцем, а при отмене — на текущую, без перехода. */
+    const up = (e, cancel) => {
+      if (!drag || (e && e.pointerId !== drag.id)) return;
       const moved = drag.moved;
       drag = null;
       bar.classList.remove('press');
       if (!moved) return;
-      const x = local(e), t = cells().reduce((a, b) => (Math.abs(mid(b) - x) < Math.abs(mid(a) - x) ? b : a));
+      const cur = bar.querySelector('button.on') || cells()[0], x = e && !cancel ? local(e) : mid(cur);
+      const t = cancel ? cur : cells().reduce((a, b) => (Math.abs(mid(b) - x) < Math.abs(mid(a) - x) ? b : a));
       /* Подложка возникает под каплей и вместе с ней садится на вкладку. */
       ind.classList.add('now');
       ind.style.setProperty('--x', Math.max(0, x - ind.offsetWidth / 2) + 'px');
@@ -117,10 +123,13 @@
       lensAt(mid(t));
       put(t);
       if (drop) setTimeout(() => drop.classList.remove('on'), 260);
-      t.click();
+      if (!cancel && t !== cur) t.click();
     };
-    bar.addEventListener('pointerup', up);
-    bar.addEventListener('pointercancel', up);
+    bar.addEventListener('pointerup', (e) => up(e));
+    bar.addEventListener('pointercancel', (e) => up(e, true));
+    window.addEventListener('pointerup', (e) => up(e), true);
+    window.addEventListener('pointercancel', (e) => up(e, true), true);
+    window.addEventListener('blur', () => up(null, true));
     new ResizeObserver(sync).observe(bar);
     sync();
     nav._tabs = { put, sync };

@@ -6,6 +6,8 @@
   const { ic, esc, pad, TASKS, DAYS, SB_ICONS, wheel, daysText, taskOpts: TO } = Sonly;
 
   const cap = (s) => s.replace(/^./, (x) => x.toUpperCase());
+  /** Имя звука для экрана: у своих звуков (my:…) — то, что задал человек. */
+  const sndName = (n) => (Sonly.mysnd ? Sonly.mysnd.label(n) : n);
   const pl = (n, one, few, many) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many; };
   const hm = (a) => pad(a.h) + ':' + pad(a.m);
   const fmtMin = (v) => pad(Math.floor(v / 60)) + ':' + pad(v % 60);
@@ -133,8 +135,9 @@
     const task = metric === 'task', v = (x) => (task ? x.secs : x.wake), mean = (l) => l.reduce((a, x) => a + v(x), 0) / l.length;
     if (!p.list.length) return '';
     const avg = mean(p.list), d = p.prev.length >= 2 ? Math.round(mean(p.cur) - mean(p.prev)) : null;
-    const was = range === '7' ? 'чем неделей раньше' : range === '30' ? 'чем месяцем раньше' : 'чем в начале';
-    const chip = d == null ? '' : !d ? `<em>как и ${was.replace('чем ', '')}</em>`
+    /* «Всё время» сравнивает первую и вторую половину истории. Без изменений — «так же» и с чем сравнили, без повтора. */
+    const when = range === '7' ? 'неделей раньше' : range === '30' ? 'месяцем раньше' : 'в первые дни', was = (d ? 'чем ' : 'как ') + when;
+    const chip = d == null ? '' : !d ? `<em>${ic('equal', 14, 2.6)}так же</em>`
       : `<em class="${d < 0 ? 'good' : 'bad'}">${ic(d < 0 ? 'trending-down' : 'trending-up', 14, 2.6)}${task ? `${d < 0 ? 'быстрее' : 'медленнее'} на ${Math.abs(d)} с` : `на ${Math.abs(d)} мин ${d < 0 ? 'раньше' : 'позже'}`}</em>`;
     return `<div class="ap-ch-sum"><div><b>${task ? `${Math.round(avg)}<u>с</u>` : fmtMin(Math.round(avg))}</b><small>${task ? 'в среднем на задание' : 'в среднем подъём'}</small></div>${chip ? `<span>${chip}<small>${was}</small></span>` : ''}</div>`;
   }
@@ -229,7 +232,7 @@
       <div class="ap-alarm-main"><div><small>${esc(a.name || 'Будильник')}</small><b>${hm(a)}</b></div>
         <button class="ap-tg${a.on ? ' on' : ''}" data-act="toggle:${a.id}" role="switch" aria-checked="${a.on}" aria-label="Будильник ${hm(a)}"></button></div>
       <div class="al-when">${a.once ? `<span class="al-once">Один раз${at ? ` · ${dayWord(at, now)}` : ''}</span>` : dayDots(a, now)}<em>${when}</em></div>
-      <div class="ap-alarm-meta"><span class="ap-tchip"><i class="tb cat-${t.cat}">${tic(t, 15)}</i>${t.name}</span><span class="al-chip">${Sonly.si('music', 14)}${esc(a.sound)}</span>${a.check ? `<span class="al-chip" title="Проверка подъёма через ${a.check} мин">${Sonly.si('eye', 14)}${a.check} мин</span>` : ''}</div>
+      <div class="ap-alarm-meta"><span class="ap-tchip"><i class="tb cat-${t.cat}">${tic(t, 15)}</i>${t.name}</span><span class="al-chip">${Sonly.si('music', 14)}${esc(sndName(a.sound))}</span>${a.check ? `<span class="al-chip" title="Проверка подъёма через ${a.check} мин">${Sonly.si('eye', 14)}${a.check} мин</span>` : ''}</div>
       ${skip}
     </article>`;
   };
@@ -291,7 +294,7 @@
         <div class="ap-card ap-list">
           <button class="ap-row" data-act="ed-task"><i class="ap-row-i tb cat-${t.cat}">${tic(t, 19)}</i><span>Задание</span><em>${t.name}</em>${chev()}</button>
           ${t.id === 'random' ? row(Sonly.si('shuffle'), 'Набор заданий', `${poolOf(e).length} из ${TASKS.length}`, 'ed-pool') : TO.has(t.id) ? row(Sonly.si('sliders'), 'Настройка', TO.summary(t.id, TO.get(e, t.id)), 'ed-opts') : ''}
-          ${row(Sonly.si('music'), 'Звук', e.sound, 'ed-sound')}
+          ${row(Sonly.si('music'), 'Звук', esc(sndName(e.sound)), 'ed-sound')}
         </div>
         <h3>Правила</h3>
         <div class="ap-card ap-list">
@@ -362,7 +365,8 @@
   /** Звуки по группам. Все доступны сразу: подарки за серию — пейзажи открыток, а не звуки. */
   function soundRows(s, cur, act) {
     const groups = SOUNDS.map(([g, list]) => [g, list.map((n) => ({ name: n, open: true }))]);
-    return groups.map(([g, list]) => `<h3>${g}</h3><div class="ap-card ap-list">${list.map((x) => (x.open
+    /* Свои звуки (запись и файлы) — первыми: это то, что человек сделал сам. */
+    return (Sonly.mysnd ? Sonly.mysnd.rows(cur, act) : '') + groups.map(([g, list]) => `<h3>${g}</h3><div class="ap-card ap-list">${list.map((x) => (x.open
       ? `<button class="ap-row ap-snd${cur === x.name ? ' on' : ''}" data-act="${act}:${x.name}"><i class="ap-row-i">${Sonly.si('wave')}</i><span>${x.name}</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></button>`
       : `<div class="ap-row ap-snd locked"><i class="ap-row-i">${Sonly.si('lock')}</i><span>${x.name}</span><em>серия ${x.n}</em></div>`)).join('')}</div>`).join('');
   }
@@ -443,7 +447,7 @@
           <button class="ap-card ap-gift" data-act="page:share" data-in style="--i:1"><i>${Sonly.mark()}</i><span><b>${Sonly.partner.title}</b><small>${Sonly.partner.sub}</small></span>${chev()}</button>
           <button class="ap-card ap-sub" data-act="page:sub" data-in style="--i:2"><i>${ic('check', 20, 3)}</i><span><b>Подписка активна</b><small>Год · продление ${renew()}</small></span>${chev()}</button>
           <h3>Будильник</h3>
-          <div class="ap-card ap-list">${row(Sonly.si('volume'), 'Громкость', `${s.volume} %`, 'page:volume', '#FF3B30')}${row(Sonly.si('music'), 'Звук по умолчанию', s.sndDef, 'page:sound', '#FF2D55')}${row(Sonly.si('ready'), 'Готовность к звонку', '', 'page:help', '#34C759')}</div>
+          <div class="ap-card ap-list">${row(Sonly.si('volume'), 'Громкость', `${s.volume} %`, 'page:volume', '#FF3B30')}${row(Sonly.si('music'), 'Звук по умолчанию', esc(sndName(s.sndDef)), 'page:sound', '#FF2D55')}${row(Sonly.si('ready'), 'Готовность к звонку', '', 'page:help', '#34C759')}</div>
           ${Sonly.lock ? `<h3>Фокус</h3><div class="ap-card ap-list"><button class="ap-row tall" data-act="page:lock"><i class="ap-row-i c" style="--c:${Sonly.lock.COLORS.lock}">${Sonly.si('lock')}</i><span>Блокировка приложений<small>${Sonly.lock.status(s)}</small></span>${chev()}</button></div>` : ''}
           <h3>Оформление</h3>
           <div class="ap-card ap-list"><div class="ap-row col"><div><i class="ap-row-i c" style="--c:#AF52DE">${Sonly.si('theme')}</i><span>Тема</span></div>${seg('theme', s.theme, [['system', 'Как в системе'], ['dark', 'Тёмная'], ['light', 'Светлая']])}</div>
@@ -469,6 +473,8 @@
   const tgRow = (icon, label, note, on, act) => `<div class="ap-row${note ? ' tall' : ''}"><i class="ap-row-i">${icon}</i><span>${label}${note ? `<small>${note}</small>` : ''}</span>${act ? `<button class="ap-tg sm${on ? ' on' : ''}" data-act="${act}" role="switch" aria-checked="${on}" aria-label="${label}"></button>` : `<em>${ic('lock', 13, 2.5)}Всегда</em>`}</div>`;
   const check = (state, label, note) => `<div class="ap-row${note ? ' tall' : ''}"><i class="ap-ck ${state}">${ic(state === 'ok' ? 'check' : state === 'warn' ? 'triangle-alert' : 'info', 15, state === 'ok' ? 3.2 : 2.3)}</i><span>${label}${note ? `<small>${note}</small>` : ''}</span></div>`;
   const MSG = { support: ['Написать в поддержку', 'Опиши, что случилось, — ответим на почту.'], idea: ['Предложить идею', 'Чего тебе не хватает в приложении?'], bug: ['Сообщить об ошибке', 'Что пошло не так и что было перед этим?'] };
+  /* Темы обращения: одно касание вместо первой фразы. Журнал проверки (diag.js) прикладывается к поддержке и ошибкам. */
+  const TOPICS = { support: ['Не зазвонил', 'Не засчиталось задание', 'Камера или микрофон', 'Подписка', 'Другое'], bug: ['Зависло', 'Не тот экран', 'Звук', 'Камера', 'Другое'], idea: ['Новое задание', 'Звуки', 'Статистика', 'Утро', 'Другое'] };
   const DOCS = { terms: 'Условия использования', privacy: 'Политика конфиденциальности' };
   const PROMO_MSG = { ok: '−25 % на следующий год', bad: 'Такого кода нет', own: 'Это твой код — его вводят твои зрители.' };
   const WIDGET_STEPS = ['Зажми пустое место на экране «Домой».', 'Нажми «Изменить» вверху и выбери «Добавить виджет».', 'Найди sonly и добавь виджет.'];
@@ -493,24 +499,30 @@
         <p class="ap-coupon-msg ${s.promo === 'ok' ? 'ok' : s.promo ? 'bad' : ''}">${PROMO_MSG[s.promo] || ''}</p>`, ''];
       case 'share': case 'blog': return Sonly.partner.page(s, id);
       case 'lock': case 'lock-ex': case 'lock-night': case 'lock-demo': return Sonly.lock.page(s, id, arg);
+      case 'mysnd': return Sonly.mysnd.page(s, arg);
       case 'widgets': return ['Как добавить виджет', `<div class="ap-card ap-steps">${WIDGET_STEPS.map((t, n) => `<div><b>${n + 1}</b><span>${t}</span></div>`).join('')}</div>`, ''];
       case 'msg': {
         const [title, hint] = MSG[arg] || MSG.support;
         return s.sent === arg ? [title, `<div class="ap-sent"><i>${ic('check', 26, 3)}</i><b>Отправлено</b><p>Спасибо!</p></div>`, '<button class="ap-btn" data-act="page-close">Готово</button>']
-          : [title, `<p class="ap-note first">${hint}</p><textarea class="ap-area js-msg" rows="7" placeholder="Текст сообщения" aria-label="${title}"></textarea>`, `<button class="ap-btn" data-act="msg-send:${arg}">Отправить</button>`];
+          : [title, `<p class="ap-note first">${hint}</p>
+            <div class="ap-topics" role="group" aria-label="Тема">${(TOPICS[arg] || TOPICS.support).map((x) => `<button class="${(s.msgTopic || {})[arg] === x ? 'on' : ''}" data-act="msg-topic:${arg}:${x}">${x}</button>`).join('')}</div>
+            <textarea class="ap-area js-msg" rows="6" placeholder="Текст сообщения" aria-label="${title}"></textarea>
+            ${arg === 'idea' ? '' : `<div class="ap-card ap-list gap">${tgRow(Sonly.si('doc'), 'Приложить журнал', '', s.msgLog !== false, 'msg-log')}</div>`}`, `<button class="ap-btn" data-act="msg-send:${arg}">Отправить</button>`];
       }
       default: return [DOCS[arg] || 'Документ', `<div class="ap-doc"><p>Здесь будет полный текст документа «${DOCS[arg] || 'Документ'}». В прототипе он не подключён.</p></div>`, ''];
     }
   }
-  function openPage(flow, id, arg = '') {
+  /** enter — въезд при переходе между страницами (push/back); та же страница перерисовывается на месте. */
+  function openPage(flow, id, arg = '', enter = '') {
     const s = flow.state, same = s._page && s._page[0] === id, [title, body, foot, back] = pageOf(s, id, arg), top = same ? keepTop(flow, '') : 0;
     s._page = [id, arg];
     /* back — страница внутри другой страницы: вместо крестика стрелка назад. Та же страница перерисовывается без въезда. */
     flow.sheet(`<div class="ap-sh-head"><button class="ap-x lg" data-act="${back || 'page-close'}" aria-label="${back ? 'Назад' : 'Закрыть'}">${ic(back ? 'chevron-left' : 'x', back ? 22 : 20, 2.3)}</button><b>${title}</b><span class="ap-x ghost"></span></div>
-      <div class="ap-sh-body scroll">${body}</div>${foot ? `<div class="ap-sh-foot">${foot}</div>` : ''}`, `ap-sheet${same ? ' now' : ''}`);
+      <div class="ap-sh-body scroll">${body}</div>${foot ? `<div class="ap-sh-foot">${foot}</div>` : ''}`, `ap-sheet${same ? ' now' : enter ? ' ' + enter : ''}`);
     setTop(flow, top);
     if (Sonly.partner && Sonly.partner.mount) Sonly.partner.mount(flow);
     if (Sonly.lock && Sonly.lock.mount) Sonly.lock.mount(flow);
+    if (Sonly.mysnd && id === 'mysnd') Sonly.mysnd.mount(flow);
     const vol = flow.sheets.querySelector('.js-vol');
     if (vol) vol.addEventListener('input', () => { s.volume = +vol.value; vol.style.setProperty('--p', ((s.volume - 10) / 90) * 100 + '%'); flow.sheets.querySelector('.js-vn').textContent = s.volume; Sonly.sound.setVolume(s.volume); });
   }
@@ -542,7 +554,7 @@
   Sonly.appPreview = (st) => `<div class="ap" data-theme="${sysDark() ? 'dark' : 'light'}"><div class="statusbar"><span>9:41</span><i class="sb-island"></i><span class="sb-right">${SB_ICONS}</span></div>
     <section class="screen">${homeHtml({ data: 'new', shareHidden: true, alarms: [alarmFrom(st)] })}</section><div class="dock">${tabbar('home')}</div><div class="homebar"></div></div>`;
 
-  Sonly.appKit = { taskOf, tic, hm, fmtMin, stats, pl, day0, copy, blank, editor, taskPicker, poolOf, nextRing, dayWord, chev, row, FLAME, keepTop, setTop, shareText, code4, refOf, openPage };
+  Sonly.appKit = { taskOf, tic, hm, fmtMin, stats, pl, day0, copy, blank, editor, taskPicker, poolOf, nextRing, dayWord, chev, row, FLAME, keepTop, setTop, shareText, code4, refOf, openPage, soundPicker };
 
   Sonly.register({
     id: 'app', name: 'Приложение', cls: 'ap',
@@ -687,7 +699,20 @@
         case 'ref-copy': case 'ref-share':
           shareText(act === 'ref-copy' ? refOf(s) : `sonly — будильник, который нельзя отложить: выключается только заданием. Промокод ${refOf(s)} — −25 % на первый год и 3 дня бесплатно.`, false, (msg) => { s._copied = act === 'ref-copy' && /^Текст/.test(msg) ? 'Код скопирован' : msg; if (s._page && s._page[0] === 'share') openPage(flow, 'share'); });
           return true;
-        case 'msg-send': s.sent = arg; openPage(flow, 'msg', arg); return true;
+        case 'msg-topic': {
+          /* Тема меняется на месте: набранный текст не пропадает. */
+          const [kind, topic] = [arg.slice(0, arg.indexOf(':')), arg.slice(arg.indexOf(':') + 1)];
+          s.msgTopic = { ...(s.msgTopic || {}), [kind]: s.msgTopic && s.msgTopic[kind] === topic ? '' : topic };
+          flow.sheets.querySelectorAll('.ap-topics button').forEach((b) => b.classList.toggle('on', b.dataset.act === `msg-topic:${kind}:${s.msgTopic[kind]}`));
+          return true;
+        }
+        case 'msg-log': { s.msgLog = s.msgLog === false; const b = flow.sheets.querySelector('[data-act="msg-log"]'); if (b) { b.classList.toggle('on', s.msgLog); b.setAttribute('aria-checked', s.msgLog); } return true; }
+        case 'msg-send': {
+          /* Ни темы, ни текста — подсвечиваем поле, а не отправляем пустое письмо. */
+          const area = flow.sheets.querySelector('.js-msg');
+          if (area && !area.value.trim() && !(s.msgTopic || {})[arg]) { Sonly.nudge(area); return true; }
+          s.sent = arg; openPage(flow, 'msg', arg); return true;
+        }
         case 'restore-app': flow.sheet('<div class="msg"><b>Подписка на месте</b><p>Покупка уже на этом Apple ID.</p><button class="msg-ok" data-act="sheet-close">Понятно</button></div>', 'center'); return true;
         case 'ring-test': s._page = null; Sonly.ringer.start(flow, s.alarms.find((x) => x.on) || s.alarms[0] || blank(s), true); return true;
         case 'ed-test': Sonly.ringer.start(flow, e, true, 'editor'); return true;
@@ -697,6 +722,7 @@
           if (Sonly.morning && Sonly.morning.on(flow, act, arg, el)) return true;
           if (Sonly.partner && Sonly.partner.on(flow, act, arg, el)) return true;
           if (Sonly.lock && Sonly.lock.on(flow, act, arg, el)) return true;
+          if (Sonly.mysnd && Sonly.mysnd.on(flow, act, arg, el)) return true;
           /* Нажатия внутри настройки задания: предметы, сложность, количество. */
           const done = e && act.startsWith('to-') && TO.act(e.task, TO.get(e, e.task), act, arg);
           if (done === 'keep') return true;

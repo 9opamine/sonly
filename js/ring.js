@@ -127,7 +127,7 @@
     else if (k.kind === 'pairs') { const pics = shuffle(TO.objects({ off: [] })).slice(0, o.n); k.n = o.n; k.cards = shuffle([...pics, ...pics]).map((p, id) => ({ id, p, open: false, done: false })); }
     else if (k.kind === 'phrase') Object.assign(k, { text: TO.pick('phrase', o.len) || TO.sample('phrase', 'len', o.len), val: '' });
     else if (k.kind === 'voice') Object.assign(k, { text: (TO.pick('tongue', o.level) || TO.sample('tongue', 'level', o.level)).replace(/\u00a0/g, ' '), phase: 'idle', got: [], heard: '' });
-    else if (k.kind === 'rhythm') { const n = Math.max(1, Math.min(5, +o.n || 3)); Object.assign(k, { n, i: 0, order: shuffle(Sonly.rhythm.TUNES.map((x) => x.id)).slice(0, n), no: [], phase: 'intro' }); tuneOpts(k); }
+    else if (k.kind === 'rhythm') { k.n = Math.max(1, Math.min(5, +o.n || 3)); k.used = []; nextTune(k); }
     else if (k.kind === 'count' || k.kind === 'pose') { k.n = o.n; k.auto = { steps: 520, shake: 300 }[t.id] || 0; }
     else if (t.id === 'hunt') { k.list = TO.objects(o); k.rerolls = 1; spin(k, k.list); }
     else if (t.id === 'qr') Object.assign(k, { phase: 'aim', qr: true, own: o.code === 'own' ? TO.ownCode() : null, target: { acc: o.code === 'own' ? 'свой код sonly' : 'любой штрихкод' } });
@@ -340,15 +340,27 @@
         <p class="tk-st js-st${['denied', 'nomic', 'network', 'none', 'error', 'silence'].includes(ph) ? ' warn' : ''}">${VOICE[ph] || VOICE.idle}</p>
         ${(k.deaf || 0) >= 2 && ph !== 'listen' && ph !== 'ok' ? `<button class="tk-again" data-act="say-type">${ic('keyboard', 16, 2.3)}Не слышит — набрать текстом</button>` : ''}</div>`;
     },
-    /* Угадай мелодию: сначала бит — удары в такт нотам, без самих нот, — потом выбор из четырёх. Верный — играет сама мелодия. */
+    /*
+     * Угадай мелодию. Звучит сама мелодия, чистым «пианино», — её узнают, а не угадывают. Ответы открываются, когда мелодию
+     * дослушали (не дольше 4 с): спросонья не прокликать сразу. Неверный ответ — показываем, что это было, и звучит новая
+     * мелодия; угаданное не сгорает. Верный — та же мелодия играет целиком, с басом и барабанами.
+     */
     rhythm: (k) => {
-      const t = tuneOf(k), ph = k.phase, win = ph === 'win', end = Math.max(1, Sonly.rhythm.length(t));
-      const head = win ? 'Верно!' : ph === 'intro' || ph === 'play' ? 'Слушай бит' : k.no.length ? 'Не она — ещё раз' : 'Что за мелодия?';
-      return `<div class="tk-body tk-tune">${prog(k.n, k.i)}<h2 class="tk-h">${head}</h2>
-        <div class="tk-track js-track${win ? ' win' : ''}"><u></u>${Sonly.rhythm.beat(t).map((x) => `<i style="--x:${((x / end) * 100).toFixed(2)}%"></i>`).join('')}</div>
-        <button class="tk-pad js-pad on${win ? ' ok' : ''}" data-act="tn-replay" aria-label="Послушать бит ещё раз"${win ? ' disabled' : ''}><i class="tk-padring"></i><i class="tk-padring r2"></i>${win ? `<b class="tk-note">${Sonly.ti('rhythm', 52)}</b>` : Sonly.mark()}</button>
-        <p class="tk-st">${win ? `${t.name} · ${t.by}` : ph === 'intro' || ph === 'play' ? `${emo('👂', 'tk-ear')}Слушай, как идут ноты` : 'Нажми на солнце — бит ещё раз'}</p>
-        <div class="tk-ans tk-tunes">${k.opts.map((id) => { const x = TUNE(id), cl = win && id === t.id ? 'ok' : k.no.includes(id) ? 'no' : ''; return `<button class="${cl}" data-act="tn:${id}"${win || k.no.includes(id) ? ' disabled' : ''}><i>${cl === 'ok' ? ic('check', 17, 3.4) : cl === 'no' ? ic('x', 16, 3.2) : ic('music', 16, 2.4)}</i><span><b>${x.name}</b><small>${x.by}</small></span></button>`; }).join('')}</div></div>`;
+      const t = TUNE(k.cur), ph = k.phase, win = ph === 'win', miss = ph === 'miss', play = ph === 'listen' || ph === 'again' || win;
+      const head = win ? 'Верно!' : miss ? 'Не угадал' : k.open ? 'Что это за песня?' : 'Слушай мелодию';
+      const left = k.n - k.i - 1, sub = win ? (left === 1 ? 'Осталась 1 мелодия' : left ? `Осталось ${left} ${K.pl(left, 'мелодия', 'мелодии', 'мелодий')}` : 'Это была последняя') : miss ? 'Правильная — зелёная. Сейчас будет другая' : !k.open ? 'Ответы откроются, когда дослушаешь' : ph === 'again' ? 'Звучит ещё раз' : 'Не уверен — послушай ещё раз';
+      const shut = !k.open || win || miss;
+      return `<div class="tk-body tk-tune">${prog(k.n, k.i + (win ? 1 : 0))}<h2 class="tk-h js-th">${head}</h2>
+        <button class="tn-disc js-disc${play ? ' play' : ''}${win ? ' win' : ''}${miss ? ' miss' : ''}" data-act="tn-replay" aria-label="Послушать ещё раз"${ph === 'pick' ? '' : ' disabled'}>
+          <svg class="tn-ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47"/><circle class="js-ring" cx="50" cy="50" r="47" pathLength="1"/></svg>
+          <span class="tn-eq" aria-hidden="true">${'<i></i>'.repeat(7)}</span>
+          ${miss ? `<span class="tn-mark">${ic('x', 30, 3)}</span>` : `<span class="tn-again">${ic('rotate-ccw', 15, 2.6)}Ещё раз</span>`}
+        </button>
+        <p class="tk-st js-ts${miss ? ' warn' : ''}">${sub}</p>
+        <div class="tk-ans tn-opts${shut && !win && !miss ? ' lock' : ''}">${k.opts.map((id) => {
+          const x = TUNE(id), cl = win && id === k.cur ? 'ok' : miss && id === k.pick ? 'no' : miss && id === k.cur ? 'was' : win || miss ? 'dim' : '';
+          return `<button class="${cl}" data-act="tn:${id}"${shut ? ' disabled' : ''}><i class="tn-cov" style="--c:${x.col}">${cl === 'ok' || cl === 'was' ? ic('check', 18, 3.2) : cl === 'no' ? ic('x', 17, 3.2) : ic(x.icon, 19, 2.3)}</i><span><b>${x.name}</b><small>${x.by}</small></span></button>`;
+        }).join('')}</div></div>`;
     },
   };
   const FEED = '<div class="cam-feed"><i class="cf-wall"></i><i class="cf-desk"></i><i class="cf-light"></i><i class="cf-bokeh b1"></i><i class="cf-bokeh b2"></i><i class="cf-bokeh b3"></i></div>';
@@ -369,6 +381,7 @@
     const S = Sonly.say, root = () => flow.cur;
     const how = S && S.engine();
     if (!how || k.phase === 'none' || k.phase === 'denied') { k.phase = 'demo'; k.got = []; k.heard = ''; flow.rerender(); return; }
+    if (sound.session) sound.session('auto');
     k.phase = 'listen';
     k.tried = true;
     k.heard = '';
@@ -413,33 +426,62 @@
   /* ── Угадай мелодию ──────────────────────────────────────── */
 
   const TUNE = (id) => Sonly.rhythm.TUNES.find((x) => x.id === id) || Sonly.rhythm.TUNES[0];
-  const tuneOf = (k) => TUNE(k.order[Math.min(k.i, k.n - 1)]);
-  /** Четыре варианта: загаданная мелодия и три случайные другие. */
-  function tuneOpts(k) {
-    const cur = k.order[Math.min(k.i, k.n - 1)];
-    k.opts = shuffle([cur, ...shuffle(Sonly.rhythm.TUNES.map((x) => x.id).filter((id) => id !== cur)).slice(0, 3)]);
+  /** Следующая мелодия: та, что ещё не звучала в этот раз, и три других названия. Ответы снова закрыты, пока не дослушал. */
+  function nextTune(k) {
+    const all = Sonly.rhythm.TUNES.map((x) => x.id);
+    let pool = all.filter((id) => !k.used.includes(id));
+    if (!pool.length) { k.used = k.cur ? [k.cur] : []; pool = all.filter((id) => id !== k.cur); }
+    k.cur = pool[Math.floor(Math.random() * pool.length)];
+    k.used.push(k.cur);
+    k.opts = shuffle([k.cur, ...shuffle(all.filter((id) => id !== k.cur)).slice(0, 3)]);
+    Object.assign(k, { phase: 'listen', open: false, pick: null });
   }
-  /** Бит: удары в такт нотам, точки на дорожке и солнце мигают вместе с ними. Угадал — играет мелодия, потом следующая. */
+  /** Сколько слушать, прежде чем откроются ответы: всю мелодию, но не дольше 4 с. */
+  const OPEN_AFTER = 4000;
+  /**
+   * Звук и движение. Эквалайзер прыгает на каждую ноту — выше на высоких, — кольцо вокруг показывает, сколько осталось.
+   * Ответы открываются без перерисовки, чтобы не оборвать мелодию; когда она кончилась — экран переходит к выбору.
+   */
   function mountTune(c, k) {
-    const pad = c.q('.js-pad'), dots = c.qa('.js-track i'), t = tuneOf(k), b = Sonly.rhythm.beat(t);
-    const pulse = () => { pad.classList.remove('hit'); void pad.offsetWidth; pad.classList.add('hit'); };
-    const light = (lead) => b.forEach((ms, i) => c.wait(lead + ms, () => { if (dots[i]) dots[i].classList.add('lit'); pulse(); }));
-    if (k.phase === 'intro') c.wait(600, () => { k.phase = 'play'; c.flow.rerender(); });
-    if (k.phase === 'play') {
-      const lead = 400;
-      if (!c.shot) b.forEach((ms, i) => sound.drum((lead + ms) / 1000, i % 2 === 1));
-      light(lead);
-      c.wait(lead + Sonly.rhythm.length(t) + 350, () => { k.phase = 'pick'; c.flow.rerender(); });
+    const t = TUNE(k.cur), ph = k.phase, disc = c.q('.js-disc'), bars = c.qa('.tn-eq i');
+    const pulse = (f, sec) => {
+      const lvl = Math.max(0.32, Math.min(1, Math.log2(f / 200) / 2.5));
+      bars.forEach((el, i) => el.style.setProperty('--h', `${Math.round(lvl * (52 + 48 * Math.abs(Math.sin(f / 37 + i * 1.7))))}%`));
+      c.wait(Math.min(sec * 700, 170), () => bars.forEach((el) => el.style.setProperty('--h', '14%')));
+    };
+    const play = (full) => {
+      /* Если звук не запустился (нет звуковой карты), экран всё равно идёт по длине мелодии — так же, как со звуком. */
+      const sec = (!c.shot && sound.song(t.notes, t.q, full).len) || Sonly.rhythm.length(t) / 1000 + 0.06;
+      if (disc) disc.style.setProperty('--len', `${sec.toFixed(2)}s`);
+      if (c.shot) return sec;
+      let at = 0.06;
+      t.notes.forEach(([f, d]) => { if (f) { const when = at; c.wait(when * 1000, () => pulse(f, d * t.q)); } at += d * t.q; });
+      return sec;
+    };
+    if (ph === 'listen' || ph === 'again') {
+      const sec = play(false);
+      if (c.shot) return;
+      if (!k.open) c.wait(Math.min(sec * 1000, OPEN_AFTER), () => {
+        k.open = true;
+        c.qa('.tn-opts button').forEach((b) => { b.disabled = false; });
+        const box = c.q('.tn-opts'), h = c.q('.js-th'), st = c.q('.js-ts');
+        if (box) box.classList.remove('lock');
+        if (h) h.textContent = 'Что это за песня?';
+        if (st) st.textContent = 'Выбери ответ';
+      });
+      c.wait(sec * 1000 + 250, () => { if (k.phase === ph) { k.phase = 'pick'; c.flow.rerender(); } });
     }
-    if (k.phase === 'win' && !c.shot) {
-      const sec = sound.melody(t.notes, t.q);
-      light(50);
-      c.wait(Math.max(1700, sec * 1000 + 600), () => {
+    if (ph === 'win') {
+      const sec = play(true);
+      if (c.shot) return;
+      c.wait(Math.max(1800, sec * 1000 + 500), () => {
         k.i++;
         if (k.i >= k.n) { finish(c.flow); return; }
-        k.phase = 'intro'; k.no = []; tuneOpts(k); c.flow.rerender();
+        nextTune(k);
+        c.flow.rerender();
       });
     }
+    if (ph === 'miss' && !c.shot) c.wait(2300, () => { nextTune(k); c.flow.rerender(); });
   }
 
   /** Человек для меню настройки: повторяет упражнение без скриптов (анимация SVG прямо в разметке). */
@@ -668,7 +710,7 @@
           <div class="rg-mid"><div class="rg-bell"><i class="rg-wave"></i><i class="rg-wave w2"></i><i class="rg-halo"></i>${Sonly.mark()}</div>
             <div class="rg-time js-now">${nowHM()}</div>
             <small>${now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^./, (x) => x.toUpperCase())}</small>
-            <span class="rg-snd"><i class="rg-eq"><u></u><u></u><u></u><u></u></i>${r.test ? 'Проверка' : esc(a.name)} · ${a.sound}</span></div>
+            <span class="rg-snd"><i class="rg-eq"><u></u><u></u><u></u><u></u></i>${r.test ? 'Проверка' : esc(a.name)} · ${esc(Sonly.mysnd ? Sonly.mysnd.label(a.sound) : a.sound)}</span></div>
           <div class="rg-card">${r.random ? `<small>${ic('dices', 13, 2.4)}Случайное задание</small>` : ''}
             <div class="rg-task"><i class="tb cat-${t.cat}">${K.tic(t, 28)}</i><span><b>${t.name}</b><em>${sum}</em></span></div>
             <button class="ap-btn" data-act="ring-go">${r.k && r.k.i ? 'Продолжить' : 'Начать задание'}</button>
@@ -815,33 +857,36 @@
 
     woke: {
       chrome: false,
+      /* Наверху — открытка этого утра и новость дня (Sonly.morning.hero): каждое утро другие. Ниже — сводка утра. */
       render: (c) => {
-        const r = ensure(c.s), st = K.stats(c.s);
+        const r = ensure(c.s);
         if (r.secs == null) { r.secs = 42; r.at = nowHM(); }
-        const note = r.test ? (r.direct ? 'Пробный запуск' : 'Проверка — в серию не идёт') : r.a.check ? `Проверим через ${r.a.check} мин` : '';
-        return `<div class="wk${r.morph ? ' morph' : ''}"><div class="wk-logo">${Sonly.logo()}</div><div class="wk-sun">${r.morph ? '<i class="wk-flare"></i>' : ''}${Sonly.mark()}</div>
-          <h1>Доброе утро</h1>
-          <div class="wk-row"><div><b><span class="js-secs">${r.morph ? 0 : r.secs}</span> с</b><small>на задание</small></div><div><b>${r.at}</b><small>подъём</small></div><div><b>${st.streak}</b><small>${K.pl(st.streak, 'день', 'дня', 'дней')} подряд</small></div></div>
+        const note = r.test ? (r.direct ? 'Пробный запуск — в альбом не идёт' : 'Проверка — в серию не идёт') : r.a.check ? `Проверим через ${r.a.check} мин` : '';
+        return `<div class="wk${r.morph ? ' morph' : ''}">${Sonly.morning ? Sonly.morning.hero(c.s, r) : '<div class="wk-news"><h1>Доброе утро</h1></div>'}
           ${note ? `<p class="${r.test ? 'wk-note' : 'wk-chk'}">${ic(r.test ? 'info' : 'eye', 15, 2.3)}${note}</p>` : ''}
-          ${!r.direct && Sonly.morning ? Sonly.morning.blocks(c.s) : ''}
+          ${Sonly.morning ? Sonly.morning.blocks(c.s) : ''}
           <button class="ap-btn" data-act="ring-done">${r.from === 'picker' ? 'К заданиям' : r.from === 'editor' ? 'К будильнику' : 'На главную'}</button></div>`;
       },
-      /* Солнце приезжает с экрана задания на своё место, время на задание досчитывается. */
+      /* Солнце с экрана задания перелетает в открытку и становится её солнцем. */
       mount(el, c) {
         const r = c.s._ring, m = r && r.morph;
         if (!m) return;
         r.morph = null;
-        /* Двигаем весь блок солнца вместе со свечением; размеры меряем по самому значку. */
-        const sun = c.q('.wk-sun'), mark = c.q('.wk-sun .mark'), out = c.q('.js-secs');
-        if (c.still || !sun || !mark) return;
-        const b = mark.getBoundingClientRect(), p = c.flow.el.getBoundingClientRect(), k = p.width / c.flow.el.offsetWidth || 1;
-        const dx = m.x - (b.left - p.left) / k, dy = m.y - (b.top - p.top) / k, sc = m.w / (b.width / k);
-        sun.style.transformOrigin = '0 0';
-        sun.style.transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${sc.toFixed(3)})`;
-        sun.getBoundingClientRect();
-        sun.style.transition = 'transform .95s cubic-bezier(.22,1,.36,1)';
-        sun.style.transform = '';
-        if (out) c.at(420, () => c.tween(900, (e) => { out.textContent = Math.round(r.secs * e); }));
+        const card = c.q('.wk-card'), core = c.q('.wk-card .mo-sun circle:last-child'), host = c.flow.el;
+        if (c.still || !card || !host) return;
+        const fly = document.createElement('i');
+        fly.className = 'wk-fly';
+        fly.innerHTML = Sonly.mark();
+        fly.style.cssText = `left:${m.x.toFixed(1)}px;top:${m.y.toFixed(1)}px;width:${m.w.toFixed(1)}px`;
+        host.appendChild(fly);
+        const p = host.getBoundingClientRect(), k = p.width / host.offsetWidth || 1, to = (core || card).getBoundingClientRect();
+        const tx = (to.left + to.width / 2 - p.left) / k, ty = (to.top + (core ? to.height / 2 : to.height * 0.62) - p.top) / k;
+        const fh = fly.offsetHeight, dx = tx - (m.x + m.w / 2), dy = ty - (m.y + fh / 2), sc = Math.max(0.08, 26 / m.w);
+        fly.getBoundingClientRect();
+        fly.style.transition = 'transform 1s cubic-bezier(.22,1,.36,1),opacity .45s ease .7s';
+        fly.style.transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${sc.toFixed(3)})`;
+        fly.style.opacity = '0';
+        setTimeout(() => fly.remove(), 1400);
       },
     },
   });
@@ -997,12 +1042,15 @@
         case 'mic': micTap(flow, k); return true;
         /* Распознавание не слышит: та же скороговорка, но набором — с той же строгой проверкой, что у «Фразы». */
         case 'say-type': if (k.eng) k.eng.stop(); k.eng = null; k.kind = 'phrase'; k.val = ''; k.fin = false; flow.rerender(); return true;
-        case 'tn-replay': if (k.phase === 'pick') { k.phase = 'play'; flow.rerender(); } return true;
-        /* Ответ можно дать и пока идёт бит. Неверный — гаснет и выбывает: в худшем случае останется один, верный. */
+        case 'tn-replay': if (k.phase === 'pick') { k.phase = 'again'; flow.rerender(); } return true;
+        /* Ответ — только когда ответы открыты. Неверный не выбывает по одному (иначе спросонья прокликать все четыре):
+           звучит другая мелодия, а счёт угаданных остаётся. */
         case 'tn': {
-          if (k.phase === 'win' || k.no.includes(arg)) return true;
+          if (!k.open || k.phase === 'win' || k.phase === 'miss') return true;
           sound.stop();
-          if (arg === k.order[k.i]) { k.phase = 'win'; sound.tick(1175); } else { k.no.push(arg); k.phase = 'pick'; sound.tick(247); }
+          k.pick = arg;
+          if (arg === k.cur) k.phase = 'win';
+          else { k.phase = 'miss'; k.miss = (k.miss || 0) + 1; sound.tick(220); }
           flow.rerender();
           return true;
         }
