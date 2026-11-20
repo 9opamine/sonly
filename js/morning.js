@@ -392,11 +392,15 @@
         const key = cap(x.d.toLocaleDateString('ru-RU', x.d.getFullYear() === new Date().getFullYear() ? { month: 'long' } : { month: 'long', year: 'numeric' }));
         (groups.find((g) => g[0] === key) || groups[groups.push([key, []]) - 1])[1].push(x);
       });
-      body = `<p class="mo-lead">${nb('Открытка за каждое утро. Небо — во сколько встал, пейзаж — из открытых за серию, золотая рамка — рекорд.')}</p>
-        <div class="ap-card mo-sum"><span><b>${h.length}</b><small>${K.pl(h.length, 'открытка', 'открытки', 'открыток')}</small></span><span><b>${K.fmtMin(wakes[0])}</b><small>самое раннее</small></span><span><b>${K.fmtMin(wakes[Math.floor(wakes.length / 2)])}</b><small>обычно</small></span></div>
+      /* Шкала внизу — не легенда, а твои утра: точка на каждый подъём поверх тех же цветов неба, что на открытках. */
+      const med = wakes[Math.floor(wakes.length / 2)], at = (m) => Math.max(0, Math.min(100, ((m - 240) / 360) * 100)).toFixed(1);
+      const bar = SKY.map(([m, a, b]) => `${rgb(mixc(a, b, 0.4))} ${at(m)}%`).join(',');
+      body = `<div class="ap-card mo-sum"><span><b>${h.length}</b><small>${K.pl(h.length, 'открытка', 'открытки', 'открыток')}</small></span><span><b>${K.fmtMin(wakes[0])}</b><small>самое раннее</small></span><span><b>${K.fmtMin(wakes[Math.floor(wakes.length / 2)])}</b><small>обычно</small></span></div>
         ${groups.map(([name, list]) => `<h3 class="mo-month">${name}<span>${list.length}</span></h3><div class="mo-album">${list.map((x) => cardOf(x, { best: best.get(x.d.getTime()), rec })).join('')}</div>`).join('')}
-        <div class="mo-scale"><i></i><span><small>04:00</small><small>06:00</small><small>08:00</small><small>10:00</small></span><p>Цвет неба — время подъёма</p>
-          <div class="mo-legend"><span><b>${si('rise', 12)}</b>самый ранний подъём</span><span><b>${ic('zap', 11, 2.6)}</b>быстрее всего задание</span></div></div>`;
+        <div class="ap-card mo-when"><header><b>Во сколько ты встаёшь</b><small>небо открыток — по этим часам</small></header>
+          <div class="mo-bar" style="background:linear-gradient(90deg,${bar})">${h.map((x) => `<u style="--x:${at(x.wake)}%"></u>`).join('')}<em style="--x:${at(med)}%"></em><b class="mo-med${at(med) < 14 ? ' l' : at(med) > 86 ? ' r' : ''}" style="--x:${at(med)}%">обычно ${K.fmtMin(med)}</b></div>
+          <span class="mo-ticks"><small>04:00</small><small>06:00</small><small>08:00</small><small>10:00</small></span></div>
+        <div class="mo-legend"><span><b>${si('rise', 12)}</b>самый ранний подъём</span><span><b>${ic('zap', 11, 2.6)}</b>быстрее всего задание</span></div>`;
     }
     flow.sheet(`${head('Открытки утра')}<div class="ap-sh-body scroll">${body}</div>`, `ap-sheet${enter ? ' ' + enter : ''}`);
   }
@@ -563,14 +567,14 @@
    * Проба и проверка в серию не идут: показывают, как будет утром, и честно это подписывают.
    */
   const SK_DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-  const SK_FLAME = '<svg class="sk-flame" viewBox="0 0 64 80" aria-hidden="true"><defs>'
-    + '<linearGradient id="skFa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB547"/><stop offset=".5" stop-color="#FF7424"/><stop offset="1" stop-color="#F0461B"/></linearGradient>'
-    + '<linearGradient id="skFb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFC94A"/><stop offset="1" stop-color="#FF9124"/></linearGradient>'
-    + '<linearGradient id="skFc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6C8"/><stop offset="1" stop-color="#FFD54A"/></linearGradient></defs>'
-    + '<g class="sk-f1"><path fill="url(#skFa)" d="M33 3c3 13 19 21 19 42a20 20 0 0 1-40 0c0-9 4-15 9-19 1 7 4 10 8 10 0-13-3-21 4-33z"/></g>'
-    + '<g class="sk-f2"><path fill="url(#skFb)" transform="translate(9.6 19.5) scale(.7)" d="M33 3c3 13 19 21 19 42a20 20 0 0 1-40 0c0-9 4-15 9-19 1 7 4 10 8 10 0-13-3-21 4-33z"/></g>'
-    + '<g class="sk-f3"><path fill="url(#skFc)" d="M32 42c3 6 10 9 10 18a10 10 0 0 1-20 0c0-7 6-10 10-18z"/></g>'
-    + '<path class="sk-hl" d="M20.5 44c-2.6 3.6-3.6 7.4-3 11.6"/></svg>';
+  /* Огонь в духе эмодзи Apple: три слоя — внешний красно-оранжевый, средний жёлтый, светлое ядро; каждый колышется сам. */
+  const SK_FLAME = '<svg class="sk-flame" viewBox="0 0 120 160" aria-hidden="true"><defs>'
+    + '<radialGradient id="skGo" cx="60" cy="120" r="100" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFB23C"/><stop offset=".5" stop-color="#FF6A1E"/><stop offset="1" stop-color="#E2321A"/></radialGradient>'
+    + '<radialGradient id="skGm" cx="60" cy="128" r="72" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFE072"/><stop offset=".6" stop-color="#FFB12F"/><stop offset="1" stop-color="#FF8C1F"/></radialGradient>'
+    + '<radialGradient id="skGc" cx="60" cy="136" r="46" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFFFF2"/><stop offset=".5" stop-color="#FFF2AE"/><stop offset="1" stop-color="#FFD957"/></radialGradient></defs>'
+    + '<g class="sk-fo"><path fill="url(#skGo)" d="M60 155C32 155 13 135 13 108C13 84 22 66 27 46C33 58 37 65 43 70C42 48 52 32 60 20C63 14 64 9 63 3C74 16 84 30 87 50C88 55 88 59 87 63C92 58 95 52 97 44C104 58 107 82 107 104C107 134 88 155 60 155Z"/></g>'
+    + '<g class="sk-fm"><path fill="url(#skGm)" d="M60 152C40 152 26 138 26 118C26 102 32 92 37 82C40 90 43 95 47 98C47 80 55 66 61 56C63 52 64 48 64 44C72 54 79 66 81 82C83 88 84 92 84 96C86 92 88 88 90 84C93 94 95 106 95 118C95 138 80 152 60 152Z"/></g>'
+    + '<g class="sk-fc"><path fill="url(#skGc)" d="M60 150C48 150 40 141 40 129C40 117 47 106 53 98C56 94 58 90 59 86C64 94 72 106 76 116C79 122 80 126 80 130C80 142 72 150 60 150Z"/></g></svg>';
   function streakOf(s, r) {
     const st = K.stats(s), now = new Date(), day = K.day0(now).getTime(), done = new Set(st.h.map((y) => y.d.getTime()));
     /* Сегодня уже в истории — число серии его включает; нет (проба днём) — показываем, какой серия станет утром. */

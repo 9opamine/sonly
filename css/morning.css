@@ -238,7 +238,7 @@ button.mo-card:active{transform:scale(.95)}
 .mo-rec b,.mo-legend b{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:#FFD12E;color:#0D0D0F;box-shadow:0 2px 6px -2px rgba(0,0,0,.35)}
 .mo-big-card .mo-rec{top:16px;right:16px;gap:5px}
 .mo-big-card .mo-rec b{width:28px;height:28px}
-.mo-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:12.5px;color:var(--mut)}
+.mo-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 16px;margin:12px 0 4px;font-size:12.5px;color:var(--mut)}
 .mo-legend span{display:flex;align-items:center;gap:6px}
 .mo-month{display:flex;align-items:center;gap:8px}
 .mo-month span{min-width:24px;height:24px;padding:0 7px;border-radius:12px;background:var(--card2);display:grid;place-items:center;font-size:12.5px;font-weight:700;color:var(--mut2)}
@@ -247,10 +247,19 @@ button.mo-card:active{transform:scale(.95)}
 .mo-sum span+span{box-shadow:-1px 0 0 var(--line)}
 .mo-sum b{font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:820;font-size:24px;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
 .mo-sum small{font-size:12.5px;color:var(--mut)}
-.mo-scale{margin:22px 4px 0}
-.mo-scale i{display:block;height:10px;border-radius:5px;background:linear-gradient(90deg,rgb(14,20,46) 0%,rgb(27,35,70) 25%,rgb(50,64,122) 41.7%,rgb(76,118,196) 58.3%,rgb(124,176,234) 75%,rgb(146,196,242) 100%)}
-.mo-scale span{display:flex;justify-content:space-between;margin-top:6px;font-size:11.5px;font-weight:600;color:var(--mut);font-variant-numeric:tabular-nums}
-.mo-scale p{margin:8px 0 0;text-align:center;font-size:13px;color:var(--mut)}
+.mo-when{margin-top:22px;padding:14px 16px 12px}
+.mo-when header{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
+.mo-when header b{font-size:15.5px;font-weight:700}
+.mo-when header small{font-size:12.5px;color:var(--mut)}
+/* Полоса неба: от тёмного раннего к светлому позднему. Точки — подъёмы, белая черта — «обычно». */
+.mo-bar{position:relative;height:30px;margin-top:26px;border-radius:10px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.mo-bar u{position:absolute;left:var(--x);top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:#FFD12E;box-shadow:0 0 0 2px rgba(13,13,15,.35);opacity:.9}
+.mo-bar em{position:absolute;left:var(--x);top:-4px;bottom:-4px;width:3px;margin-left:-1.5px;border-radius:2px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.mo-med{position:absolute;bottom:calc(100% + 9px);left:var(--x);transform:translateX(-50%);font-size:12px;font-weight:700;white-space:nowrap;color:var(--ink)}
+/* У краёв подпись «обычно» не центрируется над чертой, а прижимается внутрь, чтобы не вылезти из карточки. */
+.mo-med.l{left:0;transform:none}
+.mo-med.r{left:auto;right:0;transform:none}
+.mo-ticks{display:flex;justify-content:space-between;margin-top:7px;font-size:11.5px;font-weight:600;color:var(--mut);font-variant-numeric:tabular-nums}
 .mo-empty{display:grid;justify-items:center;gap:8px;padding:30px 10px 10px;text-align:center}
 .mo-empty b{margin-top:16px;font-size:21px;font-weight:700;letter-spacing:-.4px}
 .mo-empty p{margin:0;max-width:300px;font-size:15px;line-height:1.45;color:var(--mut2)}

@@ -160,8 +160,62 @@
     return { len: t + 0.06, at };
   }
 
+  /*
+   * Звуки экрана серии — мягкие, без «пианино»: 'flare' — огонь вспыхнул (короткий тёплый шорох),
+   * 'win' — число перещёлкнулось (колокольчики вверх по мажорному аккорду), 'pop' — сегодняшний день залился огнём.
+   * Колокольчик — синус с тихим неровным обертоном (как у челесты) и долгим мягким затуханием.
+   */
+  function bell(t, f, g, len) {
+    [[1, g, len], [2.76, g * 0.1, len * 0.3], [5.4, g * 0.03, len * 0.15]].forEach(([m, gain, d]) => {
+      const osc = ctx.createOscillator(), amp = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f * m, t);
+      amp.gain.setValueAtTime(0.0001, t);
+      amp.gain.exponentialRampToValueAtTime(gain, t + 0.008);
+      amp.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      osc.connect(amp);
+      amp.connect(master);
+      osc.start(t);
+      osc.stop(t + d + 0.05);
+      live.push(osc);
+    });
+  }
+  function fx(name) {
+    if (!ready()) return;
+    session('playback');
+    const now = ctx.currentTime, t = now + 0.02;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setValueAtTime(volume, now);
+    if (name === 'flare') {
+      /* Шум через полосовой фильтр, который за полсекунды уходит вверх: «фух» вспыхнувшего огня. */
+      const n = Math.floor(ctx.sampleRate * 0.7), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), amp = ctx.createGain();
+      src.buffer = buf;
+      bp.type = 'bandpass';
+      bp.Q.value = 0.9;
+      bp.frequency.setValueAtTime(260, t);
+      bp.frequency.exponentialRampToValueAtTime(1900, t + 0.45);
+      amp.gain.setValueAtTime(0.0001, t);
+      amp.gain.exponentialRampToValueAtTime(0.32, t + 0.12);
+      amp.gain.exponentialRampToValueAtTime(0.0001, t + 0.62);
+      src.connect(bp); bp.connect(amp); amp.connect(master);
+      src.start(t);
+      src.stop(t + 0.7);
+      live.push(src);
+      /* Под шорохом — тёплый низкий тон, чтобы вспышка не звучала как помеха. */
+      note(t, [0.02, 180, 0.4, 'sine', 0.18, 320]);
+    } else if (name === 'win') {
+      [659.3, 830.6, 987.8, 1318.5].forEach((f, i) => bell(t + i * 0.075, f, i === 3 ? 0.26 : 0.2, i === 3 ? 1.6 : 0.9));
+      bell(t + 0.225, 1975.5, 0.06, 1.2);
+    } else if (name === 'pop') {
+      note(t, [0, 520, 0.11, 'sine', 0.3, 980]);
+      bell(t + 0.04, 1568, 0.08, 0.5);
+    }
+  }
+
   Sonly.sound = {
-    melody, song, buffer,
+    melody, song, buffer, fx,
     /** Звуковой контекст — для записи с микрофона и разбора файлов (свои звуки); null — браузер не умеет звук. */
     ctx: () => (ready() ? ctx : null),
     /** Тип звуковой сессии iPhone: 'playback' — звучать и в беззвучном режиме, 'auto' — перед записью с микрофона. */

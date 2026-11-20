@@ -889,7 +889,8 @@
         if (c.still || !sun || !host || REDUCE()) { lit(false); return; }
         const fly = document.createElement('i');
         fly.className = 'wk-fly';
-        fly.innerHTML = Sonly.mark();
+        /* Свечение летит вместе с солнцем и гаснет по дороге: на экране задания оно было вокруг солнца, обрывать его нельзя. */
+        fly.innerHTML = `<i class="wk-fglow"></i>${Sonly.mark()}`;
         fly.style.cssText = `left:${m.x.toFixed(1)}px;top:${m.y.toFixed(1)}px;width:${m.w.toFixed(1)}px`;
         host.appendChild(fly);
         const p = host.getBoundingClientRect(), k = p.width / host.offsetWidth || 1, to = sun.getBoundingClientRect();
@@ -899,12 +900,13 @@
         /* Летит по дуге: быстро вверх и плавно тормозит у логотипа. */
         fly.style.transition = 'transform 1.1s cubic-bezier(.45,0,.15,1)';
         fly.style.transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${sc.toFixed(4)})`;
+        fly.classList.add('go');
         setTimeout(() => { lit(true); fly.remove(); }, 1120);
       },
     },
 
     /* Серия — отдельный экран после «Доброе утро» (Sonly.morning.streak). Вся анимация — в CSS по классу go; отсюда
-       только звук и отклик вибрацией в миг, когда число перещёлкнулось и огонь вспыхнул, и щелчок, когда залился день. */
+       только звуки: шорох, когда загорелся огонь, колокольчики и вибрация, когда число перещёлкнулось, «пуп», когда залился день. */
     streak: {
       chrome: false,
       render: (c) => {
@@ -915,8 +917,9 @@
         const root = c.q('.sk');
         if (!root || c.still || REDUCE()) return;
         root.classList.add('go');
-        c.at(1600, () => { sound.song([[784, 0.5], [988, 0.5], [1319, 1.4]], 0.085); if (navigator.vibrate) navigator.vibrate(35); });
-        c.at(2650, () => sound.tick(1175));
+        c.at(150, () => sound.fx('flare'));
+        c.at(1600, () => { sound.fx('win'); if (navigator.vibrate) navigator.vibrate(35); });
+        c.at(2650, () => sound.fx('pop'));
       },
     },
   });
