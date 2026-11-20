@@ -479,6 +479,32 @@
   const PROMO_MSG = { ok: '−25 % на следующий год', bad: 'Такого кода нет', own: 'Это твой код — его вводят твои зрители.' };
   const WIDGET_STEPS = ['Зажми пустое место на экране «Домой».', 'Нажми «Изменить» вверху и выбери «Добавить виджет».', 'Найди sonly и добавь виджет.'];
 
+  /* Картинки разделов: вместо пустой страницы со строками — то, как это выглядит на самом деле. */
+  /** Уведомления так, как они придут: звонок всегда, вечернее и недельное — если включены (выключенные бледнеют). */
+  function notifyPreview(s) {
+    const now = new Date(), nx = nextRing(s, now);
+    const ban = (on, title, when, text, i) => `<div class="pg-nt${on ? '' : ' off'}" data-in style="--i:${i}"><i class="pg-nt-app">${Sonly.mark()}</i><div><span><b>${title}</b><small>${on ? when : 'выключено'}</small></span><p>${text}</p></div></div>`;
+    return `<div class="pg-nts">${ban(true, 'sonly', 'сейчас', nx ? `Будильник ${hm(nx.a)}. Выключится только заданием «${taskOf(nx.a).name}».` : 'Будильник звонит, пока не выполнишь задание.', 0)}
+      ${ban(s.nEve, 'sonly', '22:00', nx ? `${cap(dayWord(nx.at, now))} подъём в ${hm(nx.a)}. Поставь телефон на зарядку.` : 'На завтра будильник не стоит.', 1)}
+      ${ban(s.nWeek, 'sonly', 'вс, 19:00', 'Итоги недели готовы — посмотри, как ты вставал.', 2)}</div>`;
+  }
+  /** Итог проверок крупно: щит с волнами и когда зазвонит. */
+  function readyHero(s) {
+    const now = new Date(), nx = nextRing(s, now), warn = readiness(s).find((x) => x[0] === 'warn');
+    return `<div class="ap-card pg-rdy${warn ? ' warn' : ''}"><i class="pg-rdy-i"><u></u><u></u>${Sonly.si('ready', 40)}</i><b>${warn ? 'Тихий звонок' : 'Готов к звонку'}</b>
+      <span>${nx ? `${cap(dayWord(nx.at, now))} в ${hm(nx.a)} · ${taskOf(nx.a).name}` : 'Будильник не стоит'}</span></div>`;
+  }
+  /** Экран «Домой» в режиме правки: значки покачиваются, сверху «+», на экране — виджеты sonly. */
+  function widgetHome(s) {
+    const now = new Date(), st = stats(s), nx = nextRing(s, now), nt = nx && taskOf(nx.a), M = Sonly.morning;
+    const sky = nx && M && M.sky ? M.sky(nx.a.h * 60 + nx.a.m) : null, tone = sky ? ` style="--a:${sky.a};--b:${sky.b};--t:${sky.ink}"` : '';
+    const when = nx ? `<small>${cap(dayWord(nx.at, now))}</small><b>${hm(nx.a)}</b><span><i class="tb cat-${nt.cat}">${tic(nt, 12)}</i>${nt.name}</span>` : '<small>Будильник</small><b>—</b><span>не стоит</span>';
+    const APPS = [['#FF9500', 'music'], ['#34C759', 'message'], ['#0A84FF', 'globe'], ['#FF2D55', 'calendar'], ['#AF52DE', 'theme'], ['#8E8E93', 'sliders'], ['#5AC8FA', 'cloud'], ['#FFCC00', 'book']];
+    return `<div class="pg-home" aria-hidden="true"><div class="pg-home-bar"><span>${ic('plus', 15, 2.8)}</span><em>Готово</em></div>
+      <div class="pg-home-w"><div class="wd wd-streak${st.streak ? '' : ' cold'}">${FLAME}<b>${st.streak}</b><small>${pl(st.streak, 'день', 'дня', 'дней')} подряд</small></div><div class="wd wd-next"${tone}><i class="wd-sun"></i>${when}</div></div>
+      <div class="pg-home-apps">${APPS.map(([c, id], i) => `<i class="pg-app" style="--c:${c};--d:${(i % 3) * -0.13}s">${Sonly.si(id, 22)}</i>`).join('')}</div></div>`;
+  }
+
   /** Раздел настроек: заголовок, содержимое и кнопки внизу (если нужны). */
   function pageOf(s, id, arg) {
     switch (id) {
@@ -487,20 +513,23 @@
         <div class="ap-card ap-list gap">${tgRow(Sonly.si('trend'), 'Нарастание', 'За 10 секунд', s.riseDef, 'set-flag:riseDef')}${tgRow(Sonly.si('ring'), 'В беззвучном режиме', '', true, '')}</div>`,
         '<button class="ap-btn" data-act="vol-test">Проверить звук</button>'];
       case 'sound': return ['Звук по умолчанию', `${soundRows(s, s.sndDef, 'set-snd')}`, ''];
-      case 'help': return ['Готовность к звонку', `<div class="ap-card ap-list">${readiness(s).map(([st, label, note]) => check(st, label, note)).join('')}</div>`,
+      case 'help': return ['Готовность к звонку', `${readyHero(s)}<div class="ap-card ap-list">${readiness(s).map(([st, label, note]) => check(st, label, note)).join('')}</div>`,
         '<button class="ap-btn" data-act="ring-test">Проверить звонок</button>'];
       case 'lang': return ['Язык', `<div class="ap-card ap-list"><div class="ap-row ap-snd on"><i class="ap-row-i">${Sonly.si('globe')}</i><span>Русский</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></div><div class="ap-row"><i class="ap-row-i">${ic('globe', 17, 2.1)}</i><span>English</span><em>скоро</em></div></div>`, ''];
-      case 'notify': return ['Уведомления', `<div class="ap-card ap-list">${tgRow(Sonly.si('alarm'), 'Звонок будильника', '', true, '')}${tgRow(Sonly.si('moon'), 'Напоминание вечером', 'В 22:00', s.nEve, 'set-flag:nEve')}${tgRow(Sonly.si('calendar'), 'Итоги недели', 'По воскресеньям', s.nWeek, 'set-flag:nWeek')}</div>`, ''];
+      case 'notify': return ['Уведомления', `${notifyPreview(s)}<div class="ap-card ap-list">${tgRow(Sonly.si('alarm'), 'Звонок будильника', '', true, '')}${tgRow(Sonly.si('moon'), 'Напоминание вечером', 'В 22:00', s.nEve, 'set-flag:nEve')}${tgRow(Sonly.si('calendar'), 'Итоги недели', 'По воскресеньям', s.nWeek, 'set-flag:nWeek')}</div>`, ''];
       case 'sub': return ['Подписка', `<div class="ap-card ap-plan"><span>${ic('check', 13, 3.4)}Активна</span><b>Подписка на год</b><div><u>39,99 €</u> в год</div><small>Следующее списание — ${renew()}</small></div>
         <h3>Что входит</h3><div class="ap-card ap-list">${check('ok', 'Нельзя отложить', '')}${check('ok', `Все ${TASKS.length} заданий`, '')}${check('ok', 'Серия и статистика', '')}</div>
         <div class="ap-card ap-list gap">${row(Sonly.si('card'), 'Управлять в App Store', '', 'soon:Управление подпиской', '#34C759')}${row(Sonly.si('restore'), 'Восстановить покупки', '', 'restore-app', '#0A84FF')}</div>`, ''];
-      case 'promo': return ['Промокод', `<p class="ap-note first">Скидка — со следующего продления.</p>
+      /* Билет, как в онбординге: до ввода — ни цен, ни скидок; верный код «срабатывает», и на билете появляется подарок. */
+      case 'promo': return ['Промокод', `<div class="pg-tkt${s.promo === 'ok' ? ' ok' : ''}"><div class="pg-tkt-top"><i class="pg-tkt-sun">${Sonly.mark()}</i>
+          ${s.promo === 'ok' ? '<b class="pg-tkt-big">−25 %</b><span>на следующий год</span>' : '<b>Код из видео</b><span>или поста любимого автора</span>'}</div><i class="pg-tkt-cut"></i><div class="pg-tkt-bot">
         <div class="ap-coupon${s.promo === 'ok' ? ' ok' : s.promo ? ' err' : ''}"><i>${ic('ticket', 21, 1.9)}</i><input class="js-promo" maxlength="7" value="${esc(s.promoCode || '')}" placeholder="Промокод" aria-label="Промокод" autocomplete="off" spellcheck="false"${s.promo === 'ok' ? ' disabled' : ''}>${s.promo === 'ok' ? `<em>${ic('check', 18, 3)}</em>` : '<button data-act="promo-go">Применить</button>'}</div>
-        <p class="ap-coupon-msg ${s.promo === 'ok' ? 'ok' : s.promo ? 'bad' : ''}">${PROMO_MSG[s.promo] || ''}</p>`, ''];
+        </div></div>
+        <p class="ap-coupon-msg ${s.promo === 'ok' || !s.promo ? 'note' : 'bad'}">${s.promo && s.promo !== 'ok' ? PROMO_MSG[s.promo] : 'Скидка — со следующего продления'}</p>`, ''];
       case 'share': case 'blog': return Sonly.partner.page(s, id);
       case 'lock': case 'lock-ex': case 'lock-night': case 'lock-demo': return Sonly.lock.page(s, id, arg);
       case 'mysnd': return Sonly.mysnd.page(s, arg);
-      case 'widgets': return ['Как добавить виджет', `<div class="ap-card ap-steps">${WIDGET_STEPS.map((t, n) => `<div><b>${n + 1}</b><span>${t}</span></div>`).join('')}</div>`, ''];
+      case 'widgets': return ['Как добавить виджет', `${widgetHome(s)}<div class="ap-card ap-steps">${WIDGET_STEPS.map((t, n) => `<div><b>${n + 1}</b><span>${t}</span></div>`).join('')}</div>`, ''];
       case 'msg': {
         const [title, hint] = MSG[arg] || MSG.support;
         return s.sent === arg ? [title, `<div class="ap-sent"><i>${ic('check', 26, 3)}</i><b>Отправлено</b><p>Спасибо!</p></div>`, '<button class="ap-btn" data-act="page-close">Готово</button>']
