@@ -317,8 +317,8 @@ window.Sonly = (() => {
       this.id = id;
       this.scr = scr;
       const el = document.createElement('section');
-      /* dir: 1 — вперёд, -1 — назад, 0 — без перехода, 2 — плавная смена (растворение), 3 — быстрая смена для вкладок. */
-      el.className = `screen s-${id}${scr.chrome === false ? '' : ' has-chrome'}${scr.dock ? ' has-dock' : ''}${scr.cls ? ' ' + scr.cls : ''}${dir === 0 || dir === 3 ? ' no-in' : ''}`;
+      /* dir: 1 — вперёд, -1 — назад, 0 — без перехода, 2 — плавная смена (растворение). */
+      el.className = `screen s-${id}${scr.chrome === false ? '' : ' has-chrome'}${scr.dock ? ' has-dock' : ''}${scr.cls ? ' ' + scr.cls : ''}${dir === 0 ? ' no-in' : ''}`;
       const c = (this.cx = this.ctx(el));
       el.innerHTML = scr.render(c);
       const flowIds = this.c.order.filter((k) => this.c.screens[k].chrome !== false);
@@ -336,12 +336,12 @@ window.Sonly = (() => {
       if (prev) {
         if (this.still || dir === 0) prev.remove();
         else {
-          prev.classList.add(dir === 2 ? 'out-fade' : dir === 3 ? 'out-tab' : dir > 0 ? 'out-fwd' : 'out-back');
+          prev.classList.add(dir === 2 ? 'out-fade' : dir > 0 ? 'out-fwd' : 'out-back');
           prev.inert = true;
           setTimeout(() => prev.remove(), 460);
         }
       }
-      if (!this.still && dir !== 0) el.classList.add(dir === 2 ? 'in-fade' : dir === 3 ? 'in-tab' : dir > 0 ? 'in-fwd' : 'in-back');
+      if (!this.still && dir !== 0) el.classList.add(dir === 2 ? 'in-fade' : dir > 0 ? 'in-fwd' : 'in-back');
       if (this.c.onScreen) this.c.onScreen(this, id, scr, dir);
       if (scr.mount) scr.mount(el, c);
       if (this.opts.onChange) this.opts.onChange(this);

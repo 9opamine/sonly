@@ -86,8 +86,9 @@
   function runs(s, h) {
     const done = new Set(h.map((x) => x.d.getTime())), now = new Date();
     const plan = (d) => s.alarms.some((a) => !a.once && a.days.includes((d.getDay() + 6) % 7));
+    const first = h.length ? Math.ceil((day0(now) - day0(h[0].d)) / 864e5) : 0;
     let run = 0, best = 0;
-    for (let k = 120; k >= 0; k--) {
+    for (let k = Math.max(120, first); k >= 0; k--) {
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - k);
       if (done.has(d.getTime())) { run++; best = Math.max(best, run); } else if (k > 0 && plan(d)) run = 0;
     }
@@ -660,7 +661,7 @@
     on(flow, act, arg, el) {
       const s = flow.state, e = s._ed, find = (id) => s.alarms.find((a) => a.id === id);
       switch (act) {
-        case 'tab': if (flow.id !== arg) flow.go(arg, 3); else { const sc = flow.cur.querySelector('.scroll'); if (sc) sc.scrollTo({ top: 0, behavior: 'smooth' }); } return true;
+        case 'tab': if (flow.id !== arg) flow.go(arg, 0); else { const sc = flow.cur.querySelector('.scroll'); if (sc) sc.scrollTo({ top: 0, behavior: 'smooth' }); } return true;
         case 'new': s._ed = blank(s); editor(flow); return true;
         case 'edit': s._ed = copy(find(arg)); editor(flow); return true;
         case 'toggle': { const a = find(arg); a.on = !a.on; if (!a.on) a.skip = false; flow.rerender(); return true; }

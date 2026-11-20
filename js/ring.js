@@ -196,6 +196,8 @@
     r.secs = Math.max(1, Math.round((Date.now() - (r.t1 || Date.now())) / 1000));
     r.at = nowHM();
     sound.stop();
+    /* Серия растёт один раз в день — от первого настоящего подъёма. Только тогда после «Доброе утро» будет экран серии. */
+    r.fresh = !r.test && !K.stats(s).h.some((y) => y.d.getTime() === K.day0(now).getTime());
     if (!r.test) {
       const day = K.day0(now).getTime();
       s.log = (s.log || []).filter((x) => x.t !== day).concat({ t: day, wake: now.getHours() * 60 + now.getMinutes(), secs: r.secs, task: r.a.task });
@@ -253,7 +255,7 @@
   function streakHome(flow) {
     const s = flow.state, r = s._ring || {}, host = flow.el, src = flow.cur && flow.cur.querySelector('.sk-flame'), sk = flow.cur && flow.cur.querySelector('.sk');
     const to = sk ? +sk.dataset.to || 0 : 0, real = !r.test;
-    if (r.from === 'editor' || r.from === 'picker' || flow.still || REDUCE() || !src || !host) { exit(flow); return; }
+    if (!r.fresh || r.from === 'editor' || r.from === 'picker' || flow.still || REDUCE() || !src || !host) { exit(flow); return; }
     const p = host.getBoundingClientRect(), k = p.width / host.offsetWidth || 1, a = src.getBoundingClientRect();
     const box = { x: (a.left - p.left) / k, y: (a.top - p.top) / k, w: a.width / k, h: a.height / k }, svg = src.cloneNode(true);
     exit(flow);
@@ -920,7 +922,7 @@
         const note = r.test ? (r.direct ? 'Пробный запуск — в альбом не идёт' : 'Проверка — в серию не идёт') : r.a.check ? `Проверим через ${r.a.check} мин` : '';
         return `<div class="wk${r.morph ? ' morph' : ''}">${Sonly.morning ? Sonly.morning.hero(c.s, r) : '<div class="wk-news"><h1>Доброе утро</h1></div>'}
           ${note ? `<p class="${r.test ? 'wk-note' : 'wk-chk'}">${ic(r.test ? 'info' : 'eye', 15, 2.3)}${note}</p>` : ''}
-          <button class="ap-btn" data-act="ring-streak">Дальше</button></div>`;
+          ${r.fresh ? '<button class="ap-btn" data-act="ring-streak">Дальше</button>' : `<button class="ap-btn" data-act="ring-done">${r.from === 'picker' ? 'К заданиям' : r.from === 'editor' ? 'К будильнику' : 'На главную'}</button>`}</div>`;
       },
       /*
        * Логотип появляется после анимации. С экрана задания солнце перелетает наверх и садится в логотип — с мягким толчком
@@ -1031,7 +1033,7 @@
     preview(flow, what) {
       const [scr, spec] = what.split(':'), [task, phase] = (spec || '').split('.'), s = flow.state;
       if (scr === 'check') { s._check = { a: K.copy(s.alarms[0]), t0: Date.now() - 18000 }; flow.go('check', 0); return; }
-      s._ring = { a: K.copy(s.alarms[0]), test: scr !== 'woke' && scr !== 'streak', t0: Date.now() };
+      s._ring = { a: K.copy(s.alarms[0]), test: scr !== 'woke' && scr !== 'streak', fresh: scr === 'woke' || scr === 'streak', t0: Date.now() };
       if (task) s._ring.a.task = task;
       if (scr === 'task') {
         begin(s._ring);
