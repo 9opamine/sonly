@@ -321,8 +321,10 @@ window.Sonly = (() => {
       const c = (this.cx = this.ctx(el));
       el.innerHTML = scr.render(c);
       const flowIds = this.c.order.filter((k) => this.c.screens[k].chrome !== false);
-      const at = flowIds.indexOf(id);
-      this.el.style.setProperty('--p', at < 0 ? 1 : (at + 1) / (flowIds.length + 1));
+      const at = flowIds.indexOf(id), pos = this.c.order.indexOf(id);
+      /* Экраны без полоски: до первого вопроса (приветствие) — пустая, иначе на первом вопросе она бы стягивалась
+         с конца в начало; после последнего (загрузка, итог) — полная. */
+      this.el.style.setProperty('--p', at >= 0 ? (at + 1) / (flowIds.length + 1) : pos >= 0 && pos < this.c.order.indexOf(flowIds[0]) ? 0 : 1);
       this.el.dataset.screen = id;
       this.el.dataset.chrome = scr.chrome === false ? 'off' : 'on';
       this.el.dataset.back = scr.noBack ? 'off' : 'on';

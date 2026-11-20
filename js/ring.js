@@ -867,26 +867,30 @@
           ${Sonly.morning ? Sonly.morning.blocks(c.s) : ''}
           <button class="ap-btn" data-act="ring-done">${r.from === 'picker' ? 'К заданиям' : r.from === 'editor' ? 'К будильнику' : 'На главную'}</button></div>`;
       },
-      /* Солнце с экрана задания перелетает в открытку и становится её солнцем. */
+      /*
+       * Солнце с экрана задания перелетает наверх и садится в логотип — становится солнцем в «sonly»; буквы
+       * проявляются вокруг него. Без перелёта (повтор экрана, уменьшение движения) логотип просто проявляется.
+       */
       mount(el, c) {
-        const r = c.s._ring, m = r && r.morph;
+        const r = c.s._ring, m = r && r.morph, logo = c.q('.js-wklogo');
         if (!m) return;
         r.morph = null;
-        const card = c.q('.wk-card'), core = c.q('.wk-card .mo-sun circle:last-child'), host = c.flow.el;
-        if (c.still || !card || !host) return;
+        const host = c.flow.el, sun = logo && logo.querySelector('.logo path:last-child');
+        const lit = () => { if (logo) logo.classList.add('lit'); };
+        if (c.still || !sun || !host || REDUCE()) { lit(); return; }
         const fly = document.createElement('i');
         fly.className = 'wk-fly';
         fly.innerHTML = Sonly.mark();
         fly.style.cssText = `left:${m.x.toFixed(1)}px;top:${m.y.toFixed(1)}px;width:${m.w.toFixed(1)}px`;
         host.appendChild(fly);
-        const p = host.getBoundingClientRect(), k = p.width / host.offsetWidth || 1, to = (core || card).getBoundingClientRect();
-        const tx = (to.left + to.width / 2 - p.left) / k, ty = (to.top + (core ? to.height / 2 : to.height * 0.62) - p.top) / k;
-        const fh = fly.offsetHeight, dx = tx - (m.x + m.w / 2), dy = ty - (m.y + fh / 2), sc = Math.max(0.08, 26 / m.w);
+        const p = host.getBoundingClientRect(), k = p.width / host.offsetWidth || 1, to = sun.getBoundingClientRect();
+        const tw = to.width / k, tx = (to.left - p.left) / k + tw / 2, ty = (to.top - p.top) / k + to.height / k / 2;
+        const fh = fly.offsetHeight, sc = tw / m.w, dx = tx - (m.x + m.w / 2), dy = ty - (m.y + fh / 2);
         fly.getBoundingClientRect();
-        fly.style.transition = 'transform 1s cubic-bezier(.22,1,.36,1),opacity .45s ease .7s';
-        fly.style.transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${sc.toFixed(3)})`;
-        fly.style.opacity = '0';
-        setTimeout(() => fly.remove(), 1400);
+        fly.style.transition = 'transform 1.05s cubic-bezier(.5,0,.2,1)';
+        fly.style.transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${sc.toFixed(4)})`;
+        /* Сел — в логотипе загорается своё солнце, летящее убираем; буквы проявляются. */
+        setTimeout(() => { lit(); fly.remove(); }, 1080);
       },
     },
   });

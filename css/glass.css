@@ -55,6 +55,13 @@
 @keyframes ui-turn{0%{transform:rotate(-45deg)}100%{transform:rotate(0)}}
 @media (prefers-reduced-motion:reduce){.ap-tabs-pill .ui-i,.ap-tabs-pill .ui-i *{animation:none!important;transition:opacity .2s!important}}
 .phone.instant .ap-tab-ind,.phone.instant .ap-lens{transition:none}
+/* Капля без преломления (Safari, Telegram на iPhone): внутри увеличенная копия панели, сама капля — плотное стекло
+   с яркой кромкой, чтобы подписи под ней не двоились. */
+.ap-tabs .ap-lens.flat{overflow:hidden;background:rgba(40,40,46,.97);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),inset 0 1.5px 1.5px rgba(255,255,255,.55),inset 0 -12px 22px rgba(255,255,255,.07),0 12px 30px rgba(0,0,0,.45)}
+.ap:not([data-theme="dark"]) .ap-tabs .ap-lens.flat{background:rgba(255,255,255,.97);box-shadow:inset 0 0 0 1px rgba(13,13,15,.06),inset 0 1.5px 1.5px #fff,inset 0 -12px 22px rgba(13,13,15,.04),0 12px 30px rgba(13,13,15,.2)}
+.ap-tabs .ap-lens-copy{position:absolute;left:0;top:0;margin:0;transform-origin:0 0;background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;pointer-events:none}
+.ap-tabs .ap-lens-copy::before{display:none}
+.ap-tabs .ap-lens-copy .ap-tab-ind{display:none}
 
 /* Панель вкладок плотнее остального стекла: под ней текст и цветные значки, они должны читаться как мягкий отсвет. */
 .ap-tabs-pill.lg,.ap-plus.lg{-webkit-backdrop-filter:blur(10px) saturate(1.1);backdrop-filter:blur(10px) saturate(1.1)}

@@ -452,40 +452,70 @@
     ['Ты встал — это главное', 'Самое трудное за сегодня уже позади'],
     ['Хорошее начало', 'Стакан воды и свет из окна — и ты в строю'],
     ['День начался с победы', 'Будильник выключен не кнопкой, а головой'],
-    ['С добрым утром', 'Пусть день будет таким же ясным, как эта открытка'],
-    ['Подъём засчитан', 'Открытка уже в альбоме — завтра будет другая'],
+    ['С добрым утром', 'Пусть день будет таким же ясным, как это утро'],
+    ['Подъём засчитан', 'Открытка утра уже в альбоме'],
     ['Мозг проснулся', 'Задание позади — голова уже в работе'],
   ];
   /**
-   * Новость утра — одна, самая яркая из правдивых: новый пейзаж, рекорд, редкая находка, серия, раньше обычного.
-   * Если ничего такого — тёплая фраза дня.
+   * Новость утра — одна, самая яркая из правдивых: новый пейзаж, рекорд, редкая открытка, серия, раньше обычного.
+   * Если ничего такого — тёплая фраза дня. kind решает, как проснётся мозг.
    */
   function newsOf(s, r, x, o) {
-    if (!o.mine) return r.direct ? { h: 'Так выглядит утро', p: 'После звонка — новая открытка: небо по времени подъёма, иногда редкие находки' } : { h: 'Проверка пройдена', p: 'Утром здесь будет новая открытка — каждый день своя' };
+    if (!o.mine) return r.direct ? { kind: 'try', h: 'Вот так ты проснёшься', p: 'Каждое утро мозг просыпается по-своему — и с новостью дня' } : { kind: 'try', h: 'Проверка пройдена', p: 'Утром мозг проснётся вместе с тобой' };
     const st = K.stats(s), prev = o.h.filter((y) => y !== o.mine), goal = REWARDS.find(([n]) => n > o.best);
-    if (o.fresh) return { h: `Новый пейзаж — ${o.fresh[1]}`, p: goal ? `Его открыли ${o.fresh[2]} ${utr(o.fresh[2])} подряд. Следующий — ${sceneOf(goal[1])[1]}` : 'Открыты все пейзажи — теперь выпадает любой' };
-    if (!prev.length) return { h: 'Первое утро с sonly', p: 'Каждое утро — новая открытка в альбом, а серия открывает новые пейзажи' };
+    if (o.fresh) return { kind: 'new', h: `Новый пейзаж — ${o.fresh[1]}`, p: goal ? `Его открыли ${o.fresh[2]} ${utr(o.fresh[2])} подряд. Следующий — ${sceneOf(goal[1])[1]}` : 'Открыты все пейзажи — теперь выпадает любой' };
+    if (!prev.length) return { kind: 'first', h: 'Первое утро с sonly', p: 'Каждое утро — своя сценка, новость дня и открытка в альбом' };
     const early = Math.min(...prev.map((y) => y.wake)), fast = Math.min(...prev.map((y) => y.secs || 1e9));
-    if (x.wake < early) return { h: 'Самое раннее утро', p: `На ${early - x.wake} мин раньше прошлого рекорда` };
-    if (x.secs && fast < 1e9 && x.secs < fast) return { h: 'Рекорд скорости', p: `Задание за ${x.secs} с — быстрее, чем когда-либо` };
-    if (o.f && o.f.lvl) return { h: o.f.lvl === 2 ? `Очень редкая: ${o.f.name.toLowerCase()}` : `Редкая находка: ${o.f.name.toLowerCase()}`, p: o.f.lvl === 2 ? 'Такая открытка выпадает примерно раз в месяц' : 'Такие попадаются раз в одну-две недели' };
-    if (st.streak >= 2) return { h: `${st.streak} ${utr(st.streak)} подряд`, p: goal ? `До пейзажа «${sceneOf(goal[1])[1]}» — ${goal[0] - st.streak} ${utr(goal[0] - st.streak)}` : 'Все пейзажи открыты — серия просто растёт' };
+    if (x.wake < early) return { kind: 'record', h: 'Самое раннее утро', p: `На ${early - x.wake} мин раньше прошлого рекорда` };
+    if (x.secs && fast < 1e9 && x.secs < fast) return { kind: 'record', h: 'Рекорд скорости', p: `Задание за ${x.secs} с — быстрее, чем когда-либо` };
+    if (o.f && o.f.lvl) return { kind: 'rare', h: o.f.lvl === 2 ? `Очень редкая открытка: ${o.f.name.toLowerCase()}` : `Редкая открытка: ${o.f.name.toLowerCase()}`, p: o.f.lvl === 2 ? 'Уже в альбоме — такая выпадает раз в месяц' : 'Уже в альбоме — такие выпадают раз в одну-две недели' };
+    if (st.streak >= 2) return { kind: 'streak', h: `${st.streak} ${utr(st.streak)} подряд`, p: goal ? `До пейзажа «${sceneOf(goal[1])[1]}» — ${goal[0] - st.streak} ${utr(goal[0] - st.streak)}` : 'Все пейзажи открыты — серия просто растёт' };
     const last = prev.slice(-14), usual = Math.round(last.reduce((a, y) => a + y.wake, 0) / last.length), dw = usual - x.wake;
-    if (dw >= 5) return { h: `На ${dw} мин раньше обычного`, p: 'Лишние минуты утра — тебе в подарок' };
-    if (x.wake < 390) return { h: 'Раньше солнца', p: 'Пока все спят, утро — только твоё' };
+    if (dw >= 5) return { kind: 'early', h: `На ${dw} мин раньше обычного`, p: 'Лишние минуты утра — тебе в подарок' };
+    if (x.wake < 390) return { kind: 'early', h: 'Раньше солнца', p: 'Пока все спят, утро — только твоё' };
     const g = GREET[doy() % GREET.length];
-    return { h: g[0], p: g[1] };
+    return { kind: 'greet', h: g[0], p: g[1] };
   }
-  /** Рисунок крупной открытки: свечение солнца — в той же сетке, что и солнце, поэтому они всегда совпадают; до рассвета — звёзды. */
-  function heroSvg(x, land, t, f) {
-    const cy = 130 - t.k.sun * 34, r = mix(x.d.getTime(), 433);
-    const stars = t.k.night && land !== 'aurora' ? `<g fill="#fff" opacity=".8">${Array.from({ length: 12 }, () => `<circle cx="${f1(r() * 120)}" cy="${f1(86 + r() * 30)}" r="${f1(0.35 + r() * 0.5)}"/>`).join('')}</g>` : '';
-    const glow = land === 'aurora' || !t.k.sun ? '' : `<circle class="wk-glow" cx="${f1(t.x)}" cy="${f1(cy)}" r="46" fill="url(#wkGlow)"/>`;
-    return `<svg class="mo-land" viewBox="0 0 120 160" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs><radialGradient id="wkGlow"><stop offset="0" stop-color="#FFF8D6" stop-opacity=".95"/><stop offset=".32" stop-color="#FFD660" stop-opacity=".5"/><stop offset="1" stop-color="#FFC850" stop-opacity="0"/></radialGradient></defs>${stars}${glow}${sunSvg(t)}${f ? f.back : ''}${LAND[land](rnd(x.d.getTime() + 3), t)}${f ? f.front : ''}</svg>`;
+
+  /*
+   * Мозг просыпается — каждое утро по-своему. Сценки (анимации — в css/ring.css, .wb-<сценка>):
+   * stretch — зевает и потягивается, wave — выезжает из-за края и машет «Привет!», dance — пританцовывает под ноты,
+   * peek — выглядывает снизу и выпрыгивает, coffee — сонный с кружкой, от кофе распахивает глаза,
+   * jump — прыгает от радости с конфетти (новый пейзаж, редкая открытка), flex — корона и мускулы (рекорд).
+   * Обычное утро — по кругу день за днём, поэтому подряд одинаковых нет; проба — каждый раз случайная.
+   */
+  const WAKE = ['stretch', 'wave', 'dance', 'peek', 'coffee'];
+  const SAY = ['Привет!', 'Доброе утро!', 'Я проснулся!', 'Погнали!', 'Новый день!'];
+  const CONF = ['#FFC62B', '#FF6F93', '#4DABF7', '#69DB7C', '#9775FA', '#FFA94D'];
+  let lastTry = '';
+  function wakeScene(kind) {
+    if (kind === 'record') return 'flex';
+    if (kind === 'new' || kind === 'rare') return 'jump';
+    if (kind === 'first') return 'wave';
+    if (kind === 'try') { const all = WAKE.concat('jump', 'flex').filter((x) => x !== lastTry); lastTry = all[Math.floor(Math.random() * all.length)]; return lastTry; }
+    return WAKE[doy() % WAKE.length];
+  }
+  /* Что вокруг мозга в сценке: буквы сна, облачко «Привет!», ноты, конфетти, искры. */
+  function props(scene) {
+    if (scene === 'stretch') return '<span class="wb-z"><b>z</b><b>z</b><b>z</b></span>';
+    if (scene === 'wave') return `<b class="wb-say">${SAY[doy() % SAY.length]}</b>`;
+    if (scene === 'dance') return `<span class="wb-notes">${['music', 'music-2', 'music-4'].map((n, i) => `<i class="n${i + 1}">${ic(n, 18 + i * 3, 2.4)}</i>`).join('')}</span>`;
+    const sp = '<span class="wb-sp"><i class="s1"></i><i class="s2"></i><i class="s3"></i><i class="s4"></i></span>';
+    if (scene === 'peek' || scene === 'coffee') return sp;
+    return sp + `<span class="wb-conf">${Array.from({ length: 18 }, (_, i) => { const a = (i / 18) * Math.PI * 2, d = 96 + (i % 3) * 26; return `<i style="--x:${Math.round(Math.cos(a) * d)}px;--y:${Math.round(Math.sin(a) * d * 0.75 - 40)}px;--r:${(i * 53) % 360}deg;--c:${CONF[i % CONF.length]};--d:${(i % 5) * 45}ms"></i>`; }).join('')}</span>`;
+  }
+  /* Кружка в руке (coffee) и корона (flex) — прямо в рисунке мозга, чтобы двигались вместе с ним. */
+  const MUG = '<g class="wb-mug"><path class="wb-steam s1" d="M186 126q-4-5 0-10t0-10"/><path class="wb-steam s2" d="M195 124q-4-5 0-10t0-10"/><path class="wb-handle" d="M199 140q9 0 9 8t-9 8"/><rect class="wb-cup" x="177" y="133" width="23" height="27" rx="6"/><rect class="wb-cof" x="180" y="136" width="17" height="4.5" rx="2.2"/></g>';
+  const CROWN = '<g class="wb-crown"><path d="M89 24L92 2l10 11 8-13 8 13 10-11 3 22z"/><circle cx="92" cy="2" r="3.4"/><circle cx="110" cy="0" r="3.8"/><circle cx="128" cy="2" r="3.4"/></g>';
+  function brainOf(scene) {
+    let svg = Sonly.brain ? Sonly.brain('wkb') : '';
+    const extra = scene === 'coffee' ? MUG : scene === 'flex' ? CROWN : '', at = svg.lastIndexOf('</g></svg>');
+    if (extra && at > 0) svg = svg.slice(0, at) + extra + svg.slice(at);
+    return svg;
   }
   /**
-   * Открытка этого утра крупно — каждое утро другая: пейзаж, небо по времени подъёма, иногда находка в небе, —
-   * и новость утра под ней. Проба и проверка показывают такую же открытку, но в альбом она не попадает.
+   * Верх экрана «Доброе утро»: логотип (появляется, когда солнце с экрана задания долетит до него), мозг, который
+   * просыпается своей сценкой, новость утра и три цифры. Проба и проверка — та же сценка, но в историю утро не идёт.
    */
   function hero(s, r) {
     const st = K.stats(s), h = st.h, day = K.day0(new Date()).getTime();
@@ -493,23 +523,23 @@
     const x = mine || { d: new Date(day), wake: hm(r.at), secs: r.secs };
     const by = bestByDay(s, h), best = (mine && by.get(day)) || st.best || 0;
     const before = Math.max(0, ...[...by.entries()].filter(([t]) => t < day).map(([, v]) => v));
-    const land = landOf(x, best), t = tone(x, land), k = t.k, f = findOf(x, land, t);
+    const land = landOf(x, best), f = findOf(x, land, tone(x, land));
     const fresh = mine && SCENES.find((sc) => sc[2] && sc[2] > before && sc[2] <= best);
-    const nw = newsOf(s, r, x, { mine, fresh, f, best, h });
-    const date = x.d.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' });
-    const tag = fresh ? `<b class="wk-tag new">${ic('sparkles', 13, 2.6)}Новый пейзаж</b>` : f && f.lvl ? `<b class="wk-tag${f.lvl === 2 ? ' gold' : ''}">${ic('sparkles', 13, 2.6)}${f.lvl === 2 ? 'Очень редкая' : 'Редкая'}</b>` : '';
-    const card = `${heroSvg(x, land, t, f)}<i class="wk-shade"></i>
-      <span class="wk-hi"><b>Доброе утро</b><small>${mine ? `Утро №${h.indexOf(mine) + 1}` : 'Пробное утро'} · ${date}</small></span>${tag}
-      <span class="wk-at"><b>${K.fmtMin(x.wake)}</b><small>подъём</small></span>
-      <span class="wk-meta">${x.secs ? `<i>${ic('timer', 13, 2.5)}${x.secs} с</i>` : ''}${mine && st.streak ? `<i>${ic('flame', 13, 2.5)}${st.streak} ${K.pl(st.streak, 'день', 'дня', 'дней')}</i>` : ''}</span>`;
-    const style = `--a:${k.a};--b:${k.b};--t:${k.ink};--sun:${k.sun.toFixed(2)};--sx:${t.sx}%`;
-    return `${mine ? `<button class="wk-card${fresh || (f && f.lvl) ? ' shine' : ''}" data-act="mo-card:${day}" aria-label="Открытка этого утра" style="${style}">${card}</button>` : `<div class="wk-card" style="${style}">${card}</div>`}
-      <div class="wk-news"><h1>${nb(nw.h)}</h1><p>${nb(nw.p)}</p></div>`;
+    /* s._wkScene — только для снимков и проверок: показать нужную сценку. */
+    const nw = newsOf(s, r, x, { mine, fresh, f, best, h }), scene = s._wkScene || wakeScene(nw.kind);
+    /* Цифры утра — плитками со значками: серия — главная, яркая и шире; рядом подъём и время на задание. */
+    const tile = (cls, icon, val, label) => `<div class="ws ${cls}"><div><i class="ws-ic">${icon}</i><b>${val}</b></div><small>${label}</small></div>`;
+    const chips = (mine && st.streak ? tile('fire', ic('flame', 15, 2.6), st.streak, `${K.pl(st.streak, 'день', 'дня', 'дней')} подряд`) : '')
+      + tile('sun', si('rise', 15), K.fmtMin(x.wake), 'подъём') + (x.secs ? tile('time', ic('timer', 15, 2.6), `${x.secs} с`, 'на задание') : '');
+    return `<div class="wk-logo js-wklogo">${Sonly.logo()}</div>
+      <div class="wb wb-${scene}" data-scene="${scene}" aria-hidden="true"><i class="wb-glow"></i>${props(scene)}<i class="m-brain wb-br">${brainOf(scene)}</i></div>
+      <div class="wk-news"><h1>${nb(nw.h)}</h1><p>${nb(nw.p)}</p></div>
+      <div class="wk-stats">${chips}</div>`;
   }
 
   Sonly.morning = {
     rewards,
-    /** Верх экрана «Доброе утро»: открытка утра и новость дня. */
+    /** Верх экрана «Доброе утро»: логотип, просыпающийся мозг, новость дня и цифры утра. */
     hero,
     /** Небо для минуты суток — им же красится виджет следующего будильника. */
     sky: skyOf,

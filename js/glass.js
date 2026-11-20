@@ -85,21 +85,54 @@
     }
     const sync = () => put(bar.querySelector('button.on'), true);
     const local = (e) => { const r = bar.getBoundingClientRect(), k = r.width / bar.offsetWidth || 1; return (e.clientX - r.left) / k; };
-    /** Капля по центру точки x (в координатах панели). */
-    const lensAt = (x) => { if (drop) drop.style.setProperty('--x', (bar.offsetLeft + x - drop.offsetWidth / 2).toFixed(1) + 'px'); };
+    /*
+     * Капля-линза. Где браузер умеет преломление (Chrome), его даёт фильтр. В Safari и Telegram на iPhone фильтра нет —
+     * там в капле лежит копия панели, увеличенная вокруг центра капли: те же значки и подписи крупнее, как под линзой.
+     */
+    const K = 1.32;
+    const flat = () => drop && !/url\(/.test(drop.style.backdropFilter || drop.style.webkitBackdropFilter || '');
+    let lens = null;
+    function lensOn() {
+      if (!drop || !flat()) { if (drop) drop.classList.remove('flat'); lens = null; return; }
+      const copy = bar.cloneNode(true);
+      copy.classList.remove('lg', 'press');
+      copy.removeAttribute('data-lg');
+      copy.className += ' ap-lens-copy';
+      copy.setAttribute('aria-hidden', 'true');
+      copy.inert = true;
+      copy.style.cssText = `width:${bar.offsetWidth}px;height:${bar.offsetHeight}px`;
+      copy.querySelectorAll('[data-act]').forEach((b) => b.removeAttribute('data-act'));
+      drop.replaceChildren(copy);
+      drop.classList.add('flat');
+      lens = copy;
+    }
+    /** Капля по центру точки x (в координатах панели); в копии — та же точка, увеличенная в K раз, точно в центре капли. */
+    const lensAt = (x) => {
+      if (!drop) return;
+      drop.style.setProperty('--x', (bar.offsetLeft + x - drop.offsetWidth / 2).toFixed(1) + 'px');
+      if (lens) lens.style.transform = `translate(${(drop.offsetWidth / 2 - K * x).toFixed(1)}px,${(drop.offsetHeight / 2 - (K * bar.offsetHeight) / 2).toFixed(1)}px) scale(${K})`;
+    };
     let drag = null;
     bar.addEventListener('pointerdown', (e) => {
       if (e.button) return;
-      drag = { id: e.pointerId, x0: e.clientX, moved: false };
+      drag = { id: e.pointerId, x0: e.clientX, moved: false, t: Date.now() };
       bar.classList.add('press');
+      watch();
     });
+    /* Страховка: если отпускание пальца так и не пришло (бывает в Telegram на iPhone), через 2,5 с тишины капля садится сама. */
+    let dog = 0;
+    function watch() {
+      clearTimeout(dog);
+      dog = setTimeout(() => { if (drag && Date.now() - drag.t > 2400) up(null, true); else if (drag) watch(); }, 2500);
+    }
     bar.addEventListener('pointermove', (e) => {
       if (!drag || e.pointerId !== drag.id) return;
+      drag.t = Date.now();
       const c = cells(), x = Math.max(mid(c[0]), Math.min(mid(c[c.length - 1]), local(e)));
       if (!drag.moved && Math.abs(e.clientX - drag.x0) > 6) {
         drag.moved = true;
         try { bar.setPointerCapture(e.pointerId); } catch (_) { /* синтетический указатель */ }
-        if (drop) { drop.classList.add('now'); lensAt(x); void drop.offsetWidth; drop.classList.remove('now'); drop.classList.add('on'); }
+        if (drop) { lensOn(); drop.classList.add('now'); lensAt(x); void drop.offsetWidth; drop.classList.remove('now'); drop.classList.add('on'); }
         nav.classList.add('drag');
       }
       if (drag.moved) lensAt(x);
@@ -110,6 +143,7 @@
       if (!drag || (e && e.pointerId !== drag.id)) return;
       const moved = drag.moved;
       drag = null;
+      clearTimeout(dog);
       bar.classList.remove('press');
       if (!moved) return;
       const cur = bar.querySelector('button.on') || cells()[0], x = e && !cancel ? local(e) : mid(cur);
@@ -130,6 +164,9 @@
     window.addEventListener('pointerup', (e) => up(e), true);
     window.addEventListener('pointercancel', (e) => up(e, true), true);
     window.addEventListener('blur', () => up(null, true));
+    /* На iPhone отпускание пальца надёжнее всего приходит касанием — его тоже слушаем. */
+    window.addEventListener('touchend', (e) => { if (!drag) return; const t = e.changedTouches && e.changedTouches[0]; up(t ? { pointerId: drag.id, clientX: t.clientX } : null, !t); }, true);
+    window.addEventListener('touchcancel', () => up(null, true), true);
     new ResizeObserver(sync).observe(bar);
     sync();
     nav._tabs = { put, sync };

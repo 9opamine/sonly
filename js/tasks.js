@@ -56,7 +56,7 @@
     pairs: { ask: 'Сколько пар искать?', hint: '', ctl: [count('n', 6, 4, 10, 2, ['пара', 'пары', 'пар'], '', lvl(4, 6, 8))] },
     phrase: { ask: 'Какую фразу набирать?', hint: 'Каждое утро — новая фраза такой длины.', ctl: [choice('len', 'mid', [['short', 'Короткая', 'Доброе утро, я встаю'], ['mid', 'Средняя', 'Сегодня я встаю с первого звонка'], ['long', 'Длинная', 'Каждое утро начинается с одного решения — встать']])] },
     tongue: { ask: 'Какая скороговорка?', hint: 'Каждое утро — новая, такой же сложности.', ctl: [choice('level', 'mid', [['easy', 'Простая', 'Шла Саша по шоссе и сосала сушку'], ['mid', 'Средняя', 'Карл у Клары украл кораллы, а Клара у Карла украла кларнет'], ['hard', 'Сложная', 'Сшит колпак не по-колпаковски, вылит колокол не по-колоколовски']])] },
-    rhythm: { ask: 'Сколько мелодий угадать?', hint: 'Звучит мелодия — выбери её название.', ctl: [count('n', 3, 1, 5, 1, ['мелодия', 'мелодии', 'мелодий'], '', lvl(2, 3, 5))] },
+    rhythm: { ask: 'Сколько мелодий угадать?', hint: 'Нажми на обложку — послушай, как звучит.', ctl: [count('n', 3, 1, 5, 1, ['мелодия', 'мелодии', 'мелодий'], '', lvl(2, 3, 5))] },
     quiz: { ask: 'О чём вопросы?', hint: '', ctl: [choice('topic', 'flags', [['flags', 'Флаги', 'Чей это флаг?'], ['capitals', 'Столицы', 'Столица Франции?'], ['mix', 'Вперемешку', 'Всё подряд']], 'Тема'), count('n', 3, 1, 10, 1, ['вопрос', 'вопроса', 'вопросов'], 'Сколько вопросов')] },
   };
 
@@ -89,6 +89,17 @@
   const card = (key, val, on, inner, cls = '') => `<button class="to-card${cls ? ' ' + cls : ''}${on ? ' on' : ''}${pop(key, on)}" data-act="to-set:${key}:${val}" aria-pressed="${on}">${inner}${check()}</button>`;
   /** Тёмная карточка «так будет утром»: задания всегда тёмные, поэтому и предпросмотр тёмный в любой теме. */
   const prev = (cls, inner) => `<div class="to-prev ${cls}">${inner}</div>`;
+  let coverT = 0;
+  /* Обложки мелодий листаются по две: точки под ними показывают страницу. Один слушатель на всё приложение. */
+  if (typeof document !== 'undefined') document.addEventListener('scroll', (e) => {
+    const t = e.target;
+    if (!t.classList || !t.classList.contains('js-covers')) return;
+    const i = Math.round(t.scrollLeft / Math.max(1, t.clientWidth + 10));
+    const dots = t.nextElementSibling;
+    if (dots) dots.querySelectorAll('i').forEach((d, k) => d.classList.toggle('on', k === i));
+  }, true);
+  /* Название на обложке: предлоги — к следующему слову, два последних слова — вместе, чтобы в последней строке не висело одно. */
+  const cvName = (t) => t.replace(/(^|\s)([а-яёa-z]{1,2}) /gi, '$1$2 ').replace(/ (\S+)$/, ' $1');
   const suns = (n) => `<span class="tp-suns">${[1, 2, 3].map((i) => `<i class="${i <= n ? 'on' : ''}">${Sonly.mark()}</i>`).join('')}</span>`;
   const MATH = { easy: ['8 + 7', 1], mid: ['67 − 48', 2], hard: ['19 × 8 + 29', 3] };
   /* Образец вопроса викторины для предпросмотра: флаг, вопрос и четыре ответа, верный подсвечен. */
@@ -136,11 +147,14 @@
       const say = canSpeak();
       return `<div class="to-cards c1">${C('tongue', 'level').opts.map(([v, name, text]) => `<div class="tp-say">${card('level', v, o.level === v, `<small>${name}</small><b class="tp-text">${glue(text.replace(/-/g, '‑'))}</b>`, 'wide')}${say ? `<button class="tp-play" data-act="to-say:${v}" aria-label="Послушать">${ic('volume-2', 18, 2.3)}</button>` : ''}</div>`).join('')}</div>`;
     },
-    /* Угадай мелодию: пример вопроса — столбики звука и четыре названия; «Послушать пример» играет «Оду к радости». */
+    /*
+     * Угадай мелодию: все мелодии задания — обложками, как пластинки. Нажал на обложку — играет её отрывок (тот самый,
+     * что прозвучит утром), на обложке пляшут столбики; нажал ещё раз — тишина.
+     */
     rhythm(o) {
-      const eq = `<div class="tp-bars">${[36, 62, 92, 54, 80, 46, 28].map((h, i) => `<i style="--h:${h}%;--d:${i * 50}ms"></i>`).join('')}</div>`;
-      return prev('tp-rhythm tp-tune', `${eq}<div class="tp-ans">${['Ода к радости', 'К Элизе', 'Турецкий марш', 'Братец Яков'].map((a, i) => `<span class="${i ? '' : 'ok'}">${a}</span>`).join('')}</div>
-        <button class="tp-listen" data-act="to-beat:ode">${ic('play', 15, 2.6)}Послушать пример</button>`) + stepper(C('rhythm', 'n'), o);
+      const R = typeof Sonly !== 'undefined' && Sonly.rhythm, list = R ? R.TUNES : [], pages = Math.ceil(list.length / 2);
+      return `<div class="tp-covers js-covers">${list.map((t) => `<button class="tp-cover" data-act="to-beat:${t.id}" style="--c:${t.col}" aria-label="Послушать «${t.name}»"><i class="tp-cv-ic">${ic(t.icon, 24, 2.2)}</i><span class="tp-cv-pl">${ic('play', 12, 3)}<span class="tp-cv-eq"><u></u><u></u><u></u></span></span><b>${cvName(t.name)}</b><small>${t.by}</small></button>`).join('')}</div>
+        <div class="tp-dots" aria-hidden="true">${Array.from({ length: pages }, (_, k) => `<i${k ? '' : ' class="on"'}></i>`).join('')}</div>` + stepper(C('rhythm', 'n'), o);
     },
   };
   /* Штрихкод: свой код sonly — настоящий EAN-13, его можно сохранить и распечатать; утром засчитывается только он.
@@ -279,9 +293,21 @@
       }
       if (act === 'to-beat') {
         const R = Sonly.rhythm, tune = R && R.TUNES.find((x) => x.id === arg);
+        /* Обложка мелодии: играет отрывок, пока он звучит — на обложке столбики. Повторное нажатие — стоп. */
+        const doc = typeof document !== 'undefined' ? document : null, el = doc && doc.querySelector(`.tp-cover[data-act="to-beat:${arg}"]`);
+        if (el) {
+          const was = el.classList.contains('on');
+          clearTimeout(coverT);
+          doc.querySelectorAll('.tp-cover.on').forEach((c) => c.classList.remove('on'));
+          if (Sonly.sound) Sonly.sound.stop();
+          if (was || !tune) return 'keep';
+          const len = (Sonly.sound && Sonly.sound.song(tune.notes, tune.q).len) || R.length(tune) / 1000;
+          el.classList.add('on');
+          coverT = setTimeout(() => el.classList.remove('on'), len * 1000 + 200);
+          return 'keep';
+        }
         if (Sonly.sound && tune) Sonly.sound.song(tune.notes, tune.q);
         else if (Sonly.sound) BEAT(+arg || 6).forEach((t, i) => Sonly.sound.drum(0.05 + t / 1000, i % 2 === 1));
-        if (typeof document !== 'undefined') document.querySelectorAll('.tp-rhythm .tp-bars, .tp-rhythm .tp-track').forEach((tr) => { tr.classList.remove('play'); void tr.offsetWidth; tr.classList.add('play'); });
         return 'keep';
       }
       if (act === 'to-set' || act === 'to-num' || act === 'to-step') just = arg.split(':')[0];

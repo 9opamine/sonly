@@ -221,65 +221,214 @@
 .cam .tk-shot:disabled{opacity:.35}
 
 /* ── Подъём ──────────────────────────────────────────────── */
-.wk{position:relative;flex:1;display:flex;flex-direction:column;align-items:stretch;padding:58px 20px 34px;text-align:left;overflow:hidden}
-.wk-logo{display:flex;justify-content:center}
-.wk-logo .logo{height:24px;width:auto;color:var(--ink)}
-/* Открытка этого утра: небо по времени подъёма, солнце встаёт из-за пейзажа, иногда находка в небе. */
-.wk-card{position:relative;display:block;width:100%;height:clamp(200px,31vh,272px);flex:none;padding:0;border-radius:30px;overflow:hidden;color:var(--t,#fff);background:linear-gradient(180deg,var(--a) 0%,var(--b) 100%);box-shadow:0 30px 50px -30px rgba(0,0,0,.8),inset 0 0 0 .5px rgba(255,255,255,.16);text-align:left;animation:wk-card .8s cubic-bezier(.22,1,.36,1) both;transition:transform .15s cubic-bezier(.3,.7,.4,1)}
-button.wk-card:active{transform:scale(.98)}
-.wk-card.shine{box-shadow:0 30px 50px -30px rgba(0,0,0,.8),inset 0 0 0 1.5px rgba(255,209,46,.75)}
-.wk-card.shine::after{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.4) 50%,transparent 65%);transform:translateX(-120%);animation:wk-glint 1.5s cubic-bezier(.4,0,.2,1) 1.2s both;pointer-events:none}
-/* Рисунок выше открытки: нижний край земли уходит за край, горизонт опускается — неба видно больше, даже на SE. */
-.wk-card>.mo-land{bottom:auto;height:calc(100% + 44px)}
-.wk-card .wk-glow,.wk-card .mo-sun{animation:wk-sunup 1.9s cubic-bezier(.2,.8,.2,1) .2s both}
-.wk-card .mo-fly{animation:wk-fly 9s linear infinite alternate}
-.wk-card .mo-float{animation:wk-float 3.6s ease-in-out infinite alternate}
-.wk-card .mo-shoot{animation:wk-shoot 5s ease-in 1s infinite}
-.wk-shade{position:absolute;left:0;right:0;bottom:0;height:56%;background:linear-gradient(180deg,transparent,rgba(0,0,0,.42));pointer-events:none}
-.wk-hi{position:absolute;left:18px;top:16px;right:18px;display:grid;gap:2px;color:var(--t,#fff)}
-.wk-card:has(.wk-tag) .wk-hi{right:126px}
-.wk-hi b{font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:830;font-size:22px;letter-spacing:-.5px;line-height:1.1}
-.wk-hi small{font-size:12.5px;font-weight:600;opacity:.82}
-.wk-tag{position:absolute;right:14px;top:14px;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 11px 0 9px;border-radius:14px;background:rgba(255,255,255,.92);color:#0D0D0F;font-size:12.5px;font-weight:750;box-shadow:0 6px 14px -6px rgba(0,0,0,.4);animation:wk-pop .55s cubic-bezier(.3,1.6,.5,1) 1s both}
-.wk-tag.gold,.wk-tag.new{background:#FFD12E}
-.wk-at{position:absolute;left:18px;bottom:14px;display:grid;color:#fff}
-.wk-at b{font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:830;font-size:40px;letter-spacing:-1px;line-height:1;font-variant-numeric:tabular-nums;text-shadow:0 2px 14px rgba(0,0,0,.25)}
-.wk-at small{margin-top:3px;font-size:12.5px;font-weight:600;opacity:.85}
-.wk-meta{position:absolute;right:14px;bottom:16px;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
-.wk-meta i{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px 0 8px;border-radius:13px;background:rgba(0,0,0,.34);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;font-style:normal;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
-.wk-news{margin-top:16px;padding:0 4px}
-.wk-news h1{margin:0;font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:830;font-size:27px;letter-spacing:-.6px;line-height:1.12;text-wrap:balance}
-.wk-news p{margin:6px 0 0;font-size:15px;font-weight:500;line-height:1.35;color:var(--mut2);text-wrap:balance}
-.wk>p.wk-chk,.wk>p.wk-note{align-self:flex-start;margin:12px 0 0;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px 0 11px;border-radius:16px;background:var(--card);box-shadow:var(--elev);font-size:13.5px;font-weight:600;color:var(--mut2)}
-.wk>.wk-news,.wk>p.wk-chk,.wk>p.wk-note,.wk>.wk-brief{animation:wk-in .6s cubic-bezier(.22,1,.36,1) .35s both}
-.wk>p.wk-chk,.wk>p.wk-note{animation-delay:.45s}
-.wk>.wk-brief{animation-delay:.55s}
+.wk{position:relative;flex:1;display:flex;flex-direction:column;align-items:stretch;padding:58px 20px 34px;text-align:center;overflow:hidden}
+.wk-logo{display:flex;justify-content:center;flex:none;height:26px}
+.wk-logo .logo{height:26px;width:auto;color:var(--ink)}
+/* Логотип — после анимации: без перелёта солнца проявляется, когда мозг проснулся; с перелётом — когда солнце в него село. */
+.wk:not(.morph) .wk-logo{animation:wk-in .6s cubic-bezier(.22,1,.36,1) 2.1s both}
+.wk.morph .wk-logo .logo path{opacity:0;transition:opacity .5s ease .12s}
+.wk.morph .wk-logo.lit .logo path{opacity:1}
+.wk.morph .wk-logo.lit .logo path:last-child{transition:none}
+.wk-fly{position:absolute;z-index:30;display:block;pointer-events:none;transform-origin:50% 50%}
+.wk-fly .mark{display:block;width:100%;height:auto}
+
+/* ── Мозг просыпается. Сцена: свечение-рассвет, мозг, вокруг — то, что нужно сценке. ── */
+.wb{position:relative;flex:none;align-self:center;width:260px;height:218px;margin-top:8px}
+.wb-glow{position:absolute;left:50%;top:56%;width:330px;height:330px;margin:-165px 0 0 -165px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,196,54,.46),rgba(255,166,40,.14) 56%,rgba(255,166,40,0) 76%);opacity:.18;transform:scale(.7);animation:wb-dawn 1.8s cubic-bezier(.2,.8,.2,1) .5s forwards;pointer-events:none}
+.ap:not([data-theme="dark"]) .wb-glow{background:radial-gradient(closest-side,rgba(255,206,72,.55),rgba(255,190,60,.16) 56%,rgba(255,190,60,0) 76%)}
+@keyframes wb-dawn{to{opacity:1;transform:none}}
+.wb-br{position:absolute;left:50%;bottom:0;z-index:1;display:block;width:212px;height:197px;margin-left:-106px}
+.wb .m-br{display:block;width:100%;height:100%;overflow:visible}
+.wb .br-sh{fill:rgba(0,0,0,.42)}
+.ap:not([data-theme="dark"]) .wb .br-sh{fill:rgba(13,13,15,.09)}
+.wb .br-out circle{fill:#E66C92}
+.wb .br-line{fill:none;stroke:#E66C92;stroke-width:3.4;stroke-linecap:round}
+.wb .br-shine{fill:#fff;opacity:.6}
+.wb .br-eye{fill:#fff}
+.wb .br-pup{fill:#2A1620}
+.wb .br-gl{fill:#fff}
+.wb .br-lid{fill:#FFB8CB;transform:translateY(-29px)}
+.wb .br-lash{fill:#7C2D4A}
+.wb .br-ck{fill:#FF6F93;opacity:.42}
+.wb .br-legs path{fill:none;stroke:#E66C92;stroke-width:7.5;stroke-linecap:round}
+.wb .br-legs .br-shoe{fill:#2B2B31;stroke:none}
+.ap[data-theme="dark"] .wb .br-legs .br-shoe{fill:#55555F}
+.wb .br-arm path{fill:none;stroke:#E66C92;stroke-width:7.5;stroke-linecap:round}
+.wb .br-arm circle{fill:#FFC4D3;stroke:#E66C92;stroke-width:3}
+.wb .br-arm,.wb .br-m,.wb .br-brow,.wb .br-drop{opacity:0}
+.wb .br-m.yawn,.wb .br-m.grin{fill:#8E2F4E}
+.wb .br-m.smile,.wb .br-m.wavy,.wb .br-brow{fill:none;stroke:#8E2F4E;stroke-width:3.2;stroke-linecap:round}
+.wb .br-arm,.wb .br-m.yawn{transform-box:fill-box}
+.wb .br-arm.l{transform-origin:100% 100%}
+.wb .br-arm.r{transform-origin:0 100%}
+.wb .br-m.yawn{transform-origin:50% 50%}
+.wb .br-bob{transform-origin:110px 190px}
+/* Живой даже в покое: дышит, моргает и иногда смотрит по сторонам. */
+.wb .br-pup,.wb .br-gl{animation:wb-look 7s ease-in-out 3.4s infinite}
+@keyframes wb-look{0%,34%,100%{transform:none}40%,52%{transform:translateX(-3.5px)}58%,70%{transform:translateX(3.5px)}}
+@keyframes wb-on{from{opacity:0}to{opacity:1}}
+@keyframes wb-off{from{opacity:1}to{opacity:0}}
+@keyframes wb-open{from{transform:translateY(0)}to{transform:translateY(-29px)}}
+@keyframes wb-half{from{transform:translateY(-11px)}to{transform:translateY(-29px)}}
+@keyframes wb-pop{from{opacity:0;transform:scale(.4)}}
+
+/* Потягивается: сонные глаза, зевок, «z-z-z» — руки вверх, глаза открылись, улыбка, подпрыгнул. */
+.wb-stretch .br-lid{animation:wb-half .45s cubic-bezier(.3,1.4,.5,1) 1.15s both,br-blink 3.8s ease-in-out 2.4s infinite}
+.wb-stretch .br-arm.dn{opacity:1;animation:wb-off .2s .95s both,wb-on .3s 3.3s forwards}
+.wb-stretch .br-m.yawn{opacity:1;animation:br-yawn 1.1s ease-in-out both,wb-off .2s 1.05s both}
+.wb-stretch .br-arm.up{animation:wb-on .2s .95s both,wb-reach .5s ease-in-out .95s 2 alternate,wb-off .3s 3.3s forwards}
+.wb-stretch .br-arm.up.r{--rr:12deg}
+@keyframes wb-reach{to{transform:rotate(var(--rr,-12deg)) translateY(-4px)}}
+.wb-stretch .br-m.smile{animation:wb-on .25s 1.15s both}
+.wb-stretch .br-bob{animation:wb-long 1s ease-in-out .9s both,br-hop .6s cubic-bezier(.3,1.5,.5,1) 1.95s,br-bob 2.8s ease-in-out 2.6s infinite}
+@keyframes wb-long{50%{transform:scale(.95,1.07)}}
+.wb-z{position:absolute;right:34px;top:26px;z-index:2;width:50px;height:50px;animation:wb-off .3s 1s both}
+.wb-z b{position:absolute;font-family:'Roboto Flex','Inter',sans-serif;font-weight:800;color:#9A9AA6;opacity:0;animation:br-z 1.6s ease-in-out infinite}
+.wb-z b:nth-child(1){left:0;bottom:0;font-size:15px}
+.wb-z b:nth-child(2){left:14px;bottom:13px;font-size:19px;animation-delay:.3s}
+.wb-z b:nth-child(3){left:30px;bottom:29px;font-size:24px;animation-delay:.6s}
+
+/* Машет: выезжает из-за края, открывает глаза и машет рукой; облачко «Привет!». */
+.wb-wave .wb-br,.wb-peek .wb-br{clip-path:inset(-90px -50px 0 -50px)}
+.wb-wave .br-bob{animation:wb-rise .9s cubic-bezier(.2,.9,.3,1.15) both,br-bob 2.8s ease-in-out 1.6s infinite}
+@keyframes wb-rise{from{transform:translateY(70px)}}
+.wb-wave .br-lid{animation:wb-open .35s ease-out .7s both,br-blink 3.8s ease-in-out 2.2s infinite}
+.wb-wave .br-m.smile{animation:wb-on .3s .8s both}
+.wb-wave .br-arm.dn.l{opacity:1}
+.wb-wave .br-arm.up.r{animation:wb-on .15s .9s both,wb-hi .3s ease-in-out .9s 6 alternate,wb-off .25s 2.75s forwards}
+.wb-wave .br-arm.dn.r{animation:wb-on .25s 2.75s both}
+@keyframes wb-hi{from{transform:rotate(-16deg)}to{transform:rotate(18deg)}}
+.wb-say{position:absolute;right:-4px;top:4px;z-index:2;padding:8px 14px;border-radius:18px 18px 18px 6px;background:var(--card);box-shadow:var(--elev);color:var(--ink);font-size:15px;font-weight:750;white-space:nowrap;transform-origin:0 100%;animation:wb-pop .5s cubic-bezier(.3,1.6,.5,1) 1s both}
+
+/* Пританцовывает: качается из стороны в сторону, руки по очереди вверх, вокруг плывут ноты. */
+.wb-dance .br-lid{animation:wb-open .3s .25s both,br-blink 3.8s ease-in-out 1.6s infinite}
+.wb-dance .br-m.grin{animation:wb-on .25s .35s both}
+.wb-dance .br-bob{animation:wb-sway 1s ease-in-out .45s infinite alternate}
+@keyframes wb-sway{from{transform:rotate(-7deg)}50%{transform:rotate(0) translateY(-7px)}to{transform:rotate(7deg)}}
+.wb-dance .br-arm.up.l,.wb-dance .br-arm.dn.r{animation:wb-alt 2s .45s infinite}
+.wb-dance .br-arm.up.r,.wb-dance .br-arm.dn.l{animation:wb-alt 2s 1.45s infinite}
+@keyframes wb-alt{0%,48%{opacity:1}52%,100%{opacity:0}}
+.wb-notes i{position:absolute;z-index:2;color:#FFC62B;opacity:0;animation:wb-note 2.4s ease-out infinite}
+.wb-notes .n1{left:22px;top:70px;animation-delay:.5s}
+.wb-notes .n2{right:20px;top:46px;color:#FF6F93;animation-delay:1.2s}
+.wb-notes .n3{left:52px;top:18px;color:#9775FA;animation-delay:1.9s}
+@keyframes wb-note{0%{opacity:0;transform:translateY(12px) rotate(-10deg)}20%{opacity:1}100%{opacity:0;transform:translateY(-34px) rotate(14deg)}}
+
+/* Выглядывает: снизу видны только глаза, смотрит налево-направо — и выпрыгивает целиком, руки вверх. */
+.wb-peek .br-bob{animation:wb-peek 2.2s cubic-bezier(.3,1.1,.4,1) both,br-bob 2.8s ease-in-out 2.5s infinite}
+@keyframes wb-peek{0%{transform:translateY(130px)}22%,58%{transform:translateY(74px)}78%{transform:translateY(-16px)}100%{transform:none}}
+.wb-peek .br-pup,.wb-peek .br-gl{animation:wb-peeklook 1.1s ease-in-out .55s both,wb-look 7s ease-in-out 3.6s infinite}
+@keyframes wb-peeklook{0%,100%{transform:none}25%,42%{transform:translateX(-4px)}60%,82%{transform:translateX(4px)}}
+.wb-peek .br-lid{animation:br-blink 3.8s ease-in-out .2s infinite}
+.wb-peek .br-m.grin,.wb-peek .br-arm.up{animation:wb-on .15s 1.65s both,wb-off .3s 3.4s forwards}
+.wb-peek .br-m.smile,.wb-peek .br-arm.dn{animation:wb-on .3s 3.4s both}
+.wb-peek .wb-sp i{animation-delay:1.7s}
+
+/* С кофе: сонный, с кружкой, пар — глотнул и распахнул глаза, улыбка и искры. */
+.wb-coffee .br-arm.dn{opacity:1}
+.wb-coffee .br-lid{animation:wb-half .4s cubic-bezier(.3,1.6,.5,1) 1.7s both,br-blink 3.8s ease-in-out 2.9s infinite}
+.wb-coffee .br-m.yawn{opacity:1;transform:scale(.55,.45);animation:wb-off .15s 1.6s both}
+.wb-coffee .br-m.grin{animation:wb-on .2s 1.7s both,wb-off .3s 3.4s forwards}
+.wb-coffee .br-m.smile{animation:wb-on .3s 3.4s both}
+.wb-coffee .br-bob{animation:wb-sip 1.3s ease-in-out .3s both,br-hop .6s cubic-bezier(.3,1.5,.5,1) 1.7s,br-bob 2.8s ease-in-out 2.4s infinite}
+@keyframes wb-sip{45%,70%{transform:rotate(4deg) translateY(2px)}}
+.wb .wb-cup{fill:#fff;stroke:#E2E2E8;stroke-width:1.2}
+.wb .wb-cof{fill:#8A5A3C}
+.wb .wb-handle{fill:none;stroke:#fff;stroke-width:4;stroke-linecap:round}
+.wb .wb-steam{fill:none;stroke:rgba(200,200,212,.8);stroke-width:2.2;stroke-linecap:round;opacity:0;animation:wb-steam 2s ease-out infinite}
+.wb .wb-steam.s2{animation-delay:.7s}
+@keyframes wb-steam{0%{opacity:0;transform:translateY(6px)}30%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
+.wb-coffee .wb-sp i{animation-delay:1.75s}
+
+/* Прыгает от радости: новый пейзаж или редкая открытка — конфетти и искры. */
+.wb-jump .br-lid{animation:wb-open .3s .15s both,br-blink 3.8s ease-in-out 2.6s infinite}
+.wb-jump .br-m.grin,.wb-jump .br-arm.up{animation:wb-on .2s .25s both}
+.wb-jump .br-bob{animation:br-jump .3s cubic-bezier(.3,0,.5,1) .3s 6 alternate,br-bob 2.8s ease-in-out 2.2s infinite}
+/* Рекорд: корона опускается на голову, руки-мускулы, конфетти. */
+.wb-flex .br-lid{animation:wb-open .3s .15s both,br-blink 3.8s ease-in-out 2.6s infinite}
+.wb-flex .br-m.grin,.wb-flex .br-arm.up{animation:wb-on .2s .3s both}
+.wb-flex .br-arm.up.l{animation:wb-on .2s .3s both,wb-flexl .42s ease-in-out .5s 6 alternate}
+.wb-flex .br-arm.up.r{animation:wb-on .2s .3s both,wb-flexr .42s ease-in-out .5s 6 alternate}
+@keyframes wb-flexl{to{transform:rotate(-14deg) scale(1.08)}}
+@keyframes wb-flexr{to{transform:rotate(14deg) scale(1.08)}}
+.wb-flex .br-bob{animation:br-hop .6s cubic-bezier(.3,1.5,.5,1) .9s,br-bob 2.8s ease-in-out 1.6s infinite}
+.wb .wb-crown path,.wb .wb-crown circle{fill:#FFC62B;stroke:#E39B00;stroke-width:1.6;stroke-linejoin:round}
+.wb-flex .wb-crown{animation:wb-crown .7s cubic-bezier(.3,1.5,.5,1) .8s both}
+@keyframes wb-crown{from{opacity:0;transform:translateY(-46px) rotate(-12deg)}}
+
+/* Конфетти и искры. */
+.wb-conf{position:absolute;left:50%;top:44%;z-index:2;width:0;height:0}
+.wb-conf i{position:absolute;left:-4px;top:-6px;width:8px;height:12px;border-radius:2px;background:var(--c);opacity:0;animation:wb-conf 1.5s cubic-bezier(.2,.7,.4,1) calc(.4s + var(--d)) both}
+.wb-flex .wb-conf i{animation-delay:calc(1s + var(--d))}
+@keyframes wb-conf{0%{opacity:0;transform:translate(0,0) rotate(0) scale(.4)}12%{opacity:1}100%{opacity:0;transform:translate(var(--x),calc(var(--y) + 110px)) rotate(var(--r)) scale(1)}}
+.wb-sp i{position:absolute;z-index:2;width:18px;height:18px;background:#FFC62B;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);opacity:0;animation:br-tw 1.4s ease-in-out .5s 3}
+.wb-sp .s1{left:18px;top:40px}
+.wb-sp .s2{left:56px;top:2px;width:12px;height:12px}
+.wb-sp .s3{right:46px;top:0;width:14px;height:14px}
+.wb-sp .s4{right:14px;top:70px;width:11px;height:11px}
+.wb-sp .s2{animation-delay:.85s}.wb-sp .s3{animation-delay:1.2s}.wb-sp .s4{animation-delay:1.55s}
+
+/* Новость утра и цифры. */
+.wk-news{margin-top:14px;padding:0 6px}
+.wk-news h1{margin:0;font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:830;font-size:30px;letter-spacing:-.7px;line-height:1.1;text-wrap:balance}
+.wk-news p{margin:7px 0 0;font-size:15.5px;font-weight:500;line-height:1.35;color:var(--mut2);text-wrap:balance}
+/* Цифры утра: три равные плитки, значок рядом с цифрой, подпись строкой ниже. Серия — первая, оранжевая, с огоньком. */
+.wk-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px;text-align:left}
+.wk-stats:not(:has(.fire)){grid-template-columns:repeat(2,minmax(0,1fr))}
+.ws{position:relative;display:grid;gap:3px;padding:10px 12px 10px;border-radius:20px;background:var(--card);box-shadow:var(--elev);min-width:0;overflow:hidden}
+.ws>div{display:flex;align-items:center;gap:6px;min-width:0}
+.ws-ic{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex:none}
+.ws-ic .ic,.ws-ic .si{width:15px;height:15px}
+.ws b{font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:830;font-size:20px;letter-spacing:-.4px;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ws small{font-size:12px;font-weight:600;color:var(--mut);white-space:nowrap}
+.ws.sun .ws-ic{background:color-mix(in srgb,#FFC62B 24%,transparent);color:#E8A512}
+.ws.time .ws-ic{background:color-mix(in srgb,#4DABF7 22%,transparent);color:#3D8DFF}
+.ws.fire{background:linear-gradient(135deg,#FFA43A 0%,#FF6A1F 60%,#F2491C 100%);box-shadow:0 12px 24px -14px rgba(255,106,31,.9),inset 0 1px 0 rgba(255,255,255,.35);color:#fff}
+.ws.fire .ws-ic{background:#fff;color:#FF6A1F;box-shadow:0 3px 8px -3px rgba(120,30,0,.5)}
+.ws.fire .ws-ic .ic{animation:ws-flame 1.6s ease-in-out infinite;transform-origin:50% 90%}
+.ws.fire small{color:rgba(255,255,255,.9)}
+.ws.fire::after{content:'';position:absolute;right:-26px;top:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.3),rgba(255,255,255,0));pointer-events:none}
+@keyframes ws-flame{0%,100%{transform:scale(1) rotate(-3deg)}50%{transform:scale(1.12,1.16) rotate(3deg)}}
+.wk>p.wk-chk,.wk>p.wk-note{align-self:center;margin:12px 0 0;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px 0 11px;border-radius:16px;background:var(--card);box-shadow:var(--elev);font-size:13.5px;font-weight:600;color:var(--mut2)}
+/* Текст приходит, когда мозг проснулся. */
+.wk>.wk-news{animation:wk-in .6s cubic-bezier(.22,1,.36,1) 1.2s both}
+.wk>.wk-stats{animation:wk-in .6s cubic-bezier(.22,1,.36,1) 1.4s both}
+.wk>p.wk-chk,.wk>p.wk-note{animation:wk-in .6s cubic-bezier(.22,1,.36,1) 1.55s both}
+.wk>.wk-brief{animation:wk-in .6s cubic-bezier(.22,1,.36,1) 1.7s both}
+@keyframes wk-in{from{opacity:0;transform:translateY(12px)}}
 /* Сводка после подъёма — те же карточки, что во вкладке «Утро», от края до края экрана. */
 .wk-brief{align-self:stretch;width:auto;margin:14px -20px 14px;text-align:left}
 .wk-brief .bf-track{padding:2px 20px 24px;scroll-padding:0 20px}
 .wk-brief .bf-card{min-height:156px}
 .wk .ap-btn{margin-top:auto;flex:none}
-.wk-fly{position:absolute;z-index:30;display:block;pointer-events:none;transform-origin:50% 50%}
-.wk-fly .mark{display:block;width:100%;height:auto}
-@keyframes wk-in{from{opacity:0;transform:translateY(12px)}}
-@keyframes wk-card{from{opacity:0;transform:translateY(18px) scale(.96)}}
-@keyframes wk-sunup{from{transform:translateY(24px);opacity:.25}}
-@keyframes wk-glint{to{transform:translateX(120%)}}
-@keyframes wk-pop{from{opacity:0;transform:scale(.6)}}
-@keyframes wk-fly{to{transform:translate(9px,-2px)}}
-@keyframes wk-float{to{transform:translateY(-3px)}}
-@keyframes wk-shoot{0%{transform:translate(-16px,-6px);opacity:0}8%{opacity:1}26%{transform:none;opacity:1}40%,100%{transform:none;opacity:0}}
-@media (prefers-reduced-motion:reduce){.wk-card,.wk-card *,.wk-card::after,.wk>*{animation:none!important}}
-/* Невысокий экран (iPhone SE): открытка ниже, текст мельче, карточки ниже — кнопка остаётся на экране. */
+/* Уменьшение движения: сразу проснувшийся мозг — улыбка, руки вниз, без сценки. */
+@media (prefers-reduced-motion:reduce){
+  .wk>*,.wb,.wb *,.wb-glow{animation:none!important}
+  .wb-glow{opacity:1;transform:none}
+  .wb .br-arm.dn,.wb .br-m.smile{opacity:1}
+  .wb .br-arm.up,.wb .br-m.yawn,.wb .br-m.grin,.wb-z,.wb-conf,.wb-sp,.wb-notes{opacity:0}
+}
+/* Невысокий экран (iPhone SE): мозг меньше, текст мельче, карточки ниже — кнопка остаётся на экране. */
 @media (max-height:740px){
-  .wk{padding-top:50px;padding-bottom:26px}
-  .wk:has(.wk-brief) .wk-card{height:176px;border-radius:26px}
-  .wk:has(.wk-brief) .wk-at b{font-size:34px}
-  .wk:has(.wk-brief) .wk-hi b{font-size:20px}
-  .wk:has(.wk-brief) .wk-news{margin-top:11px}
-  .wk:has(.wk-brief) .wk-news h1{font-size:23px}
-  .wk:has(.wk-brief) .wk-news p{margin-top:4px;font-size:14px}
-  .wk:has(.wk-brief)>p.wk-chk,.wk:has(.wk-brief)>p.wk-note{margin-top:9px;height:28px;font-size:13px}
+  .wk{padding-top:48px;padding-bottom:24px}
+  .wk-logo,.wk-logo .logo{height:22px}
+  .wb{width:220px;height:166px;margin-top:4px}
+  .wb-br{width:160px;height:149px;margin-left:-80px}
+  .wb-glow{width:260px;height:260px;margin:-130px 0 0 -130px}
+  .wb-say{font-size:13.5px;padding:6px 11px}
+  .wk-news{margin-top:8px}
+  .wk-news h1{font-size:24px}
+  .wk-news p{margin-top:4px;font-size:14px}
+  .wk-stats{margin-top:10px;gap:6px}
+  .ws{padding:8px 10px;border-radius:17px;gap:1px}
+  .ws-ic{width:21px;height:21px}
+  .ws-ic .ic,.ws-ic .si{width:13px;height:13px}
+  .ws b{font-size:17px}
+  .ws small{font-size:11px}
+  .wb{height:142px}
+  .wb-br{width:140px;height:130px;margin-left:-70px}
+  .wk-brief .bf-track{padding-bottom:16px}
+  .wk>p.wk-chk,.wk>p.wk-note{margin-top:8px;height:28px;font-size:13px}
   .wk-brief{margin-top:10px;margin-bottom:10px}
   .wk-brief .bf-card{min-height:140px;padding:12px 14px 11px;gap:6px}
   .wk-brief .bf-wx>b{font-size:40px}
