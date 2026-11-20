@@ -178,7 +178,7 @@
     const s = flow.state, r = s._ring || {}, back = r.from === 'editor' || r.from === 'picker';
     sound.stop();
     s._ring = null;
-    flow.go(back || !r.from ? 'home' : r.from, 0);
+    flow.go(back || !r.from ? 'home' : r.from, 2);
     if (back) { K.editor(flow); if (r.from === 'picker') K.taskPicker(flow, ''); }
   }
   /** Проверка подъёма: «Ты не спишь?». Если не ответить за минуту, будильник зазвонит снова. */
@@ -231,6 +231,62 @@
     });
   }
   const REDUCE = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /** Место элемента внутри телефона по раскладке, без трансформаций: экран может ещё проявляться или ехать. */
+  const posIn = (el, host) => { const sum = (n) => { let x = 0, y = 0; for (; n; n = n.offsetParent) { x += n.offsetLeft; y += n.offsetTop; } return [x, y]; }; const [a, b] = sum(el), [c, d] = sum(host); return { x: a - c, y: b - d, w: el.offsetWidth, h: el.offsetHeight }; };
+  /**
+   * «Я не сплю» засчитан: солнце поднимается, свет заливает экран, надписи гаснут — и главная мягко проявляется,
+   * а не обрывает проверку на полуслове.
+   */
+  function checkOk(flow) {
+    const k = flow.state._check, root = flow.cur && flow.cur.querySelector('.ck');
+    if (k) k.ok = true;
+    const go = () => { flow.state._check = null; flow.go('home', 2); };
+    if (!root || flow.still || REDUCE()) { go(); return; }
+    root.classList.add('ok');
+    flow.at(700, go);
+  }
+  /**
+   * С экрана серии — на главную: огонь улетает по дуге в значок серии в шапке, значок вспыхивает искрами,
+   * число в нём щёлкает со вчерашнего на сегодняшнее. Если дальше открывается лист (из выбора заданий, из будильника) —
+   * просто плавный переход.
+   */
+  function streakHome(flow) {
+    const s = flow.state, r = s._ring || {}, host = flow.el, src = flow.cur && flow.cur.querySelector('.sk-flame'), sk = flow.cur && flow.cur.querySelector('.sk');
+    const to = sk ? +sk.dataset.to || 0 : 0, real = !r.test;
+    if (r.from === 'editor' || r.from === 'picker' || flow.still || REDUCE() || !src || !host) { exit(flow); return; }
+    const p = host.getBoundingClientRect(), k = p.width / host.offsetWidth || 1, a = src.getBoundingClientRect();
+    const box = { x: (a.left - p.left) / k, y: (a.top - p.top) / k, w: a.width / k, h: a.height / k }, svg = src.cloneNode(true);
+    exit(flow);
+    const chip = flow.cur && flow.cur.querySelector('.ap-top .ap-chip'), num = chip && chip.querySelector('.ap-chip-n');
+    if (!chip) return;
+    /* Пока огонь летит, в значке ещё вчерашнее число. */
+    if (num && real && to > 1) num.textContent = to - 1;
+    const at = posIn(chip, host), tx = at.x + 19, ty = at.y + at.h / 2;
+    const fly = document.createElement('i'), inner = document.createElement('i');
+    fly.className = 'sk-fly';
+    inner.className = 'sk-fly-in';
+    fly.style.cssText = `left:${box.x.toFixed(1)}px;top:${box.y.toFixed(1)}px;width:${box.w.toFixed(1)}px;height:${box.h.toFixed(1)}px`;
+    inner.appendChild(svg);
+    fly.appendChild(inner);
+    host.appendChild(fly);
+    /* Дуга: по горизонтали — быстро в начале, по вертикали — разгоняется; огонь уменьшается до значка. */
+    const dx = tx - (box.x + box.w / 2), dy = ty - (box.y + box.h * 0.6), sc = 17 / box.w, ms = 820;
+    fly.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${dx.toFixed(1)}px)` }], { duration: ms, easing: 'cubic-bezier(.3,.1,.25,1)', fill: 'forwards' });
+    inner.animate([{ transform: 'translateY(0) scale(1)' }, { transform: `translateY(${(dy * 0.18).toFixed(1)}px) scale(${Math.max(sc * 2.2, 0.3).toFixed(3)})`, offset: 0.35 }, { transform: `translateY(${dy.toFixed(1)}px) scale(${sc.toFixed(4)})` }], { duration: ms, easing: 'cubic-bezier(.55,0,.35,1)', fill: 'forwards' });
+    flow.at(ms, () => {
+      fly.remove();
+      chip.classList.remove('pop');
+      void chip.offsetWidth;
+      chip.classList.add('pop');
+      chip.insertAdjacentHTML('beforeend', `<span class="ap-chip-sp" aria-hidden="true">${'<i></i>'.repeat(8)}</span>`);
+      if (num && real && to > 1) num.innerHTML = `<span class="ap-chip-r"><i>${to - 1}</i><i>${to}</i></span>`;
+      sound.fx('pop');
+      if (navigator.vibrate) navigator.vibrate(20);
+      flow.at(1200, () => { const sp = chip.querySelector('.ap-chip-sp'); if (sp) sp.remove(); if (num) num.textContent = to || num.textContent; chip.classList.remove('pop'); });
+    });
+    /* Если ушли с главной до конца полёта — огонь не должен остаться висеть. */
+    setTimeout(() => fly.remove(), ms + 200);
+  }
   const step = (flow, k) => { k.i++; if (k.i >= k.n) finish(flow); else flow.rerender(); };
   /** Засчитанный повтор: число и солнце обновляются на месте, без перерисовки — солнце растёт плавно. На последнем — восход. */
   function count(flow, k) {
@@ -952,6 +1008,7 @@
       /* С клавиатуры удерживать нечем: Enter и пробел засчитывают сразу. */
       btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') btn.dataset.act = 'check-ok'; });
       const tick = () => {
+        if (k.ok) return;
         const ms = Math.max(0, 60000 - (Date.now() - k.t0)), left = Math.ceil(ms / 1000);
         out.textContent = left;
         root.style.setProperty('--l', (ms / 60000).toFixed(3));
@@ -969,6 +1026,7 @@
     start,
     anim,
     check: checkNow,
+    checkOk,
     /** Готовит экран для снимка: «ring:math», «task:memory», «task:hunt.spin», «woke», «streak», «check». */
     preview(flow, what) {
       const [scr, spec] = what.split(':'), [task, phase] = (spec || '').split('.'), s = flow.state;
@@ -1005,8 +1063,9 @@
           b.setAttribute('aria-label', r.mute ? 'Включить звук' : 'Заглушить');
           return true;
         }
-        case 'ring-streak': flow.go('streak', 1); return true;
-        case 'ring-exit': case 'ring-done': exit(flow); return true;
+        case 'ring-streak': flow.go('streak', 2); return true;
+        case 'ring-done': if (flow.id === 'streak') streakHome(flow); else exit(flow); return true;
+        case 'ring-exit': exit(flow); return true;
         case 'key':
           if (k.solved) return true;
           if (arg === 'ok') {

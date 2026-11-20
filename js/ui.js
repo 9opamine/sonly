@@ -50,22 +50,35 @@
     const min = Math.max(1, Math.round((d - now) / 60000)), h = Math.floor(min / 60), dd = Math.floor(h / 24);
     return dd ? `${dd}<u>д</u> ${h % 24}<u>ч</u>` : h ? `${h}<u>ч</u> ${min % 60}<u>мин</u>` : `${min}<u>мин</u>`;
   };
+  /* Коротко для плашки под «Зазвонит через»: «сегодня в», «завтра в», «пн,» — чтобы обе плашки всегда стояли в один ряд. */
+  const shortWhen = (d, now) => { const k = Math.round((day0(d) - day0(now)) / 864e5); return k === 0 ? 'сегодня в' : k === 1 ? 'завтра в' : ['пн,', 'вт,', 'ср,', 'чт,', 'пт,', 'сб,', 'вс,'][(d.getDay() + 6) % 7]; };
   const dayWord = (d, now) => { const k = Math.round((day0(d) - day0(now)) / 864e5); return k === 0 ? 'сегодня' : k === 1 ? 'завтра' : WD[(d.getDay() + 6) % 7]; };
 
   /* ── История подъёмов ────────────────────────────────────── */
 
-  /** Пример истории за две недели: нужен, чтобы показать статистику заполненной. В новом аккаунте есть только настоящие подъёмы. */
+  /**
+   * Пример истории: нужен, чтобы показать статистику заполненной. В новом аккаунте есть только настоящие подъёмы.
+   * Длина — две недели, три месяца или год (s.span). В длинных есть проспанные утра: серия рвалась, рекорд больше
+   * нынешней серии, подъём со временем стал раньше, а задание — быстрее; задания чередуются.
+   */
+  const SPAN = { '2w': 14, '3m': 91, '1y': 365 };
+  const MISS = { '3m': [16, 17, 45, 46, 72, 86], '1y': [16, 17, 45, 46, 72, 86, 121, 122, 158, 199, 200, 201, 263, 264, 301, 302, 333, 350] };
+  const MIX = ['math', 'memory', 'phrase', 'squat', 'quiz', 'rhythm', 'pairs'];
   function history(s) {
     const log = (s.log || []).map((x) => ({ d: new Date(x.t), wake: x.wake, secs: x.secs, task: x.task }));
     if (s.data !== 'demo') return log;
-    const a = s.alarms.find((x) => !x.once) || { h: 7, m: 30, days: [0, 1, 2, 3, 4] };
+    const a = s.alarms.find((x) => !x.once) || { h: 7, m: 30, days: [0, 1, 2, 3, 4] }, span = SPAN[s.span] ? s.span : '2w', n = SPAN[span], miss = new Set(MISS[span] || []);
     const off = [3, -1, 5, 0, 2, 4, -2, 1, 6, 0, 2, -1, 3, 1, 2], secs = [52, 47, 44, 49, 41, 38, 43, 36, 40, 35, 37, 33, 36, 31, 34];
-    const out = [], now = new Date();
-    for (let k = 14; k >= 0; k--) {
+    const out = [], now = new Date(), task = a.task === 'random' ? 'math' : a.task;
+    for (let k = n; k >= 0; k--) {
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - k);
       /* Сегодняшнее утро попадает в историю, только если время будильника уже прошло. */
       if (k === 0 && now.getHours() * 60 + now.getMinutes() < a.h * 60 + a.m + 10) continue;
-      if (a.days.includes((d.getDay() + 6) % 7)) out.push({ d, wake: a.h * 60 + a.m + off[14 - k], secs: secs[14 - k], task: a.task === 'random' ? 'math' : a.task });
+      if (!a.days.includes((d.getDay() + 6) % 7) || miss.has(k)) continue;
+      if (k <= 14) { out.push({ d, wake: a.h * 60 + a.m + off[14 - k], secs: secs[14 - k], task }); continue; }
+      /* Раньше вставал позже и дольше решал: чем дальше в прошлое, тем больше сдвиг; плюс неровность день ото дня. */
+      const j = Math.sin(k * 12.9898) * 43758.5453, r = j - Math.floor(j), late = Math.round(Math.min(k, 200) / 9);
+      out.push({ d, wake: a.h * 60 + a.m + late + Math.round(r * 14) - 5, secs: Math.round(34 + Math.min(k, 200) / 7 + r * 12), task: MIX[k % MIX.length] });
     }
     return out.filter((x) => !log.some((y) => y.d.getTime() === x.d.getTime())).concat(log).sort((x, y) => x.d - y.d);
   }
@@ -125,7 +138,7 @@
   }
   /** Подъёмы за выбранный период и за такой же период перед ним — для сравнения. */
   function period(st, range) {
-    const now = day0(new Date()), n = range === '7' ? 7 : range === '30' ? 30 : 0, ago = (x) => (now - x.d) / 864e5;
+    const now = day0(new Date()), n = range === '7' ? 7 : range === '30' ? 30 : range === '90' ? 90 : 0, ago = (x) => (now - x.d) / 864e5;
     if (!n) { const h = st.h, k = Math.floor(h.length / 2); return { list: h, prev: h.length >= 6 ? h.slice(0, k) : [], cur: h.length >= 6 ? h.slice(k) : h }; }
     const list = st.h.filter((x) => ago(x) < n);
     return { list, prev: st.h.filter((x) => ago(x) >= n && ago(x) < 2 * n), cur: list };
@@ -136,7 +149,7 @@
     if (!p.list.length) return '';
     const avg = mean(p.list), d = p.prev.length >= 2 ? Math.round(mean(p.cur) - mean(p.prev)) : null;
     /* «Всё время» сравнивает первую и вторую половину истории. Без изменений — «так же» и с чем сравнили, без повтора. */
-    const when = range === '7' ? 'неделей раньше' : range === '30' ? 'месяцем раньше' : 'в первые дни', was = (d ? 'чем ' : 'как ') + when;
+    const when = range === '7' ? 'неделей раньше' : range === '30' ? 'месяцем раньше' : range === '90' ? 'тремя месяцами раньше' : 'в первые дни', was = (d ? 'чем ' : 'как ') + when;
     const chip = d == null ? '' : !d ? `<em>${ic('equal', 14, 2.6)}так же</em>`
       : `<em class="${d < 0 ? 'good' : 'bad'}">${ic(d < 0 ? 'trending-down' : 'trending-up', 14, 2.6)}${task ? `${d < 0 ? 'быстрее' : 'медленнее'} на ${Math.abs(d)} с` : `на ${Math.abs(d)} мин ${d < 0 ? 'раньше' : 'позже'}`}</em>`;
     return `<div class="ap-ch-sum"><div><b>${task ? `${Math.round(avg)}<u>с</u>` : fmtMin(Math.round(avg))}</b><small>${task ? 'в среднем на задание' : 'в среднем подъём'}</small></div>${chip ? `<span>${chip}<small>${was}</small></span>` : ''}</div>`;
@@ -258,9 +271,9 @@
   function homeHtml(s) {
     const now = new Date(), st = stats(s), ring = nextRing(s, now), rt = ring && taskOf(ring.a);
     return `<div class="ap-scroll scroll">
-      <header class="ap-top" data-in><div class="ap-brand">${Sonly.logo()}</div><span class="ap-top-r"><button class="ap-chip lg" data-act="tab:stats" aria-label="Серия подъёмов">${ic('flame', 16, 2.3)}${st.streak}</button>${Sonly.people ? `<button class="ap-me" data-act="pp-profile" aria-label="Профиль">${Sonly.people.avatar(s, 38)}</button>` : ''}</span></header>
+      <header class="ap-top" data-in><div class="ap-brand">${Sonly.logo()}</div><span class="ap-top-r"><button class="ap-chip lg" data-act="tab:stats" aria-label="Серия подъёмов">${ic('flame', 16, 2.3)}<b class="ap-chip-n">${st.streak}</b></button>${Sonly.people ? `<button class="ap-me" data-act="pp-profile" aria-label="Профиль">${Sonly.people.avatar(s, 38)}</button>` : ''}</span></header>
       ${ring ? `<section class="ap-hero" data-in style="--i:1"><i class="ap-sun"></i><i class="ap-rise">${Sonly.mark()}</i><small>Зазвонит через</small><div class="ap-hero-n">${until(ring.at, now)}</div>
-          <div class="ap-hero-row"><span>${ic('alarm-clock', 15, 2.3)}${dayWord(ring.at, now)} в ${hm(ring.a)}</span><span>${tic(rt, 16)}${rt.name}</span></div></section>`
+          <div class="ap-hero-row"><span>${ic('alarm-clock', 15, 2.3)}${shortWhen(ring.at, now)} ${hm(ring.a)}</span><span>${tic(rt, 16)}${rt.name}</span></div></section>`
         : `<section class="ap-hero idle" data-in style="--i:1"><i class="ap-sun"></i><i class="ap-rise">${Sonly.mark()}</i><small>${s.alarms.length ? 'Все будильники выключены' : 'Будильников пока нет'}</small><div class="ap-hero-n t">Поставь будильник</div>
           <button class="ap-hero-btn" data-act="new">${ic('plus', 17, 2.6)}Новый будильник</button></section>`}
       ${weekCard(s, st, 2)}
@@ -429,7 +442,7 @@
           ${weekCard(s, st, 3)}
           <div class="ap-card ap-chart" data-in style="--i:4"><div class="ap-card-h">${seg('st-metric', s.metric, [['wake', 'Подъём'], ['task', 'Задание']])}</div>
             ${list.length >= 3 ? chartSum(per, s.metric, s.range) + chart(list, s.metric) : `<div class="ap-empty">${ic('chart-spline', 26, 1.8)}<span>${st.h.length >= 3 ? 'За эти дни мало подъёмов — выбери период длиннее' : 'График появится после трёх подъёмов'}</span></div>`}
-            ${seg('st-range', s.range, [['7', '7 дней'], ['30', '30 дней'], ['all', 'Всё время']])}</div>
+            ${seg('st-range', s.range, [['7', '7 дней'], ['30', '30 дней'], ['90', '3 месяца'], ['all', 'Всё время']])}</div>
           <div class="ap-card ap-cons" data-in style="--i:5"><div class="ap-card-h"><b>Стабильность подъёма</b><button class="ap-q" data-act="st-info" aria-label="Как считается стабильность">?</button></div>
             ${band ? `<div class="ap-cons-v"><b>${st.score}</b><span style="--c:${band[3]}">${band[1]}</span><small>разброс ${st.spread} ${pl(st.spread, 'минута', 'минуты', 'минут')}</small></div>` : `<div class="ap-cons-v none"><b>—</b><small>Нужно три подъёма</small></div>`}
             <div class="ap-cons-bar"><i style="flex:30;background:#E5484D"></i><i style="flex:20;background:#F08A24"></i><i style="flex:20;background:#FFC62B"></i><i style="flex:30;background:#1FA055"></i>${band ? `<u style="left:${st.score}%"></u>` : ''}</div>
@@ -446,7 +459,6 @@
         return `<div class="ap-scroll scroll"><h1 class="ap-h1" data-in>Настройки</h1>
           ${Sonly.people ? `<button class="ap-card ap-prof" data-act="pp-profile" data-in style="--i:1">${Sonly.people.avatar(s, 54)}<span><b>${esc(Sonly.people.name(s) || 'Профиль')}</b><small>Друзья, значки и твои цифры</small></span>${chev()}</button>` : ''}
           <button class="ap-card ap-gift" data-act="page:share" data-in style="--i:1"><i>${Sonly.mark()}</i><span><b>${Sonly.partner.title}</b><small>${Sonly.partner.sub}</small></span>${chev()}</button>
-          <button class="ap-card ap-sub" data-act="page:sub" data-in style="--i:2"><i>${ic('check', 20, 3)}</i><span><b>Подписка активна</b><small>Год · продление ${renew()}</small></span>${chev()}</button>
           <h3>Будильник</h3>
           <div class="ap-card ap-list">${row(Sonly.si('volume'), 'Громкость', `${s.volume} %`, 'page:volume', '#FF3B30')}${row(Sonly.si('music'), 'Звук по умолчанию', esc(sndName(s.sndDef)), 'page:sound', '#FF2D55')}${row(Sonly.si('ready'), 'Готовность к звонку', '', 'page:help', '#34C759')}</div>
           ${Sonly.lock ? `<h3>Фокус</h3><div class="ap-card ap-list"><button class="ap-row tall" data-act="page:lock"><i class="ap-row-i c" style="--c:${Sonly.lock.COLORS.lock}">${Sonly.si('lock')}</i><span>Блокировка приложений<small>${Sonly.lock.status(s)}</small></span>${chev()}</button></div>` : ''}
@@ -631,13 +643,15 @@
     /* Переключатели под телефоном в оболочке просмотра. */
     shell: {
       html: (s) => `<span class="shell-ctl">Тема ${[['system', 'как в системе'], ['dark', 'тёмная'], ['light', 'светлая']].map(([v, n]) => `<button data-shell="theme:${v}"${s.theme === v ? ' aria-pressed="true"' : ''}>${n}</button>`).join('')}</span>
-        <span class="shell-ctl">Данные ${[['new', 'новый аккаунт'], ['demo', 'две недели']].map(([v, n]) => `<button data-shell="data:${v}"${s.data === v ? ' aria-pressed="true"' : ''}>${n}</button>`).join('')}</span>
+        <span class="shell-ctl">Данные ${[['new', 'новый аккаунт'], ['2w', 'две недели'], ['3m', '3 месяца'], ['1y', 'год']].map(([v, n]) => `<button data-shell="data:${v}"${(v === 'new' ? s.data === 'new' : s.data === 'demo' && (s.span || '2w') === v) ? ' aria-pressed="true"' : ''}>${n}</button>`).join('')}</span>
         <span class="shell-ctl">Сейчас <button data-shell="ring:now">зазвонить</button><button data-shell="check:now">проверка подъёма</button></span>`,
       set(flow, key, val) {
         const s = flow.state, a = s.alarms.find((x) => x.on) || s.alarms[0];
         /* «Зазвонить» — как будто подошло время будильника: такой подъём идёт в серию. */
         if (key === 'ring') { if (a && !s._ring) Sonly.ringer.start(flow, a, false); return; }
         if (key === 'check') { if (a && !s._ring) Sonly.ringer.check(flow, a); return; }
+        /* Данные: новый аккаунт или пример истории нужной длины. Друзья-пример заводятся заново. */
+        if (key === 'data') { s.data = val === 'new' ? 'new' : 'demo'; s.span = val === 'new' ? '' : val; s.friends = undefined; paint(flow); if (!s._ring && !s._check) flow.rerender(); return; }
         s[key] = val;
         paint(flow);
         if (!s._ring && !s._check) flow.rerender();
@@ -646,7 +660,7 @@
     on(flow, act, arg, el) {
       const s = flow.state, e = s._ed, find = (id) => s.alarms.find((a) => a.id === id);
       switch (act) {
-        case 'tab': if (flow.id !== arg) flow.go(arg, 0); else { const sc = flow.cur.querySelector('.scroll'); if (sc) sc.scrollTo({ top: 0, behavior: 'smooth' }); } return true;
+        case 'tab': if (flow.id !== arg) flow.go(arg, 3); else { const sc = flow.cur.querySelector('.scroll'); if (sc) sc.scrollTo({ top: 0, behavior: 'smooth' }); } return true;
         case 'new': s._ed = blank(s); editor(flow); return true;
         case 'edit': s._ed = copy(find(arg)); editor(flow); return true;
         case 'toggle': { const a = find(arg); a.on = !a.on; if (!a.on) a.skip = false; flow.rerender(); return true; }
@@ -747,7 +761,7 @@
         case 'restore-app': flow.sheet('<div class="msg"><b>Подписка на месте</b><p>Покупка уже на этом Apple ID.</p><button class="msg-ok" data-act="sheet-close">Понятно</button></div>', 'center'); return true;
         case 'ring-test': s._page = null; Sonly.ringer.start(flow, s.alarms.find((x) => x.on) || s.alarms[0] || blank(s), true); return true;
         case 'ed-test': Sonly.ringer.start(flow, e, true, 'editor'); return true;
-        case 'check-ok': s._check = null; flow.go('home', 0); return true;
+        case 'check-ok': if (Sonly.ringer.checkOk) Sonly.ringer.checkOk(flow); else { s._check = null; flow.go('home', 2); } return true;
         default:
           if (Sonly.ringer && Sonly.ringer.on(flow, act, arg)) return true;
           if (Sonly.morning && Sonly.morning.on(flow, act, arg, el)) return true;

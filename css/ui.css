@@ -39,8 +39,9 @@
 .ap-hero-n{font-family:var(--disp);font-stretch:120%;font-variation-settings:'wdth' 120;font-weight:850;font-size:60px;letter-spacing:-1.8px;line-height:1.08;font-variant-numeric:tabular-nums}
 .ap-hero-n u{text-decoration:none;font-size:25px;letter-spacing:-.4px;margin:0 4px 0 2px}
 .ap-hero-n.t{font-size:30px;letter-spacing:-.8px;padding:8px 0 6px}
-.ap-hero-row{margin-top:14px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
-.ap-hero-row span{height:36px;padding:0 13px 0 10px;border-radius:18px;background:rgba(255,255,255,.78);display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;white-space:nowrap}
+.ap-hero-row{margin-top:14px;display:flex;gap:6px;flex-wrap:nowrap;justify-content:center;max-width:100%}
+.ap-hero-row span{min-width:0;height:36px;padding:0 13px 0 10px;border-radius:18px;background:rgba(255,255,255,.78);display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;white-space:nowrap}
+.ap-hero-row span .ic{flex:none}
 .ap-hero-btn{margin-top:10px;height:48px;padding:0 22px 0 18px;border-radius:24px;background:#111113;color:#fff;display:flex;align-items:center;gap:7px;font-size:15.5px;font-weight:600}
 .ap-sec{display:flex;justify-content:space-between;align-items:center;margin:24px 4px 12px}
 .ap-sec h2{font-size:21px;font-weight:700;letter-spacing:-.5px}

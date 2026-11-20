@@ -171,12 +171,12 @@
 .gf-txt span{font-size:15px;font-weight:600}
 .gf-txt em{margin-top:4px;font-style:normal;font-size:13px;line-height:1.35;color:var(--mut2)}
 .gf-lock{position:absolute;top:8px;right:8px;z-index:2;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:rgba(13,13,15,.55);color:#fff;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-.gf-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 10px}
+.gf-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 10px}
 .gf-scene{position:relative;display:grid;gap:2px;text-align:left}
 .gf-scene .mo-card{width:100%;margin-bottom:6px;border-radius:16px}
 .gf-scene .mo-card>small,.gf-scene .mo-card>b,.gf-prev .mo-card>small,.gf-prev .mo-card>b{display:none}
 .gf-scene:not(.open) .mo-card{filter:saturate(.25) brightness(.7)}
-.gf-scene b{font-size:13.5px;font-weight:700;padding:0 2px;white-space:nowrap;letter-spacing:-.2px}
+.gf-scene b{font-size:13px;font-weight:700;padding:0 2px;white-space:nowrap;letter-spacing:-.3px}
 .gf-scene .mo-find-tag,.gf-prev .mo-find-tag{display:none}
 .gf-scene small{font-size:11.5px;color:var(--mut);padding:0 2px}
 .gf-scene.open small{color:var(--green)}

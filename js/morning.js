@@ -204,6 +204,8 @@
   /* Пейзажи: два есть сразу, остальные открывает серия. Это и есть подарки за серию. */
   const SCENES = [['city', 'Город', 0], ['field', 'Поле', 0], ['sea', 'Море', 3], ['mountains', 'Горы', 7], ['forest', 'Лес', 14], ['dunes', 'Дюны', 21], ['aurora', 'Северное сияние', 30]];
   const sceneOf = (id) => SCENES.find((x) => x[0] === id) || SCENES[0];
+  /* В узкой плитке — короткое название, чтобы подпись стояла в одну строку. */
+  const short = (sc) => (sc[0] === 'aurora' ? 'Сияние' : sc[1]);
   /** Лучшая серия на каждый день истории: пейзаж открытки берётся из открытых к этому утру. */
   function bestByDay(s, h) {
     const plan = (d) => s.alarms.some((a) => !a.once && a.days.includes((d.getDay() + 6) % 7)), out = new Map();
@@ -374,7 +376,7 @@
       <div class="ap-card gf-hero">${hero}</div>
       <div class="gf-path" aria-hidden="true"><i class="gf-line"><u style="width:${((cur / max) * 100).toFixed(1)}%"></u></i>${rw.map((r) => `<span class="${r.open ? 'on' : ''}${nx && r.n === nx.n ? ' next' : ''}" style="left:${((r.n / max) * 100).toFixed(1)}%"><i>${r.open ? si('check', 13) : ''}</i><b>${r.n}</b></span>`).join('')}</div>
       <h3>Пейзажи для открыток</h3>
-      <div class="gf-grid">${SCENES.map((sc, i) => { const open = sc[2] <= st.best; return `<div class="gf-scene${open ? ' open' : ''}">${sample(sc[0], i)}${open ? '' : `<i class="gf-lock">${si('lock', 14)}</i>`}<b>${sc[1]}</b><small>${!sc[2] ? 'есть сразу' : open ? `открыт · ${sc[2]} ${utr(sc[2])}` : `${sc[2]} ${utr(sc[2])} подряд`}</small></div>`; }).join('')}</div>
+      <div class="gf-grid">${SCENES.map((sc, i) => { const open = sc[2] <= st.best; return `<div class="gf-scene${open ? ' open' : ''}">${sample(sc[0], i)}${open ? '' : `<i class="gf-lock">${si('lock', 14)}</i>`}<b>${short(sc)}</b><small>${!sc[2] ? 'есть сразу' : open ? `открыт · ${sc[2]} ${utr(sc[2])}` : `${sc[2]} ${utr(sc[2])} подряд`}</small></div>`; }).join('')}</div>
       <p class="mo-fine">${nb('Каждое утро открытка берёт один из открытых пейзажей, а в день, когда серия открыла новый, — его. Подарок остаётся навсегда, даже если серия прервётся.')}</p></div>`, 'ap-sheet');
     K.setTop(flow, top);
   }
@@ -526,14 +528,19 @@
     const date = cap(new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }));
     /* Две плитки одного устройства: значок и примета справа, крупная цифра, подпись. Погода открывает истории утра. */
     const tile = (cls, icon, side, val, label, act) => `<${act ? `button type="button" data-act="${act}" aria-label="Погода: ${val}, ${label}. Открыть истории утра"` : 'div'} class="ws ${cls}"><header><i class="ws-ic">${icon}</i>${side}</header><b>${val}</b><small>${label}</small></${act ? 'button' : 'div'}>`;
-    const tiles = tile('sun', si('rise', 17), x.secs ? `<em title="Время на задание">${ic('timer', 13, 2.6)}${x.secs} с</em>` : '', K.fmtMin(x.wake), 'подъём')
+    const tiles = tile('sun', si('rise', 17), '', K.fmtMin(x.wake), x.secs ? `подъём за ${x.secs} с` : 'подъём')
       + tile('wx', si('weather', 18), `<em class="go">${ic('chevron-right', 16, 2.6)}</em>`, `+${W.now}°`, `${W.text.toLowerCase()} · до +${W.hi}°`, 'mo-story:weather');
     return `<header class="wk-top"><div><h1 class="wk-hi">Доброе утро</h1><small>${date}</small></div><div class="wk-logo js-wklogo">${logoParts()}</div></header>
       <div class="wk-hero">
         <div class="wk-news"><h2 class="${hcls}">${nb(nw.h).replace(/^(\d+) /, '$1\u00a0')}</h2><p>${nb(nw.p)}</p></div>
         <div class="wb wb-${scene}" data-scene="${scene}" aria-hidden="true"><i class="wb-glow"></i>${props(scene)}<i class="m-brain wb-br">${brainOf(scene)}</i></div>
       </div>
-      <div class="wk-stats">${tiles}</div>`;
+      <div class="wk-stats">${tiles}</div>${more(s)}`;
+  }
+  /* Под плитками — маленькие значки слова дня и поговорки (что включено в «После подъёма»): нажатие открывает историю. */
+  function more(s) {
+    const b = briefOf(s), list = BRIEF.filter((x) => x[0] !== 'weather' && b[x[0]]);
+    return list.length ? `<div class="wk-more">${list.map(([id, name, glyph, c1, c2]) => `<button type="button" class="wk-mi" data-act="mo-story:${id}"><i style="--a:${c1};--b:${c2}">${si(glyph, 15)}</i>${name}</button>`).join('')}</div>` : '';
   }
 
   /*
@@ -595,6 +602,15 @@
     streak: streakOf,
     /** Небо для минуты суток — им же красится виджет следующего будильника. */
     sky: skyOf,
+    /** Пейзажи открыток: [id, название, сколько утр подряд нужно]. Ими же можно украсить обложку профиля. */
+    scenes: SCENES,
+    /** Обложка профиля из пейзажа: то же небо, солнце и пейзаж, что на открытках, только широкой полосой. */
+    banner(land) {
+      const x = { d: new Date(2026, 0, 9), wake: land === 'aurora' ? 300 : 445 }, t = tone(x, land), k = t.k;
+      /* Северное сияние — это небо: обложка показывает полосы сияния, остальные пейзажи — землю у горизонта. */
+      const crop = land === 'aurora' ? 'viewBox="0 30 120 72" preserveAspectRatio="xMidYMid slice"' : 'viewBox="0 56 120 104" preserveAspectRatio="xMidYMax slice"';
+      return `<span class="pp-ban-l" style="--a:${k.a};--b:${k.b}"><svg ${crop} aria-hidden="true">${sunSvg({ ...t, x: 84 })}${LAND[land](rnd(x.d.getTime() + 3), t)}</svg></span>`;
+    },
     /** Сводка для экрана «Доброе утро». */
     blocks: (s) => briefCards(s, 'wk-brief'),
     preview(flow, what) {

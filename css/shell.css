@@ -73,6 +73,14 @@ body.shot .phone{border-radius:0;box-shadow:none}
 @keyframes s-out{to{opacity:0;transform:translateX(-30px)}}
 @keyframes s-in-b{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:none}}
 @keyframes s-out-b{to{opacity:0;transform:translateX(30px)}}
+/* Плавная смена: новый экран проявляется поверх старого, старый гаснет. Вкладки — то же, только быстро и без подъёма карточек. */
+.screen.in-fade{animation:s-fade .45s cubic-bezier(.22,1,.36,1) both}
+.screen.out-fade{animation:s-fade-out .4s ease both}
+.screen.in-tab{animation:s-fade .2s ease-out both}
+.screen.out-tab{animation:s-fade-out .2s ease both}
+@keyframes s-fade{from{opacity:0;transform:scale(.985)}}
+@keyframes s-fade-out{to{opacity:0}}
+@media (prefers-reduced-motion:reduce){.screen.in-fade,.screen.in-tab{animation:s-fade-rm .2s ease both}@keyframes s-fade-rm{from{opacity:0}}}
 .screen [data-in]{animation:in-rise .55s cubic-bezier(.2,.75,.2,1) both;animation-delay:calc(var(--i,0)*70ms + 80ms)}
 .screen.no-in [data-in]{animation:none}
 @keyframes in-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
