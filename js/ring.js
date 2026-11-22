@@ -165,7 +165,8 @@
     const s = flow.state, a = K.copy(alarm);
     let random = false;
     if (a.task === 'random') { const pool = K.poolOf(alarm); a.task = pool[rnd(0, pool.length - 1)]; random = true; }
-    clearTimeout(flow._chk);
+    /* Назначенную проверку подъёма отменяет только настоящий звонок: проба из выбора заданий её не трогает. */
+    if (!test) clearTimeout(flow._chk);
     s._check = null;
     s._ring = { a, test, random, direct: !!o.direct, t0: Date.now(), mute: false, from: from || (['ring', 'task', 'woke', 'streak', 'check'].includes(flow.id) ? 'home' : flow.id) };
     flow.closeSheet(true);
@@ -184,7 +185,11 @@
   /** Проверка подъёма: «Ты не спишь?». Если не ответить за минуту, будильник зазвонит снова. */
   function checkNow(flow, alarm) {
     const s = flow.state;
-    if (s._ring) return;
+    /* Пока звонит будильник или решается задание — проверка ждёт и приходит, как только они закончатся. С «Доброе утро»
+       и экрана серии она открывается поверх них (после первой минуты на них): подъём уже засчитан. */
+    if (busy(flow)) { clearTimeout(flow._chk); flow._chk = setTimeout(() => checkNow(flow, alarm), 3000); return; }
+    sound.stop();
+    s._ring = null;
     s._check = { a: K.copy(alarm), t0: Date.now() };
     flow.closeSheet(true);
     flow.go('check', 1);
@@ -194,13 +199,15 @@
   function finish(flow) {
     const s = flow.state, r = s._ring, now = new Date();
     r.secs = Math.max(1, Math.round((Date.now() - (r.t1 || Date.now())) / 1000));
+    r.doneAt = Date.now();
     r.at = nowHM();
     sound.stop();
     /* Серия растёт один раз в день — от первого настоящего подъёма. Только тогда после «Доброе утро» будет экран серии. */
     r.fresh = !r.test && !K.stats(s).h.some((y) => y.d.getTime() === K.day0(now).getTime());
     if (!r.test) {
       const day = K.day0(now).getTime();
-      s.log = (s.log || []).filter((x) => x.t !== day).concat({ t: day, wake: now.getHours() * 60 + now.getMinutes(), secs: r.secs, task: r.a.task });
+      /* День определяет первый подъём: он остаётся на открытке и в статистике, следующие звонки того же дня его не меняют. */
+      if (!(s.log || []).some((x) => x.t === day)) s.log = (s.log || []).concat({ t: day, wake: now.getHours() * 60 + now.getMinutes(), secs: r.secs, task: r.a.task });
       const a = s.alarms.find((x) => x.id === r.a.id);
       if (a && a.once) a.on = false;
       if (r.a.check && !flow.shot) { const again = K.copy(r.a); flow._chk = setTimeout(() => checkNow(flow, again), r.a.check * 60000); }
@@ -233,6 +240,11 @@
     });
   }
   const REDUCE = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /**
+   * Занят ли экран звонком: звонок, задание, открытая проверка — и первая минута на «Доброе утро» или экране серии, чтобы
+   * следующий будильник или проверка не сбивали только что засчитанный подъём. Дальше они открываются и поверх них.
+   */
+  const busy = (flow) => { const s = flow.state, r = s._ring; return !!s._check || (!!r && (flow.id === 'ring' || flow.id === 'task' || flow.id === 'check' || Date.now() - (r.doneAt || 0) < 60000)); };
   /** Место элемента внутри телефона по раскладке, без трансформаций: экран может ещё проявляться или ехать. */
   const posIn = (el, host) => { const sum = (n) => { let x = 0, y = 0; for (; n; n = n.offsetParent) { x += n.offsetLeft; y += n.offsetTop; } return [x, y]; }; const [a, b] = sum(el), [c, d] = sum(host); return { x: a - c, y: b - d, w: el.offsetWidth, h: el.offsetHeight }; };
   /**
@@ -1029,6 +1041,7 @@
     anim,
     check: checkNow,
     checkOk,
+    busy,
     /** Готовит экран для снимка: «ring:math», «task:memory», «task:hunt.spin», «woke», «streak», «check». */
     preview(flow, what) {
       const [scr, spec] = what.split(':'), [task, phase] = (spec || '').split('.'), s = flow.state;

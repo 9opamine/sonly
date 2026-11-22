@@ -577,12 +577,19 @@
   }
 
   /** Настоящий звонок: если приложение открыто и подошло время включённого будильника, он звонит сам. */
+  /*
+   * Будильник, чья минута пришлась на открытый звонок или проверку «Ты не спишь?», не теряется: он ждёт и звонит, как только
+   * экран освободится, если с его времени прошло не больше 30 минут. Каждый будильник звонит один раз за своё время.
+   * Будильники, чьё время прошло ещё до открытия приложения, не звонят задним числом.
+   */
   function autoRing(flow) {
-    const s = flow.state, now = new Date(), key = now.toDateString() + ' ' + now.getHours() + ':' + now.getMinutes();
-    if (s._ring || s._check || !flow.el.isConnected || flow.el.closest('[hidden]')) return;
-    const a = s.alarms.find((x) => x.on && x.h === now.getHours() && x.m === now.getMinutes() && x._rung !== key && (x.once || x.days.includes((now.getDay() + 6) % 7)));
+    const s = flow.state, now = new Date(), dow = (now.getDay() + 6) % 7;
+    if (Sonly.ringer.busy(flow) || !flow.el.isConnected || flow.el.closest('[hidden]')) return;
+    const at = (x) => new Date(now.getFullYear(), now.getMonth(), now.getDate(), x.h, x.m).getTime(), key = (x) => now.toDateString() + ' ' + x.h + ':' + x.m;
+    const due = s.alarms.filter((x) => x.on && x._rung !== key(x) && (x.once || x.days.includes(dow)) && at(x) >= (flow._since || 0) && at(x) <= now.getTime() && now.getTime() - at(x) <= 30 * 60000).sort((x, y) => at(x) - at(y));
+    const a = due[0];
     if (!a) return;
-    a._rung = key;
+    a._rung = key(a);
     if (a.skip) { a.skip = false; flow.rerender(true); return; }
     Sonly.ringer.start(flow, a, false);
   }
@@ -615,7 +622,8 @@
       flow._tabs = Sonly.glass ? Sonly.glass.tabs(flow.dock.querySelector('.ap-tabs')) : null;
       paint(flow);
       Sonly.sound.stop();
-      if (!flow._tick && !flow.still) flow._tick = setInterval(() => autoRing(flow), 5000);
+      /* Расписание идёт и при «Уменьшении движения» (там flow.still тоже включён); выключено только для снимков экрана. */
+      if (!flow._tick && !flow.shot) { flow._since = Date.now() - (Date.now() % 60000); flow._tick = setInterval(() => autoRing(flow), 5000); }
       if (!flow._mq) { flow._mq = matchMedia('(prefers-color-scheme: dark)'); flow._mq.addEventListener('change', () => paint(flow)); }
     },
     /* Выбранная вкладка: кнопки не перерисовываются — меняется класс, у значка плавно проявляется второй тон, подложка переезжает. */
@@ -649,8 +657,8 @@
       set(flow, key, val) {
         const s = flow.state, a = s.alarms.find((x) => x.on) || s.alarms[0];
         /* «Зазвонить» — как будто подошло время будильника: такой подъём идёт в серию. */
-        if (key === 'ring') { if (a && !s._ring) Sonly.ringer.start(flow, a, false); return; }
-        if (key === 'check') { if (a && !s._ring) Sonly.ringer.check(flow, a); return; }
+        if (key === 'ring') { if (a && !Sonly.ringer.busy(flow)) Sonly.ringer.start(flow, a, false); return; }
+        if (key === 'check') { if (a && !Sonly.ringer.busy(flow)) Sonly.ringer.check(flow, a); return; }
         /* Данные: новый аккаунт или пример истории нужной длины. Друзья-пример заводятся заново. */
         if (key === 'data') { s.data = val === 'new' ? 'new' : 'demo'; s.span = val === 'new' ? '' : val; s.friends = undefined; paint(flow); if (!s._ring && !s._check) flow.rerender(); return; }
         s[key] = val;

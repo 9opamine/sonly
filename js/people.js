@@ -152,7 +152,7 @@
         <div class="ap-card pp-lb">${lb.map((x, i) => `<div class="pp-lb-r${x.me ? ' me' : ''}"><b class="pp-rank r${i}">${i + 1}</b>${avatar({ ...x, n: x.me ? x.name : x.n, frame: '' }, 32)}<span>${esc(x.n)}</span><small>${x.avg != null ? `обычно ${K.fmtMin(x.avg)}` : ''}</small><em>${x.w}<u>/${dow() + 1}</u></em></div>`).join('')}</div>`;
     }
     body += `<div class="ap-card pp-code"><span><small>Твой код</small><b>${m.code}</b></span><button class="pp-copy" data-act="pp-copy">${ic('copy', 16, 2.3)}Копировать</button></div>
-      <div class="ap-card pp-join"><input class="js-ppcode" placeholder="Код друга" maxlength="9" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Код друга"><button class="pp-add" data-act="pp-add">Добавить</button></div>
+      <div class="ap-card pp-join"><input class="js-ppcode" placeholder="Код друга, например SN-7K2Q" maxlength="200" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Код друга"><button class="pp-add" data-act="pp-add">Добавить</button></div>
       <p class="ap-note pp-msg">${s._ppMsg || ''}</p>`;
     flow.sheet(`${head('Вставай вместе', s._ppFromProfile ? 'pp-profile:back' : '')}<div class="ap-sh-body scroll">${body}</div><div class="ap-sh-foot"><button class="ap-btn" data-act="pp-invite">${ic('user-plus', 19, 2.4)}Позвать друга</button></div>`, `ap-sheet pp-sheet${enter ? ' ' + enter : ''}`);
   }
@@ -193,7 +193,8 @@
     const s = flow.state, m = me(s), h = K.stats(s).h;
     const fr = friends(s).filter((f) => !f.pending), my = myStatus(s), up = fr.filter((f) => statusOf(f).k === 'up').length + (my.k === 'up' ? 1 : 0);
     const bd = K.badges ? K.badges(s) : [], got = bd.filter((b) => b.on).length;
-    const sd = new Date(m.since), since = `${MONTHS[sd.getMonth()]} ${sd.getFullYear()}`;
+    /* «С какого времени в sonly» — не позже первого подъёма в истории (в демо история начинается раньше первого открытия профиля). */
+    const sd = new Date(Math.min(m.since, h.length ? h[0].d.getTime() : m.since)), since = `${MONTHS[sd.getMonth()]} ${sd.getFullYear()}`;
     flow.sheet(`${head('Профиль', '', '<button class="pp-ed" data-act="pp-edit">Изменить</button>')}
       <div class="ap-sh-body scroll">
         <button class="pp-cover" data-act="pp-edit" aria-label="Изменить оформление">${banner(m.ban)}</button>
@@ -269,7 +270,7 @@
   Sonly.people = {
     card, profile, together,
     /** Маленький аватар для шапки главной и карточки в настройках. */
-    avatar: (s, size) => avatar({ ...meP(s), frame: '' }, size),
+    avatar: (s, size) => { const p = meP(s); return avatar(p, p.frame && p.frame !== 'none' ? size - 10 : size); },
     name: (s) => me(s).name,
     preview(flow, what) {
       flow.state._ppFromProfile = false;
@@ -312,8 +313,9 @@
         }
         case 'pp-cancel': s.friends = fr().filter((f) => f.id !== arg); s._ppMsg = 'Запрос отменён'; redraw(); return true;
         case 'pp-add': {
-          const input = flow.sheets.querySelector('.js-ppcode'), code = ((input && input.value) || '').trim().toUpperCase().replace(/\s+/g, '');
-          const ok = /^(SN-)?[A-Z0-9]{4}$/.test(code), full = code.startsWith('SN-') ? code : 'SN-' + code;
+          /* В поле можно вставить и сам код, и целое приглашение: код достаётся из текста. */
+          const input = flow.sheets.querySelector('.js-ppcode'), raw = ((input && input.value) || '').trim().toUpperCase();
+          const hit = raw.match(/\bSN-?([A-Z0-9]{4})\b/) || raw.replace(/\s+/g, '').match(/^([A-Z0-9]{4})$/), ok = !!hit, full = hit ? 'SN-' + hit[1] : '';
           if (!ok) s._ppMsg = 'Код — четыре буквы или цифры, например SN-7K2Q';
           else if (full === me(s).code) s._ppMsg = 'Это твой код — нужен код друга';
           else if (fr().some((f) => f.code === full)) s._ppMsg = 'Этот код уже добавлен';
@@ -321,8 +323,12 @@
           redraw();
           return true;
         }
-        case 'pp-copy': case 'pp-invite':
-          K.shareText(`Вставай со мной в sonly: добавь меня по коду ${me(s).code}. https://9opamine.github.io/sonly/`, act === 'pp-invite', (msg) => { s._ppMsg = msg ? msg.replace('Текст с кодом', 'Приглашение с кодом') : ''; redraw(); });
+        /* «Копировать» кладёт в буфер только код — его вставляют в поле «Код друга». «Позвать друга» отправляет приглашение. */
+        case 'pp-copy':
+          K.shareText(me(s).code, false, (msg) => { s._ppMsg = msg ? msg.replace('Текст с кодом скопирован', 'Код скопирован') : ''; redraw(); });
+          return true;
+        case 'pp-invite':
+          K.shareText(`Вставай со мной в sonly: добавь меня по коду ${me(s).code}. https://9opamine.github.io/sonly/`, true, (msg) => { s._ppMsg = msg ? msg.replace('Текст с кодом', 'Приглашение с кодом') : ''; redraw(); });
           return true;
         case 'pp-badges': Sonly.concepts.app.on(flow, 'st-badges'); return true;
         default: return false;
