@@ -942,6 +942,7 @@
        * начинается, когда мозг проснулся. Граница между «s» и «nly» — центр солнца в логотипе.
        */
       mount(el, c) {
+        if (Sonly.morning && Sonly.morning.refreshWx) Sonly.morning.refreshWx(c.flow);
         const r = c.s._ring, m = r && r.morph, logo = c.q('.js-wklogo'), host = c.flow.el;
         const sun = logo && logo.querySelector('.js-lsun');
         if (sun && sun.getBBox) {
