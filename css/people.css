@@ -221,6 +221,101 @@
 .pp-wk span.on i{background:linear-gradient(160deg,#FFB547 0%,#FF6A1F 60%,#EE4A1A 100%)}
 .pp-wk span.next i{background:none;box-shadow:inset 0 0 0 2px var(--line)}
 
+/* ── Друзья и группы ── */
+/* Заголовок листа: длинное название группы обрезается, а не переносится. */
+.pp-sheet .ap-sh-head b{flex:1;min-width:0;padding:0 10px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp-one{display:block!important;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp-h .pp-hl{display:inline-flex;align-items:center;gap:3px;height:30px;margin:-6px -2px -6px 0;padding:0 4px;font-size:15px;font-weight:650;color:#0A84FF}
+.pp-badge{flex:none;min-width:22px;height:22px;padding:0 7px;border-radius:11px;display:grid;place-items:center;background:#FF3B30;color:#fff;font-size:13px;font-weight:750;font-variant-numeric:tabular-nums}
+/* Значок группы: глиф на градиенте её цвета. */
+.pp-gt{flex:none;width:var(--s);height:var(--s);border-radius:calc(var(--s) * .3);display:grid;place-items:center;color:#fff;font-style:normal;background:linear-gradient(160deg,var(--a),var(--b));box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}
+.pp-gt.ghost{background:var(--card2);color:var(--mut2);box-shadow:none}
+/* Кольцо «встали N из M». */
+.pp-ring{position:relative;flex:none;width:42px;height:42px;display:grid;place-items:center}
+.pp-ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.pp-ring circle{fill:none;stroke:var(--card2);stroke-width:3.4}
+.pp-ring circle.on{stroke:#30D158;stroke-linecap:round}
+.pp-ring b{display:block;font-size:13px;font-weight:800;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+.pp-ring u{text-decoration:none;font-size:10.5px;font-weight:650;color:var(--mut)}
+.pp-grow{width:100%;text-align:left;color:var(--ink)}
+.pp-grow>.ic{flex:none;color:var(--mut)}
+.pp-list.pp-row{padding:10px 14px}
+.pp-who>.ic{flex:none;margin-left:auto;color:var(--mut)}
+/* Приглашение в группу и заявки в друзья — первыми на «Вставай вместе». */
+.pp-inv{margin-bottom:12px;padding:14px}
+.pp-inv-t{display:flex;align-items:center;gap:12px}
+.pp-inv-b{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.pp-inv-b button{height:42px;border-radius:21px;font-size:15px;font-weight:700;transition:transform .15s}
+.pp-inv-b button:active{transform:scale(.97)}
+.pp-inv-ok{background:#0A84FF;color:#fff}
+.pp-inv-no{background:var(--card2);color:var(--ink)}
+.pp-reqs{display:flex;align-items:center;gap:12px;width:100%;margin-bottom:12px;padding:12px 12px 12px 14px;text-align:left;color:var(--ink)}
+.pp-reqs .pp-stack .pp-av+.pp-av{margin-left:-10px}
+.pp-reqs .pp-tx b{font-size:16px;font-weight:700;letter-spacing:-.2px}
+.pp-reqs .pp-tx small{font-size:13px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp-reqs>.ic{flex:none;color:var(--mut)}
+/* Поиск. */
+.pp-q{display:flex;align-items:center;gap:8px;height:46px;padding:0 8px 0 13px;border-radius:15px;background:var(--card2);color:var(--mut)}
+.pp-q>.ic{flex:none}
+.pp-q input{flex:1;min-width:0;height:100%;border:0;background:none;-webkit-appearance:none;appearance:none;font:inherit;font-size:16.5px;font-weight:550;color:var(--ink);outline:none}
+.pp-q input::placeholder{font-weight:500;color:var(--mut)}
+.pp-q input::-webkit-search-cancel-button,.pp-q input::-webkit-search-decoration{-webkit-appearance:none;display:none}
+.pp-qx{position:relative;flex:none;width:30px;height:30px;border-radius:50%;display:none;place-items:center;color:var(--bg)}
+.pp-qx::before{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:var(--mut)}
+.pp-qx .ic{position:relative}
+.pp-q.has .pp-qx{display:grid}
+.pp-res>h3:first-child{margin-top:24px}
+.pp-none{display:grid;justify-items:center;gap:6px;padding:44px 10px 14px;text-align:center;color:var(--mut)}
+.pp-none b{margin-top:6px;font-size:18px;font-weight:700;letter-spacing:-.3px;color:var(--ink)}
+.pp-none p{margin:0;font-size:14.5px;color:var(--mut2)}
+.pp-hint{padding:16px;text-align:center;font-size:14.5px;font-weight:550;color:var(--mut2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp-lockn{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:12px}
+.pp-lockn .si{flex:none;width:15px;height:15px;color:var(--mut)}
+.pp-after{margin-top:12px}
+/* Кнопки в строках: добавить, принять или отклонить, «Друг», «Отправлено». */
+.pp-plus{flex:none;height:34px;padding:0 14px;border-radius:17px;background:rgba(10,132,255,.14);color:#0A84FF;font-size:14px;font-weight:700;transition:transform .15s}
+.pp-plus:active,.pp-ok:active,.pp-no:active,.pp-undo:active{transform:scale(.94)}
+.pp-tagr{flex:none;display:inline-flex;align-items:center;gap:4px;height:30px;padding:0 11px;border-radius:15px;background:var(--card2);color:var(--mut2);font-size:13px;font-weight:650;white-space:nowrap}
+.pp-tagr .ic{color:#30D158}
+.pp-yn{flex:none;display:flex;gap:8px}
+.pp-ok,.pp-no{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;transition:transform .15s}
+.pp-ok{background:#0A84FF;color:#fff}
+.pp-no{background:var(--card2);color:var(--mut2)}
+.pp-undo{transition:transform .15s}
+/* Отметки: участники группы и в какие группы добавить друга. */
+.pp-chk{width:100%;text-align:left;color:var(--ink)}
+.pp-box{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-style:normal;color:transparent;box-shadow:inset 0 0 0 2px var(--tg,var(--line));transition:background .15s,box-shadow .15s,color .15s}
+.pp-chk.on .pp-box{background:#0A84FF;box-shadow:none;color:#fff}
+.pp-mut{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.pp-mut .pp-stack .pp-av+.pp-av{margin-left:-9px}
+.pp-mut>span:last-child{flex:1;font-size:15px;font-weight:600}
+.pp-danger{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:52px;margin-top:26px;color:#FF453A;font-size:16px;font-weight:650;transition:background .2s,color .2s}
+.pp-danger.ask{background:linear-gradient(160deg,#FF6B5E,#FF3B30);color:#fff}
+.pp-sheet .ap-sh-foot .pp-btn-ok{background:#0A84FF;color:#fff}
+.pp-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+/* Лист группы: значок, название, сколько человек и цель. */
+.pp-gh{display:grid;justify-items:center;gap:4px;padding:4px 0 20px;text-align:center}
+.pp-gh .pp-gt{margin-bottom:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 16px 30px -18px var(--b)}
+.pp-gh b{max-width:100%;font-family:var(--disp);font-stretch:112%;font-variation-settings:'wdth' 112;font-weight:820;font-size:25px;letter-spacing:-.5px;line-height:1.15}
+.pp-gh small{font-size:14px;color:var(--mut2);white-space:nowrap}
+/* Новая группа: значок, цвет, цель, участники, вступить по коду. */
+.pp-gprev{display:grid;place-items:center;padding:0 0 18px}
+.pp-gprev .pp-gt{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 16px 30px -18px var(--b)}
+.pp-glyphs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}
+.pp-glyphs button{aspect-ratio:1;border-radius:15px;display:grid;place-items:center;background:var(--card);box-shadow:var(--elev);color:var(--ink);transition:transform .15s}
+.pp-glyphs button:active{transform:scale(.92)}
+.pp-glyphs button.on{background:linear-gradient(160deg,var(--a),var(--b));color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}
+.pp-goals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.pp-goals button{height:40px;padding:0 4px;border-radius:20px;background:var(--card);box-shadow:var(--elev);color:var(--ink);font-size:14.5px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap;transition:transform .15s}
+.pp-goals button:active{transform:scale(.95)}
+.pp-goals button.on{background:var(--btn);color:var(--btn-ink);box-shadow:none}
+/* Сообщение внизу листа: появляется и само уходит. */
+.sheet.ap-sheet>.pp-toast{animation:none}
+.pp-toast{position:absolute;left:50%;bottom:44px;z-index:6;max-width:calc(100% - 40px);padding:11px 18px;border-radius:22px;background:rgba(28,28,30,.94);color:#fff;font-size:14.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;box-shadow:0 14px 30px -14px rgba(0,0,0,.55);opacity:0;transform:translate(-50%,12px);transition:opacity .22s ease-out,transform .3s cubic-bezier(.2,.8,.2,1)}
+.pp-toast.up{bottom:112px}
+.pp-toast.on{opacity:1;transform:translate(-50%,0)}
+.ap[data-theme="dark"] .pp-toast{background:rgba(60,60,66,.97)}
+
 @keyframes pp-pop{40%{transform:scale(1.18)}}
 @keyframes pp-ring{0%,60%,100%{transform:rotate(0)}66%{transform:rotate(14deg)}74%{transform:rotate(-12deg)}82%{transform:rotate(8deg)}90%{transform:rotate(-4deg)}}
-@media (prefers-reduced-motion:reduce){.pp-cheer.on,.pp-wake .ic{animation:none}}
+@media (prefers-reduced-motion:reduce){.pp-cheer.on,.pp-wake .ic{animation:none}.pp-toast{transform:translate(-50%,0);transition:opacity .2s}}

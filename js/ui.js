@@ -660,7 +660,7 @@
         if (key === 'ring') { if (a && !Sonly.ringer.busy(flow)) Sonly.ringer.start(flow, a, false); return; }
         if (key === 'check') { if (a && !Sonly.ringer.busy(flow)) Sonly.ringer.check(flow, a); return; }
         /* Данные: новый аккаунт или пример истории нужной длины. Друзья-пример заводятся заново. */
-        if (key === 'data') { s.data = val === 'new' ? 'new' : 'demo'; s.span = val === 'new' ? '' : val; s.friends = undefined; paint(flow); if (!s._ring && !s._check) flow.rerender(); return; }
+        if (key === 'data') { s.data = val === 'new' ? 'new' : 'demo'; s.span = val === 'new' ? '' : val; s.pp = undefined; s._ppNav = undefined; s._ppQ = ''; s._ppDraft = null; paint(flow); if (!s._ring && !s._check) flow.rerender(); return; }
         s[key] = val;
         paint(flow);
         if (!s._ring && !s._check) flow.rerender();
