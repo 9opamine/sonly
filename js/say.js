@@ -79,7 +79,8 @@
         dict.onFinal((e) => { text += e.text || ''; partial = ''; onText([text.trim()]); }),
         dict.onState((e) => { if (e.state === 'idle' && e.reason) { offs.forEach((f) => f()); end(e.reason === 'stopped' || e.reason === 'viewer_stopped' ? 'end' : e.reason === 'not_granted' ? 'denied' : 'error'); } }),
       ];
-      dict.start({ language: 'ru' }).catch((e) => {
+      /* Язык диктовки — тот же, что у распознавания: 'en-GB' → 'en'. */
+      dict.start({ language: String(lang || 'ru-RU').slice(0, 2) }).catch((e) => {
         offs.forEach((f) => f());
         /* Диктовка недоступна для этого человека или языка — больше её не предлагаем, дальше слушает браузер или пример. */
         if (e && e.code === 'unavailable') dict = null;
