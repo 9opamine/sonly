@@ -321,7 +321,7 @@
 .vm .m-atile .m-tg::after{width:28px;height:28px}
 .vm .m-atile .m-tg.on{background:var(--y)}
 .vm .m-atile .m-tg.on::after{transform:translateX(22px);background:#0D0D0F}
-.vm .m-atile>b{font-size:54px;font-weight:700;letter-spacing:-2.4px;line-height:1.05}
+.vm .m-atile>b{font-size:54px;font-weight:700;letter-spacing:-2.4px;line-height:1.05;margin-bottom:4px}
 .vm .m-atile em{font-style:normal;justify-self:start;display:flex;align-items:center;gap:6px;height:28px;padding:0 11px 0 9px;border-radius:14px;background:#232327;font-size:13px;font-weight:600}
 .vm .m-atile em .ms,.vm .m-atile em .ic{color:var(--y)}
 .vm .m-done-tile .m-party{position:absolute;right:45px;top:34px;width:0;height:0;display:block}

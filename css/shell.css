@@ -42,7 +42,7 @@ body.shot .phone{border-radius:0;box-shadow:none}
 .phone{width:390px;height:844px;transform:scale(var(--k,1));transform-origin:0 0;position:relative;border-radius:50px;overflow:hidden;background:#fff;color:#0d0d0f;box-shadow:0 0 0 10px #0A0A0B,0 0 0 11px rgba(128,128,140,.35),0 26px 50px -18px rgba(0,0,0,.42);isolation:isolate;text-align:left;font-size:16px;line-height:1.3;text-wrap:pretty;user-select:none;-webkit-user-select:none}
 .phone *,.phone *::before,.phone *::after{box-sizing:border-box}
 .phone button{font-family:inherit}
-.phone h1,.phone p{margin:0}
+:where(.phone) :where(h1,p){margin:0}
 /* Заголовки и короткие подписи по центру — ровными строками; длинный текст — без одинокого слова в конце (pretty наследуется). */
 .phone .ap-sent p,.phone .pt-top p,.phone .pt-empty p,.phone .msg p{text-wrap:balance}
 .phone .ic{display:block;flex:none}
@@ -205,3 +205,24 @@ body.fs .stage{padding:0}
 body.fs .phone-box{position:fixed;inset:0;z-index:40;width:auto;height:auto;padding:0}
 body.fs .fs-exit{position:fixed;z-index:60;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;display:flex;align-items:center;gap:5px;height:32px;padding:0 13px 0 10px;border-radius:16px;background:rgba(20,20,24,.62);color:#fff;font:700 13px/1 'Inter',system-ui,sans-serif;-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.22),0 6px 16px -6px rgba(0,0,0,.5)}
 body.fs .fs-exit:active{transform:scale(.95)}
+
+/* Языки: русский флаг — триколор того же размера, что флаги Apple; выбор на стартовом экране и в настройках. */
+.i18n-ru{display:inline-block;flex:none;width:1.3em;height:1.3em;border-radius:22%;background:linear-gradient(#FFFFFF 0 37%,#1F5AC9 0 63%,#E2251B 0) center/100% 70% no-repeat;-webkit-mask:linear-gradient(#000 0 0) center/100% 70% no-repeat;mask:linear-gradient(#000 0 0) center/100% 70% no-repeat;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.va .a-wel-top{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.va .a-lang{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 11px 0 10px;border-radius:19px;font-size:14px;font-weight:700;color:#0D0D0F;transition:transform .15s cubic-bezier(.3,.7,.4,1)}
+.va .a-lang:active{transform:scale(.95)}
+/* Светлое стекло на стартовом экране — как у значка серии на главной, только под светлый фон. */
+.va .lg{background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.32) 55%,rgba(255,255,255,.45));box-shadow:inset 0 1px 1px #fff,inset 0 -5px 12px rgba(255,255,255,.35),0 5px 16px rgba(13,13,15,.12),0 0 0 .5px rgba(13,13,15,.06)}
+.va .lg::before{background:linear-gradient(145deg,#fff,rgba(255,255,255,.5) 30%,rgba(255,255,255,.08) 52%,rgba(255,255,255,.4) 74%,#fff)}
+.va .a-lang .ic{color:#8E8E96}
+.a-flag{width:22px;height:22px;font-size:22px;display:block}
+img.a-flag{object-fit:contain}
+.a-langs{display:grid;gap:4px;padding:6px 16px 26px}
+.a-langs>b{padding:0 6px 10px;font-size:20px;font-weight:750;letter-spacing:-.3px}
+.a-langs button{display:flex;align-items:center;gap:14px;height:58px;padding:0 16px;border-radius:18px;font-size:17px;font-weight:650;color:#0D0D0F;text-align:left}
+.a-langs button span{flex:1}
+.a-langs button.on{background:#F3F3F6}
+.a-langs button .ic{color:#0A84FF}
+.a-langs .a-flag{width:30px;height:30px;font-size:30px}
+.ap-flag{background:none!important}
+.ap-flag .emj,.ap-flag .i18n-ru{width:26px;height:26px;font-size:26px}

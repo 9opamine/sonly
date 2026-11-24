@@ -30,6 +30,7 @@
   /* Пламя серии: рисунок, а не значок из набора, чтобы у серии было своё лицо. */
   const FLAME = `<svg class="ap-flame" viewBox="0 0 64 80" aria-hidden="true"><path class="f1" d="M33 3c3 13 19 21 19 42a20 20 0 0 1-40 0c0-9 4-15 9-19 1 7 4 10 8 10 0-13-3-21 4-33z"/><path class="f2" d="M32 42c3 6 10 9 10 18a10 10 0 0 1-20 0c0-7 6-10 10-18z"/></svg>`;
   const HEX = 'M30 3.5 55.5 18v30L30 62.5 4.5 48V18z';
+  const NBSP = ' ';
 
   /* ── Время до звонка ─────────────────────────────────────── */
 
@@ -103,23 +104,54 @@
   }
   const RANGES = [[70, 'Стабильно', 'разброс до 30 минут', '#1FA055'], [50, 'Ровно', 'от 30 минут до часа', '#FFC62B'], [30, 'Набирает ход', 'от часа до полутора', '#F08A24'], [0, 'Плавает', 'больше полутора часов', '#E5484D']];
 
-  /* Значки за подъёмы. Серии считаются по лучшей серии, поэтому полученный значок не пропадает. */
+  /*
+   * Значки. У каждого редкость — как часто его получают: обычные приходят в первые дни, мифические — за год без пропусков.
+   * pct — у какой доли людей он есть (пример; в приложении — по всем пользователям). Секретные до получения без названия.
+   * Серии считаются по лучшей серии, поэтому полученный значок не пропадает. prog — сколько уже есть из нужного.
+   */
+  const TIERS = [['common', 'Обычный', 'Обычные'], ['rare', 'Редкий', 'Редкие'], ['epic', 'Эпический', 'Эпические'], ['legend', 'Легендарный', 'Легендарные'], ['myth', 'Мифический', 'Мифические']];
   const BADGES = [
-    ['first', 'Первое утро', 'Первый подъём с sonly', 'sunrise', (b) => b.total >= 1],
-    ['s3', 'Три подряд', 'Серия из трёх утр', 'flame', (b) => b.best >= 3],
-    ['s7', 'Неделя', 'Серия из семи утр', 'calendar-check', (b) => b.best >= 7],
-    ['s14', 'Две недели', 'Серия из четырнадцати утр', 'trophy', (b) => b.best >= 14],
-    ['n10', 'Десятка', 'Десять подъёмов всего', 'medal', (b) => b.total >= 10],
-    ['fast', 'Молния', 'Задание быстрее 30 секунд', 'zap', (b) => b.fast],
-    ['early', 'Ранняя пташка', 'Подъём до 6:00', 'bird', (b) => b.early],
-    ['weekend', 'Без выходных', 'Подъём в субботу или воскресенье', 'coffee', (b) => b.weekend],
+    ['alarm', 'Старт', 'Поставь первый будильник с заданием', 'alarm-clock-check', 'common', 96, (b) => [b.alarms, 1]],
+    ['first', 'Первое утро', 'Встань с sonly в первый раз', 'sunrise', 'common', 88, (b) => [b.total, 1]],
+    ['face', 'Это я', 'Добавь имя и свой аватар', 'user-round', 'common', 61, (b) => [b.face, 1]],
+    ['friend', 'Не один', 'Добавь первого друга', 'users', 'common', 54, (b) => [b.friends, 1]],
+    ['s3', 'Три подряд', 'Три утра подряд без пропуска', 'flame', 'common', 47, (b) => [b.best, 3]],
+    ['group', 'Команда', 'Вступи в группу или создай свою', 'users-round', 'rare', 31, (b) => [b.groups, 1]],
+    ['n10', 'Десятка', 'Десять подъёмов всего', 'medal', 'rare', 34, (b) => [b.total, 10]],
+    ['s7', 'Неделя', 'Семь утр подряд', 'calendar-check', 'rare', 28, (b) => [b.best, 7]],
+    ['weekend', 'Без выходных', 'Встань по будильнику в субботу или воскресенье', 'coffee', 'rare', 26, (b) => [b.weekend, 1]],
+    ['fast', 'Молния', 'Выполни задание быстрее 30 секунд', 'zap', 'rare', 22, (b) => [b.fast30, 1]],
+    ['cheer', 'Болельщик', 'Поздравь друга с подъёмом', 'party-popper', 'rare', 19, (b) => [b.cheer, 1]],
+    ['mix', 'На все руки', 'Пять разных заданий', 'shapes', 'rare', 15, (b) => [b.kinds, 5]],
+    ['s14', 'Две недели', 'Четырнадцать утр подряд', 'trophy', 'epic', 11, (b) => [b.best, 14]],
+    ['early', 'Жаворонок', 'Встань до 6:00', 'bird', 'epic', 9, (b) => [b.early, 1]],
+    ['n50', 'Полсотни', 'Пятьдесят подъёмов', 'award', 'epic', 8, (b) => [b.total, 50]],
+    ['steady', 'Как часы', 'Две недели вставать в одно время — разброс до 20 минут', 'clock', 'epic', 7, (b) => [b.steady, 1]],
+    ['flash', 'Реактивный', 'Выполни задание быстрее 15 секунд', 'rocket', 'epic', 6, (b) => [b.fast15, 1]],
+    ['waker', 'Будильщик', 'Разбуди проспавшего друга', 'bell-ring', 'epic', 5, (b) => [b.nudge, 1]],
+    ['s30', 'Месяц', 'Тридцать утр подряд', 'crown', 'legend', 3.1, (b) => [b.best, 30]],
+    ['n100', 'Сотня', 'Сто подъёмов', 'gem', 'legend', 2.4, (b) => [b.total, 100]],
+    ['squad', 'Все встали', 'Вся группа встала до своей цели', 'shield-check', 'legend', 1.8, (b) => [b.squad, 1]],
+    ['dawn', 'До рассвета', 'Встань до 5:00', 'moon-star', 'legend', 1.2, (b) => [b.dawn, 1]],
+    ['s100', 'Несгибаемый', 'Сто утр подряд', 'flame-kindling', 'myth', 0.4, (b) => [b.best, 100]],
+    ['s365', 'Целый год', 'Триста шестьдесят пять утр подряд — ни одного «отложить»', 'sparkles', 'myth', 0.05, (b) => [b.best, 365]],
+    ['ny', 'Новый год', 'Встань по будильнику 1 января', 'gift', 'epic', 4, (b) => [b.ny, 1], true],
+    ['f13', 'Суеверный', 'Встань по будильнику в пятницу 13-го', 'ghost', 'rare', 12, (b) => [b.f13, 1], true],
   ];
   function badges(s) {
-    const st = stats(s), h = st.h;
-    const b = { total: h.length, best: st.best, fast: h.some((x) => x.secs < 30), early: h.some((x) => x.wake < 360), weekend: h.some((x) => x.d.getDay() % 6 === 0) };
-    return BADGES.map(([id, name, note, icon, test]) => ({ id, name, note, icon, on: test(b) }));
+    const st = stats(s), h = st.h, pf = Sonly.people && Sonly.people.facts ? Sonly.people.facts(s) : {};
+    const last = h.slice(-14).map((x) => x.wake), steady = last.length >= 14 && Math.max(...last) - Math.min(...last) <= 20;
+    const b = { alarms: s.alarms.length ? 1 : 0, total: h.length, best: st.best, fast30: +h.some((x) => x.secs < 30), fast15: +h.some((x) => x.secs < 15),
+      early: +h.some((x) => x.wake < 360), dawn: +h.some((x) => x.wake < 300), weekend: +h.some((x) => x.d.getDay() % 6 === 0), kinds: new Set(h.map((x) => x.task).filter(Boolean)).size,
+      steady: +steady, ny: +h.some((x) => x.d.getMonth() === 0 && x.d.getDate() === 1), f13: +h.some((x) => x.d.getDay() === 5 && x.d.getDate() === 13),
+      friends: pf.friends || 0, groups: pf.groups || 0, cheer: pf.cheer || 0, nudge: pf.nudge || 0, face: pf.face || 0, squad: pf.squad || 0 };
+    return BADGES.map(([id, name, note, icon, tier, pct, test, secret]) => { const [cur, need] = test(b); return { id, name, note, icon, tier, pct, secret: !!secret, on: cur >= need, cur: Math.min(cur, need), need }; });
   }
-  const hex = (b) => `<i class="bd-hex${b.on ? ' on' : ''}"><svg viewBox="0 0 60 66" aria-hidden="true"><path d="${HEX}"/></svg>${ic(b.on ? b.icon : 'lock', b.on ? 24 : 18, 2.2)}</i>`;
+  const tierOf = (t) => TIERS.find((x) => x[0] === t) || TIERS[0];
+  const pctStr = (p) => (p < 1 ? String(p).replace('.', ',') : p < 10 ? String(p).replace('.', ',') : Math.round(p)) + NBSP + '%';
+  /** Значок-шестиугольник цвета своей редкости; не полученный — серый с замком (секретный — со знаком вопроса). */
+  const hex = (b, size = 62) => `<i class="bd-hex t-${b.tier}${b.on ? ' on' : ''}" style="--s:${size}px"><svg viewBox="0 0 60 66" aria-hidden="true"><path d="${HEX}"/></svg>${b.on ? ic(b.icon, Math.round(size * 0.38), 2.2) : b.secret ? `<b class="bd-q">?</b>` : ic('lock', Math.round(size * 0.29), 2.2)}</i>`;
+  const bdName = (b) => (b.secret && !b.on ? 'Секретный' : b.name);
 
   /* ── График статистики ───────────────────────────────────── */
 
@@ -181,28 +213,78 @@
     </svg><div class="ap-tip" aria-live="polite"><small></small><b></b></div></div>
     <div class="ap-ch-key"><span><i class="k-last"></i>последний</span>${best !== n - 1 ? `<span><i class="k-best"></i>${task ? 'быстрее всего' : 'раньше всего'}</span>` : ''}<span><i class="k-avg"></i>среднее</span></div>`;
   }
-  /** Касание или курсор над графиком: линия, точка и подсказка с днём и значением. */
+  /**
+   * Касание или курсор над графиком: линия, точка и подсказка с днём и значением.
+   * Плавно: точка едет по самой кривой за пальцем, а не прыгает от дня к дню; движение сглаживается по кадрам.
+   * Подпись — ближайший день, после отпускания точка мягко садится на него. На телефоне вертикальное движение
+   * листает экран (график не перехватывает прокрутку), горизонтальное — ведёт по графику.
+   */
   function chartScrub(root) {
     const wrap = root.querySelector('.js-chart');
     if (!wrap) return;
-    const svg = wrap.querySelector('svg'), tip = wrap.querySelector('.ap-tip'), gd = svg.querySelector('.gd'), dot = svg.querySelector('.sel');
+    const svg = wrap.querySelector('svg'), tip = wrap.querySelector('.ap-tip'), gd = svg.querySelector('.gd'), dot = svg.querySelector('.sel'), ln = svg.querySelector('.ln');
     const pts = wrap.dataset.p.split(';').map((r) => { const [x, y, d, v] = r.split('|'); return { x: +x, y: +y, d, v }; });
-    let hide = 0;
-    const show = (e) => {
-      const r = svg.getBoundingClientRect(), x = ((e.clientX - r.left) / r.width) * CW;
-      const p = pts.reduce((a, b) => (Math.abs(b.x - x) < Math.abs(a.x - x) ? b : a));
-      clearTimeout(hide);
-      wrap.classList.add('scrub');
-      gd.setAttribute('x1', p.x); gd.setAttribute('x2', p.x);
-      dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y);
-      tip.firstChild.textContent = p.d; tip.lastChild.textContent = p.v;
-      tip.style.left = `${Math.max(14, Math.min(86, (p.x / CW) * 100))}%`;
-      tip.style.top = `${(p.y / CH) * 100}%`;
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    /* Кривая по x: 240 точек вдоль линии — y под пальцем находится без пересчёта пути на каждом кадре. */
+    let curve = null;
+    const sample = () => {
+      if (curve) return curve;
+      const len = ln.getTotalLength ? ln.getTotalLength() : 0;
+      curve = len ? Array.from({ length: 241 }, (_, i) => { const q = ln.getPointAtLength((i / 240) * len); return [q.x, q.y]; }) : pts.map((p) => [p.x, p.y]);
+      return curve;
     };
+    const yAt = (x) => {
+      const c = sample();
+      let lo = 0, hi = c.length - 1;
+      while (hi - lo > 1) { const m = (lo + hi) >> 1; if (c[m][0] < x) lo = m; else hi = m; }
+      const [x0, y0] = c[lo], [x1, y1] = c[hi];
+      return x1 === x0 ? y0 : y0 + ((x - x0) / (x1 - x0)) * (y1 - y0);
+    };
+    const near = (x) => pts.reduce((a, b) => (Math.abs(b.x - x) < Math.abs(a.x - x) ? b : a));
+    const x0 = pts[0].x, x1 = pts[pts.length - 1].x;
+    let tx = x0, cx = null, raf = 0, shown = null, hide = 0;
+    const paint = () => {
+      raf = 0;
+      if (cx == null) cx = tx;
+      cx += (tx - cx) * (calm ? 1 : 0.3);
+      if (Math.abs(tx - cx) < 0.05) cx = tx;
+      const y = yAt(cx), p = near(cx);
+      gd.setAttribute('x1', cx); gd.setAttribute('x2', cx);
+      dot.setAttribute('cx', cx); dot.setAttribute('cy', y);
+      if (p !== shown) { tip.firstChild.textContent = p.d; tip.lastChild.textContent = p.v; shown = p; }
+      /* Подсказка двигается сдвигом (без перерасчёта раскладки) и не выходит за края графика. */
+      const r = svg.getBoundingClientRect(), w = wrap.getBoundingClientRect(), k = r.width / CW, half = tip.offsetWidth / 2;
+      const px = Math.max(half + 2, Math.min(w.width - half - 2, r.left - w.left + cx * k)), py = r.top - w.top + y * k;
+      tip.style.transform = `translate3d(${px.toFixed(1)}px,${py.toFixed(1)}px,0) translate(-50%,calc(-100% - 14px))`;
+      if (cx !== tx) raf = requestAnimationFrame(paint);
+    };
+    const go = (x) => { tx = Math.max(x0, Math.min(x1, x)); if (!raf) raf = requestAnimationFrame(paint); };
+    const toX = (e) => { const r = svg.getBoundingClientRect(); return ((e.clientX - r.left) / r.width) * CW; };
+    const on = (fresh) => { clearTimeout(hide); if (fresh && !wrap.classList.contains('scrub')) cx = null; wrap.classList.add('scrub'); };
     const off = (ms) => { clearTimeout(hide); hide = setTimeout(() => wrap.classList.remove('scrub'), ms); };
-    svg.addEventListener('pointerdown', (e) => { show(e); try { svg.setPointerCapture(e.pointerId); } catch (er) { /* указатель уже отпущен */ } });
-    svg.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse' || wrap.classList.contains('scrub')) show(e); });
-    svg.addEventListener('pointerup', (e) => off(e.pointerType === 'mouse' ? 2500 : 1600));
+    let mode = null, sx = 0, sy = 0;
+    svg.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse') { on(true); go(toX(e)); return; }
+      mode = 'wait'; sx = e.clientX; sy = e.clientY;
+    });
+    svg.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'mouse') { on(true); go(toX(e)); return; }
+      if (mode === 'wait') {
+        const dx = Math.abs(e.clientX - sx), dy = Math.abs(e.clientY - sy);
+        if (dx > 6 && dx > dy) { mode = 'scrub'; try { svg.setPointerCapture(e.pointerId); } catch (er) { /* указатель уже отпущен */ } on(true); go(toX(e)); }
+        else if (dy > 6) mode = null;
+        return;
+      }
+      if (mode === 'scrub') go(toX(e));
+    });
+    svg.addEventListener('pointerup', (e) => {
+      /* Касание без движения — показать ближайший день; после ведения — мягко сесть на ближайший день. */
+      if (mode === 'wait') on(true);
+      if (mode || e.pointerType === 'mouse') go(near(toX(e)).x);
+      mode = null;
+      off(e.pointerType === 'mouse' ? 2500 : 1800);
+    });
+    svg.addEventListener('pointercancel', () => { mode = null; off(250); });
     svg.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') off(200); });
   }
 
@@ -465,7 +547,7 @@
           ${Sonly.lock ? `<h3>Фокус</h3><div class="ap-card ap-list"><button class="ap-row tall" data-act="page:lock"><i class="ap-row-i c" style="--c:${Sonly.lock.COLORS.lock}">${Sonly.si('lock')}</i><span>Блокировка приложений<small>${Sonly.lock.status(s)}</small></span>${chev()}</button></div>` : ''}
           <h3>Оформление</h3>
           <div class="ap-card ap-list"><div class="ap-row col"><div><i class="ap-row-i c" style="--c:#AF52DE">${Sonly.si('theme')}</i><span>Тема</span></div>${seg('theme', s.theme, [['system', 'Как в системе'], ['dark', 'Тёмная'], ['light', 'Светлая']])}</div>
-            ${row(Sonly.si('globe'), 'Язык', 'Русский', 'page:lang', '#0A84FF')}${row(Sonly.si('bell'), 'Уведомления', `${1 + (s.nEve ? 1 : 0) + (s.nWeek ? 1 : 0)} из 3`, 'page:notify', '#FF3B30')}</div>
+            ${row(Sonly.si('globe'), 'Язык', Sonly.i18n ? Sonly.i18n.LANGS.find((x) => x[0] === Sonly.i18n.lang)[1] : 'Русский', 'page:lang', '#0A84FF')}${row(Sonly.si('bell'), 'Уведомления', `${1 + (s.nEve ? 1 : 0) + (s.nWeek ? 1 : 0)} из 3`, 'page:notify', '#FF3B30')}</div>
           <h3>Виджеты</h3>${widgets(s, st, now)}
           <button class="ap-link" data-act="page:widgets">Как добавить виджет${ic('chevron-right', 14, 2.6)}</button>
           <h3>Подписка</h3>
@@ -474,7 +556,7 @@
           <div class="ap-card ap-list">${row(Sonly.si('message'), 'Написать в поддержку', '', 'page:msg:support', '#0A84FF')}${row(Sonly.si('idea'), 'Предложить идею', '', 'page:msg:idea', '#FFAA00')}${row(Sonly.si('bug'), 'Сообщить об ошибке', '', 'page:msg:bug', '#FF3B30')}</div>
           <h3>Документы</h3>
           <div class="ap-card ap-list">${row(Sonly.si('doc'), 'Условия использования', '', 'page:doc:terms', '#8E8E93')}${row(Sonly.si('privacy'), 'Конфиденциальность', '', 'page:doc:privacy', '#8E8E93')}</div>
-          <p class="ap-ver"><span>Сделано с ${Sonly.mark()} для ранних пташек</span>sonly 1.0 · сборка 1</p>
+          <p class="ap-ver"><span>Сделано с ${Sonly.mark()} и любовью к утру</span>sonly 1.0 · сборка 1</p>
         </div>`;
       },
     },
@@ -529,7 +611,11 @@
       case 'sound': return ['Звук по умолчанию', `${soundRows(s, s.sndDef, 'set-snd')}`, ''];
       case 'help': return ['Готовность к звонку', `${readyHero(s)}<div class="ap-card ap-list">${readiness(s).map(([st, label, note]) => check(st, label, note)).join('')}</div>`,
         '<button class="ap-btn" data-act="ring-test">Проверить звонок</button>'];
-      case 'lang': return ['Язык', `<div class="ap-card ap-list"><div class="ap-row ap-snd on"><i class="ap-row-i">${Sonly.si('globe')}</i><span>Русский</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></div><div class="ap-row"><i class="ap-row-i">${ic('globe', 17, 2.1)}</i><span>English</span><em>скоро</em></div></div>`, ''];
+      case 'lang': {
+        const cur = Sonly.i18n ? Sonly.i18n.lang : 'ru', L = Sonly.i18n ? Sonly.i18n.LANGS : [['ru', 'Русский']];
+        return ['Язык', `<div class="ap-card ap-list">${L.map(([id, name]) => `<button class="ap-row ap-snd${id === cur ? ' on' : ''}" data-act="set-lang:${id}" aria-pressed="${id === cur}"><i class="ap-row-i ap-flag">${Sonly.i18n ? Sonly.i18n.flag(id) : ''}</i><span>${name}</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></button>`).join('')}</div>
+          <p class="ap-note">Язык меняется сразу. Звонок и задания — тоже на нём.</p>`, ''];
+      }
       case 'notify': return ['Уведомления', `${notifyPreview(s)}<div class="ap-card ap-list">${tgRow(Sonly.si('alarm'), 'Звонок будильника', '', true, '')}${tgRow(Sonly.si('moon'), 'Напоминание вечером', 'В 22:00', s.nEve, 'set-flag:nEve')}${tgRow(Sonly.si('calendar'), 'Итоги недели', 'По воскресеньям', s.nWeek, 'set-flag:nWeek')}</div>`, ''];
       case 'sub': return ['Подписка', `<div class="ap-card ap-plan"><span>${ic('check', 13, 3.4)}Активна</span><b>Подписка на год</b><div><u>39,99 €</u> в год</div><small>Следующее списание — ${renew()}</small></div>
         <h3>Что входит</h3><div class="ap-card ap-list">${check('ok', 'Нельзя отложить', '')}${check('ok', `Все ${TASKS.length} заданий`, '')}${check('ok', 'Серия и статистика', '')}</div>
@@ -604,7 +690,7 @@
   Sonly.appPreview = (st) => `<div class="ap" data-theme="${sysDark() ? 'dark' : 'light'}"><div class="statusbar"><span>9:41</span><i class="sb-island"></i><span class="sb-right">${SB_ICONS}</span></div>
     <section class="screen">${homeHtml({ data: 'new', shareHidden: true, alarms: [alarmFrom(st)] })}</section><div class="dock">${tabbar('home')}</div><div class="homebar"></div></div>`;
 
-  Sonly.appKit = { taskOf, tic, hm, fmtMin, stats, pl, day0, copy, blank, editor, taskPicker, poolOf, nextRing, dayWord, chev, row, FLAME, keepTop, setTop, shareText, code4, refOf, openPage, soundPicker, badges, hex };
+  Sonly.appKit = { taskOf, tic, hm, fmtMin, stats, pl, day0, copy, blank, editor, taskPicker, poolOf, nextRing, dayWord, chev, row, FLAME, keepTop, setTop, shareText, code4, refOf, openPage, soundPicker, badges, hex, bdName, pctStr, TIERS };
 
   Sonly.register({
     id: 'app', name: 'Приложение', cls: 'ap',
@@ -641,6 +727,7 @@
       const s = flow.state;
       if (what === 'info') { this.on(flow, 'st-info'); return; }
       if (what === 'badges') { this.on(flow, 'st-badges'); return; }
+      if (what.startsWith('badge-')) { this.on(flow, 'st-badge', what.slice(6)); return; }
       if (/^(ring|task|woke|streak|check)(:|$)/.test(what)) { Sonly.ringer.preview(flow, what); return; }
       if (what.startsWith('mo-')) { Sonly.morning.preview(flow, what.slice(3)); return; }
       if (what.startsWith('pp-') && Sonly.people) { Sonly.people.preview(flow, what.slice(3)); return; }
@@ -727,13 +814,30 @@
             <button class="ap-btn" data-act="sheet-close">Понятно</button></div>`, 'ap-low');
           return true;
         case 'st-badges': {
+          /* Значки по редкости: сверху сколько собрано и полоска каждой редкости, ниже — сетки от обычных к мифическим. */
           const bd = badges(s), got = bd.filter((b) => b.on).length;
+          const tiers = TIERS.map(([id, one, many]) => ({ id, one, many, list: bd.filter((b) => b.tier === id) }));
           flow.sheet(`<div class="ap-sh-head"><button class="ap-x lg" data-act="sheet-close" aria-label="Закрыть">${ic('x', 20, 2.3)}</button><b>Значки</b><span class="ap-x ghost"></span></div>
-            <div class="ap-sh-body scroll"><p class="ap-note first">${got} из ${bd.length}</p>
-            <div class="bd-grid">${bd.map((b) => `<div class="bd${b.on ? ' on' : ''}">${hex(b)}<b>${b.name}</b></div>`).join('')}</div></div>`, 'ap-sheet');
+            <div class="ap-sh-body scroll"><div class="ap-card bd-sum"><b>${got}<u> из ${bd.length}</u></b><small>Чем реже значок, тем он ярче</small>
+              <div class="bd-tiers">${tiers.map((x) => `<span class="t-${x.id}"><small>${x.many}</small><i style="--p:${(x.list.filter((b) => b.on).length / x.list.length).toFixed(3)}"></i><b>${x.list.filter((b) => b.on).length}/${x.list.length}</b></span>`).join('')}</div></div>
+            ${tiers.map((x) => `<h3 class="bd-h t-${x.id}">${x.many}<span>${x.list.filter((b) => b.on).length} из ${x.list.length}</span></h3>
+              <div class="bd-grid">${x.list.map((b) => `<button class="bd t-${b.tier}${b.on ? ' on' : ''}" data-act="st-badge:${b.id}" aria-label="${bdName(b)}${b.on ? '' : ' — ещё не получен'}">${hex(b, 58)}<b>${bdName(b)}</b><small>${!b.on && b.need > 1 ? `${b.cur} из ${b.need}` : `есть у ${pctStr(b.pct)}`}</small></button>`).join('')}</div>`).join('')}</div>`, 'ap-sheet bd-sheet');
+          return true;
+        }
+        case 'st-badge': {
+          /* Один значок крупно: редкость, условие, прогресс и у скольких он есть. */
+          const b = badges(s).find((x) => x.id === arg);
+          if (!b) return true;
+          const t = tierOf(b.tier), back = flow.sheets.querySelector('.bd-sheet') ? 'st-badges' : flow.sheets.querySelector('[data-pp="profile"]') ? 'pp-profile' : 'sheet-close';
+          flow.sheet(`<div class="pay-grab"></div><div class="bd-one t-${b.tier}${b.on ? ' on' : ''}">${hex(b, 112)}<span class="bd-tag t-${b.tier}">${t[1]}</span>
+              <b>${bdName(b)}</b><p>${b.secret && !b.on ? 'Условие откроется, когда получишь' : b.note}</p>
+              ${b.on ? `<span class="bd-got">${ic('check', 15, 3)}Получен</span>` : b.need > 1 ? `<div class="bd-prog"><i style="--p:${(b.cur / b.need).toFixed(3)}"></i></div><small class="bd-pn">${b.cur} из ${b.need}</small>` : ''}
+              <small class="bd-pct">Есть у ${pctStr(b.pct)} пользователей</small>
+              <button class="ap-btn" data-act="${back}">${back === 'st-badges' ? 'Ко всем значкам' : back === 'pp-profile' ? 'К профилю' : 'Понятно'}</button></div>`, 'ap-low');
           return true;
         }
         case 'soon': soon(flow, arg); return true;
+        case 'set-lang': if (Sonly.i18n) { Sonly.i18n.set(arg); flow.rerender(true); openPage(flow, 'lang'); } return true;
         case 'page': { const i = arg.indexOf(':'); s._copied = ''; openPage(flow, i < 0 ? arg : arg.slice(0, i), i < 0 ? '' : arg.slice(i + 1)); return true; }
         case 'page-close': s._page = null; Sonly.sound.stop(); flow.rerender(true); flow.closeSheet(); return true;
         /* Закрытие листа касанием мимо: если это был раздел настроек, экран под ним обновляется. */

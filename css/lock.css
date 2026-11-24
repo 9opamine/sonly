@@ -120,3 +120,35 @@
 .lk-sys-b button:first-child{font-weight:600}
 
 @media (prefers-reduced-motion:reduce){.lk-ic u,.lk-shield,.lk-sh-in,.lk-toast{animation:none}}
+
+/* Сегодня по шагам: вечер → звонок → задание → откроется. */
+.lk-steps{display:flex;align-items:flex-start;padding:16px 10px 14px}
+.lk-st{position:relative;flex:1;min-width:0;display:grid;justify-items:center;gap:4px;text-align:center}
+.lk-st:not(.end)::after{content:'';position:absolute;top:15px;left:calc(50% + 20px);right:calc(-50% + 20px);height:2px;border-radius:1px;background:var(--line)}
+.lk-st i{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--card2);color:var(--ink);font-style:normal}
+.lk-st.end i{background:#30D158;color:#fff}
+.lk-st b{margin-top:4px;font-size:14.5px;font-weight:750;font-variant-numeric:tabular-nums;white-space:nowrap}
+.lk-st small{font-size:12px;color:var(--mut);white-space:nowrap}
+/* Неделя: сколько раз тянулся к ленте — столбики по дням. */
+.lk-h-r{float:right;font-size:13.5px;font-weight:500;color:var(--mut)}
+.lk-week{padding:16px}
+.lk-wk-n{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.lk-wk-n span{display:grid;gap:2px}
+.lk-wk-n b{font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:830;font-size:26px;letter-spacing:-.5px;line-height:1.05;font-variant-numeric:tabular-nums;white-space:nowrap}
+.lk-wk-n small{font-size:12.5px;font-weight:600;color:var(--mut)}
+.lk-bars{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;height:96px;margin-top:16px;align-items:end}
+.lk-bars span{display:grid;justify-items:center;gap:6px;height:100%;grid-template-rows:1fr auto}
+.lk-bars i{align-self:end;width:100%;max-width:26px;height:calc(10% + var(--h) * 90%);border-radius:7px;background:linear-gradient(180deg,#8E8CFF,#5E5CE6)}
+.lk-bars small{font-size:11.5px;font-weight:650;color:var(--mut)}
+.lk-wk-t{display:flex;align-items:center;gap:6px;margin-top:14px;font-size:13.5px;font-weight:600;color:#30D158}
+.lk-wk-e{font-size:14.5px;line-height:1.42;color:var(--mut2)}
+/* Экстренно открыть: ожидание на экране блокировки. */
+.lk-sh-btn.ghost{background:rgba(255,255,255,.14);color:#fff}
+.lk-sh-sos{height:44px;margin-top:10px;border-radius:14px;color:rgba(255,255,255,.78);font-size:14.5px;font-weight:650}
+.lk-sh-sos:disabled{opacity:.5}
+.lk-sos-w{display:grid;justify-items:center;gap:4px;margin-bottom:16px;color:#fff;text-align:center}
+.lk-sos-w b{font-family:var(--disp);font-stretch:118%;font-weight:850;font-size:54px;line-height:1;font-variant-numeric:tabular-nums}
+.lk-sos-w small{font-size:14px;color:rgba(255,255,255,.75)}
+/* Строка с переключателем снизу: подпись под заголовком, как в высоких строках. */
+.ap-row.col>div>span{display:grid;gap:3px}
+.ap-row.col>div>span small{font-size:13px;font-weight:500;line-height:1.32;color:var(--mut)}

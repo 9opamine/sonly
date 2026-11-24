@@ -219,7 +219,7 @@
     welcome: {
       chrome: false,
       render: () => `<div class="a-wel"><div class="a-sun"></div>
-        <div class="a-brand" data-in>${Sonly.logo()}</div>
+        <div class="a-wel-top" data-in><div class="a-brand">${Sonly.logo()}</div>${Sonly.i18n ? `<button class="a-lang lg" data-lg="btn" data-act="lang" aria-label="Язык: ${Sonly.i18n.LANGS.find((x) => x[0] === Sonly.i18n.lang)[1]}">${Sonly.i18n.flag(Sonly.i18n.lang, 'a-flag')}<span>${Sonly.i18n.lang.toUpperCase()}</span>${ic('chevron-down', 14, 2.6)}</button>` : ''}</div>
         <h1 class="a-wel-h"><span data-in style="--i:2">Встать</span><span data-in style="--i:3">с первого</span><span data-in style="--i:4">будильника</span></h1>
         <p class="a-wel-p" data-in style="--i:6">Будильник, который нельзя отложить.</p></div>
         <footer class="a-foot a-wel-foot" data-in style="--i:8"><button class="a-cta" data-act="next">Начать</button><button class="a-link" data-act="restore">У меня уже есть подписка</button>
@@ -627,7 +627,14 @@
     defaults: () => ({ now: { h: 8, m: 15 } }),
     demo: () => ({ source: 'Друзья или семья', alarms: 'Четыре-пять', thought: 'Ещё пять минут', back: 'Пару раз в\u00a0неделю', feel: 'Разбито', block: 'Листаю телефон в кровати', why: 'Фора на весь день', task: 'hunt', sign: SIGN_DEMO, notify: true }),
     /* Кнопка на последнем экране открывает приложение, если оболочка умеет его показать. */
-    on(flow, act) {
+    on(flow, act, arg) {
+      /* Язык со стартового экрана: список с флагами, выбор сразу перерисовывает экран. */
+      if (act === 'lang' && Sonly.i18n) {
+        const cur = Sonly.i18n.lang;
+        flow.sheet(`<div class="pay-grab"></div><div class="a-langs"><b>Язык</b>${Sonly.i18n.LANGS.map(([id, name]) => `<button class="${id === cur ? 'on' : ''}" data-act="lang-set:${id}" aria-pressed="${id === cur}">${Sonly.i18n.flag(id, 'a-flag')}<span>${name}</span>${id === cur ? ic('check', 18, 3) : ''}</button>`).join('')}</div>`, 'pay');
+        return true;
+      }
+      if (act === 'lang-set' && Sonly.i18n) { flow.closeSheet(); Sonly.i18n.set(arg, flow); return true; }
       if (act !== 'open-app') return false;
       if (flow.opts.onOpenApp) flow.opts.onOpenApp(flow.state); else flow.restart();
       return true;

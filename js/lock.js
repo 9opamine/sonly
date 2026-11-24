@@ -36,10 +36,15 @@
   /* Категории для режима «Только выбранные». */
   const CATS = [['social', 'Соцсети', 'heart'], ['video', 'Видео и ролики', 'clapperboard'], ['games', 'Игры', 'gamepad-2'], ['chats', 'Мессенджеры', 'message-circle'], ['news', 'Новости', 'newspaper'], ['shop', 'Покупки', 'shopping-bag'], ['web', 'Браузер', 'compass']];
   const EXTRA = [[0, 'Нет'], [15, '15 мин'], [30, '30 мин'], [60, '1 час']];
+  const SOS = [[0, 'Нельзя'], [1, '1 раз'], [3, '3 раза']];
+  /* Что внутри категорий — для подписи (в приложении это настоящие приложения с телефона). */
+  const IN_CAT = { social: 'Лента, фото, истории', video: 'Ролики, видео, стримы', games: 'Все игры', chats: 'Чаты и каналы', news: 'Новости и подборки', shop: 'Магазины и скидки', web: 'Сайты в браузере' };
+  /* Пример недели: сколько раз утром тянулся к закрытому приложению. */
+  const WEEK = [6, 4, 5, 2, 3, 1, 2];
   const COLORS = { lock: '#5E5CE6' };
 
   /** Настройки блокировки; создаются при первом обращении. */
-  const conf = (s) => s.lock || (s.lock = { on: false, perm: false, denied: false, extra: 30, night: false, nh: 23, nm: 0, mode: 'all', allow: ['messages'], cats: ['social', 'video', 'games'], strict: true });
+  const conf = (s) => { const L = s.lock || (s.lock = { on: false, perm: false, denied: false, extra: 30, night: false, nh: 23, nm: 0, mode: 'all', allow: ['messages'], cats: ['social', 'video', 'games'], strict: true }); if (L.weekend == null) L.weekend = true; if (L.sos == null) L.sos = 3; if (L.used == null) L.used = 0; return L; };
   /** Состояние экрана примера: сценарий, открытое приложение, подсказка. */
   const ui = (s) => s._lk || (s._lk = { scene: 'morning', app: null, toast: '' });
   /** Закрыто ли приложение при текущих настройках. Звонки и сам sonly не закрываются никогда. */
@@ -88,7 +93,14 @@
     const hero = `<div class="lk-hero${L.on ? ' on' : ''}">
         <div class="lk-mini" aria-hidden="true">${minis}</div>
         <div class="lk-hero-t"><b>Утро без ленты</b><p>Пока не проснёшься, приложения закрыты${NB}— ни ленты, ни${NB}видео.</p></div>
-        <div class="lk-hero-sw"><span>${L.on ? `${ic('lock', 15, 2.5)}Включена` : 'Выключена'}</span>${toggle('lk-toggle', L.on, 'Блокировка приложений', false)}</div></div>`;
+        ${L.on ? `<div class="lk-hero-sw"><span>${ic('lock', 15, 2.5)}Включена</span>${toggle('lk-toggle', L.on, 'Блокировка приложений', false)}</div>` : ''}</div>`;
+    /* Сегодня по шагам: вечером закрывается (если включено), звонок, задание, через сколько откроется. */
+    const r = ring(s), open = plus(r, 2 + L.extra);
+    const steps = [L.night ? [ic('moon', 15, 2.3), hhmm(L.nh, L.nm), 'закроется'] : null, [ic('alarm-clock', 15, 2.3), hhmm(r.h, r.m), 'звонок'], [ic('check', 15, 2.6), 'задание', 'проснулся'], [ic('lock-open', 15, 2.3), L.extra ? hhmm(open.h, open.m) : 'сразу', 'откроется']].filter(Boolean);
+    const today = L.on ? `<h3>Сегодня</h3><div class="ap-card lk-steps">${steps.map(([i, b, sm], k) => `<span class="lk-st${k === steps.length - 1 ? ' end' : ''}"><i>${i}</i><b>${b}</b><small>${sm}</small></span>`).join('')}</div>` : '';
+    const max = Math.max(...WEEK), demoWeek = s.data === 'demo';
+    const stats = L.on || demoWeek ? `<h3>Утро без ленты<span class="lk-h-r">неделя</span></h3><div class="ap-card lk-week">${demoWeek ? `<div class="lk-wk-n"><span><b>${WEEK.reduce((a, x) => a + x, 0)}</b><small>раз тянулся к ленте</small></span><span><b>3${NB}ч 20${NB}мин</b><small>утром без ленты</small></span></div>
+        <div class="lk-bars">${WEEK.map((x, i) => `<span><i style="--h:${(x / max).toFixed(3)}"></i><small>${['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][i]}</small></span>`).join('')}</div><p class="lk-wk-t">${ic('trending-down', 15, 2.4)}Тянешься к телефону всё реже</p>` : `<p class="lk-wk-e">Покажем после первого утра: сколько раз тянулся к ленте и сколько минут прошло без неё.</p>`}</div>` : '';
     const denied = L.denied && !L.perm ? `<div class="ap-card lk-warn">${ic('triangle-alert', 18, 2.2)}<span><b>Нет доступа к${NB}Экранному времени</b><small>Без него sonly не может закрывать приложения</small></span><button data-act="lk-toggle">Дать доступ</button></div>` : '';
     const whenHtml = `<h3>Когда закрывать</h3>
       <div class="ap-card ap-list">
@@ -96,6 +108,7 @@
         <div class="ap-row col"><div><i class="ap-row-i">${ic('sunrise', 17, 2.1)}</i><span>И ещё после подъёма</span></div>${seg('lk-extra', L.extra, EXTRA)}</div>
         <div class="ap-row tall"><i class="ap-row-i">${ic('moon', 17, 2.1)}</i><span>Вечером перед сном<small>${L.night ? `С ${hhmm(L.nh, L.nm)} до${NB}звонка` : `Чтобы не листать в${NB}кровати`}</small></span>${toggle('lk-night', L.night, 'Вечером перед сном')}</div>
         ${L.night ? K.row(ic('clock', 17, 2.1), 'Со скольки', hhmm(L.nh, L.nm), 'page:lock-night') : ''}
+        <div class="ap-row tall"><i class="ap-row-i">${ic('calendar', 17, 2.1)}</i><span>В выходные тоже<small>${L.weekend ? 'Каждый день с будильником' : 'Только по будням'}</small></span>${toggle('lk-weekend', L.weekend, 'В выходные тоже')}</div>
       </div>`;
     const exc = L.allow.map(app).filter(Boolean).map((a) => `<div class="ap-row"><i class="ap-row-i lk-ri" style="--ab:${a.bg}">${ic(a.icon, 16, 2.2)}</i><span>${a.name}</span><button class="lk-rm" data-act="lk-ex:${a.id}" aria-label="Закрывать «${a.name}» тоже">${ic('minus', 14, 3)}</button></div>`).join('');
     const whatHtml = `<h3>Что закрывать</h3>
@@ -105,12 +118,13 @@
           ${exc}
           <button class="ap-row" data-act="page:lock-ex"><i class="ap-row-i">${ic('plus', 17, 2.4)}</i><span>Оставить открытым…</span>${K.chev()}</button></div>
         <p class="ap-note">Браузер тоже закроется${NB}— иначе ленту откроют через${NB}сайт.</p>`
-        : `<div class="ap-card ap-list lk-list">${CATS.map(([id, name, icon]) => `<div class="ap-row"><i class="ap-row-i">${ic(icon, 17, 2.1)}</i><span>${name}</span>${toggle('lk-cat:' + id, L.cats.includes(id), name)}</div>`).join('')}</div>
+        : `<div class="ap-card ap-list lk-list">${CATS.map(([id, name, icon]) => `<div class="ap-row tall"><i class="ap-row-i">${ic(icon, 17, 2.1)}</i><span>${name}<small>${IN_CAT[id]}</small></span>${toggle('lk-cat:' + id, L.cats.includes(id), name)}</div>`).join('')}</div>
         ${L.cats.length ? '' : `<p class="ap-note lk-bad">Выбери хотя бы одно — иначе закрывать${NB}нечего.</p>`}`}`;
     const rules = `<h3>Правила</h3>
-      <div class="ap-card ap-list"><div class="ap-row tall"><i class="ap-row-i">${ic('shield-check', 17, 2.1)}</i><span>Снять только${NB}заданием<small>Утром выключатель не${NB}сработает</small></span>${toggle('lk-strict', L.strict, 'Снять только заданием')}</div></div>`;
+      <div class="ap-card ap-list"><div class="ap-row tall"><i class="ap-row-i">${ic('shield-check', 17, 2.1)}</i><span>Снять только${NB}заданием<small>Утром выключатель не${NB}сработает</small></span>${toggle('lk-strict', L.strict, 'Снять только заданием')}</div>
+        <div class="ap-row col"><div><i class="ap-row-i">${ic('siren', 17, 2.1)}</i><span>Экстренно открыть<small>${L.sos ? `В месяц, после 10${NB}секунд ожидания` : 'До задания не откроется ничего'}</small></span></div>${seg('lk-sos', L.sos, SOS)}</div></div>`;
     const demo = `<button class="ap-card ap-try lk-try" data-act="page:lock-demo">${ic('smartphone', 17, 2.3)}<span>Как это выглядит</span>${K.chev()}</button>`;
-    return ['Блокировка приложений', `${hero}${denied}${whenHtml}${whatHtml}${rules}${demo}`, L.on ? '' : '<button class="ap-btn" data-act="lk-toggle">Включить блокировку</button>'];
+    return ['Блокировка приложений', `${hero}${denied}${today}${stats}${whenHtml}${whatHtml}${rules}${demo}`, L.on ? '' : '<button class="ap-btn" data-act="lk-toggle">Включить блокировку</button>'];
   }
 
   /** Что оставить открытым в режиме «Все приложения». */
@@ -139,7 +153,8 @@
         <div class="lk-sh-in"><i class="lk-sh-i"><span class="lk-mark">${Sonly.mark()}</span><u>${ic('lock', 13, 3)}</u></i>
           <b>${u.scene === 'night' ? 'Пора спать' : u.scene === 'after' ? 'Утро без ленты' : 'Сначала проснись'}</b>
           <p>${a.name} ${opens} ${u.scene === 'night' ? 'после будильника' : u.scene === 'after' ? `в${NB}${hhmm(unlock.h, unlock.m)}` : 'после задания'}</p></div>
-        <button class="lk-sh-btn" data-act="lk-shield-close">Понятно</button></div>` : '';
+        ${u.wait > 0 ? `<div class="lk-sos-w"><b>${u.wait}</b><small>Подожди — точно нужно?</small></div><button class="lk-sh-btn ghost" data-act="lk-sos-stop">Не надо</button>`
+          : `<button class="lk-sh-btn" data-act="lk-shield-close">Понятно</button>${L.sos && u.scene !== 'night' ? `<button class="lk-sh-sos" data-act="lk-sos-go"${L.used >= L.sos ? ' disabled' : ''}>${L.used >= L.sos ? 'Экстренные на этот месяц закончились' : `Мне срочно · осталось ${L.sos - L.used} из ${L.sos}`}</button>` : ''}`}</div>` : '';
     const phone = `<div class="lk-phone lk-${u.scene}">
         <div class="lk-sb"><span>${hhmm(clock.h, clock.m)}</span><i></i><span class="lk-sb-r">${ic('signal', 13, 2.6)}${ic('wifi', 13, 2.6)}${ic('battery-full', 16, 2.2)}</span></div>
         <div class="lk-grid">${APPS.map((x) => tile(x, shut(L, x), true)).join('')}</div>
@@ -210,6 +225,23 @@
         case 'lk-cat': L.cats = L.cats.includes(arg) ? L.cats.filter((x) => x !== arg) : L.cats.concat(arg); reopen(flow); return true;
         case 'lk-ex': L.allow = L.allow.includes(arg) ? L.allow.filter((x) => x !== arg) : L.allow.concat(arg); reopen(flow); return true;
         case 'lk-strict': L.strict = !L.strict; reopen(flow); return true;
+        case 'lk-weekend': L.weekend = !L.weekend; reopen(flow); return true;
+        case 'lk-sos': L.sos = +arg; reopen(flow); return true;
+        /* Экстренно: десять секунд на подумать, потом приложение открывается на 5 минут и тратится одна попытка. */
+        case 'lk-sos-go': {
+          if (L.used >= L.sos || u.wait > 0) return true;
+          u.wait = 10;
+          reopen(flow, 'lock-demo');
+          clearInterval(u.timer);
+          u.timer = setInterval(() => {
+            if (!flow.sheets.querySelector('.lk-shield')) { clearInterval(u.timer); u.wait = 0; return; }
+            u.wait -= 1;
+            if (u.wait <= 0) { clearInterval(u.timer); u.wait = 0; L.used += 1; const a = app(u.app); u.app = null; u.toast = `${a ? a.name : 'Приложение'} открыто на${NB}5${NB}минут`; }
+            reopen(flow, 'lock-demo');
+          }, flow.shot ? 1e9 : 1000);
+          return true;
+        }
+        case 'lk-sos-stop': clearInterval(u.timer); u.wait = 0; reopen(flow, 'lock-demo'); return true;
         case 'lk-scene': u.scene = arg; u.app = null; u.toast = ''; reopen(flow, 'lock-demo'); return true;
         /* Нажатие на приложение в примере: закрытое — экран блокировки, открытое — короткая подсказка. */
         case 'lk-app': {
@@ -222,7 +254,7 @@
           reopen(flow, 'lock-demo');
           return true;
         }
-        case 'lk-shield-close': u.app = null; reopen(flow, 'lock-demo'); return true;
+        case 'lk-shield-close': clearInterval(u.timer); u.wait = 0; u.app = null; reopen(flow, 'lock-demo'); return true;
         default: return false;
       }
     },

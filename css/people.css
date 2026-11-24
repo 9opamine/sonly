@@ -71,8 +71,9 @@
 .ap-sh-head .pp-ed{min-width:44px;height:44px;padding:0 2px;font-size:16px;font-weight:650;color:#0A84FF;text-align:right}
 .pp-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .pp-stats.three{grid-template-columns:repeat(3,minmax(0,1fr))}
-.pp-st{display:flex;flex-direction:column;align-items:flex-start;min-width:0;height:104px;padding:12px 14px 13px;border-radius:24px;background:var(--card);box-shadow:var(--elev)}
-.pp-stats.three .pp-st{height:98px;padding:11px 12px 12px;border-radius:22px}
+.pp-st{display:flex;flex-direction:column;align-items:flex-start;min-width:0;min-height:112px;padding:12px 14px 13px;border-radius:24px;background:var(--card);box-shadow:var(--elev)}
+.pp-stats.three .pp-st{min-height:106px;padding:11px 12px 12px;border-radius:22px}
+.pp-st>.pp-ic{margin-bottom:10px}
 .pp-ic{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;background:linear-gradient(180deg,var(--a),var(--b));box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}
 .pp-ic .ic,.pp-ic .si{width:18px;height:18px}
 .pp-st.fire .pp-ic{--a:#FFB547;--b:#FF5E1F}
@@ -109,7 +110,7 @@
 .pp-kind small{font-size:13px;font-weight:650}
 .pp-kind.on{box-shadow:inset 0 0 0 2.5px #0A84FF}
 .pp-kind input{position:absolute;inset:0;opacity:0;cursor:pointer}
-.pp-colors{display:flex;justify-content:space-between;margin-top:14px;padding:0 4px}
+.pp-colors{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));justify-items:center;margin-top:14px}
 .pp-colors button{width:34px;height:34px;border-radius:50%;background:linear-gradient(160deg,var(--a),var(--b));transition:transform .15s}
 .pp-colors button.on{box-shadow:0 0 0 3px var(--bg),0 0 0 5.5px var(--b)}
 .pp-colors button:active{transform:scale(.9)}
@@ -165,7 +166,7 @@
 .pp-cheer{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--card2);color:#FF9F0A;transition:transform .15s}
 .pp-cheer:active{transform:scale(.92)}
 .pp-cheer.on{background:linear-gradient(160deg,#FFCC33,#FF9500);color:#fff;box-shadow:0 8px 16px -10px rgba(255,149,0,.9);animation:pp-pop .45s cubic-bezier(.3,1.6,.5,1)}
-.pp-wake{flex:none;display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 15px 0 12px;border-radius:19px;background:linear-gradient(160deg,#FF6B5E,#FF3B30);color:#fff;font-size:14.5px;font-weight:700;box-shadow:0 8px 16px -10px rgba(255,59,48,.9);transition:transform .15s}
+.pp-wake{flex:none;display:inline-flex;align-items:center;gap:6px;height:42px;padding:0 16px 0 13px;border-radius:21px;background:linear-gradient(160deg,#FF6B5E,#FF3B30);color:#fff;font-size:14.5px;font-weight:700;box-shadow:0 8px 16px -10px rgba(255,59,48,.9);transition:transform .15s}
 .pp-wake:active{transform:scale(.95)}
 .pp-wake .ic{animation:pp-ring 1.6s ease-in-out infinite;transform-origin:50% 10%}
 .pp-sent,.pp-undo{flex:none;display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 13px;border-radius:17px;background:var(--card2);color:var(--mut2);font-size:13.5px;font-weight:650}
@@ -223,7 +224,7 @@
 
 /* ── Друзья и группы ── */
 /* Заголовок листа: длинное название группы обрезается, а не переносится. */
-.pp-sheet .ap-sh-head b{flex:1;min-width:0;padding:0 10px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp-sheet .ap-sh-head>b{flex:1;min-width:0;padding:0 10px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pp-one{display:block!important;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pp-h .pp-hl{display:inline-flex;align-items:center;gap:3px;height:30px;margin:-6px -2px -6px 0;padding:0 4px;font-size:15px;font-weight:650;color:#0A84FF}
 .pp-badge{flex:none;min-width:22px;height:22px;padding:0 7px;border-radius:11px;display:grid;place-items:center;background:#FF3B30;color:#fff;font-size:13px;font-weight:750;font-variant-numeric:tabular-nums}
@@ -309,6 +310,50 @@
 .pp-goals button{height:40px;padding:0 4px;border-radius:20px;background:var(--card);box-shadow:var(--elev);color:var(--ink);font-size:14.5px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap;transition:transform .15s}
 .pp-goals button:active{transform:scale(.95)}
 .pp-goals button.on{background:var(--btn);color:var(--btn-ink);box-shadow:none}
+/* «Вставай вместе»: вкладки под заголовком, справа сверху — добавить друга со счётчиком заявок. */
+.pp-tabbar{flex:none;padding:0 20px 14px}
+.pp-tabs button{position:relative;gap:6px}
+.pp-badge.sm{min-width:19px;height:19px;padding:0 5px;border-radius:10px;font-size:11.5px}
+.pp-hb{position:relative}
+.pp-badge.dot{position:absolute;top:-3px;right:-3px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;font-size:12px;box-shadow:0 0 0 2.5px var(--bg)}
+.pp-tb-friends>.pp-q,.pp-tb-groups>:first-child,.pp-tb-morning>:first-child{margin-top:2px}
+.pp-empty.sm{padding:22px 10px 18px;gap:6px}
+.pp-empty.sm b{margin-top:6px;font-size:20px}
+.pp-empty.sm p{font-size:14.5px}
+/* Профиль: аватар с камерой — сразу выбрать своё фото. */
+.pp-avup{position:relative;flex:none;display:block;border-radius:50%;cursor:pointer}
+.pp-avup input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.pp-id>.pp-avup>.pp-av,.pp-id>.pp-avup>.pp-fr{box-shadow:0 0 0 4px var(--bg)}
+.pp-id>.pp-avup>.pp-fr{background:var(--bg)}
+.pp-cam{position:absolute;right:2px;bottom:2px;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#0A84FF;color:#fff;box-shadow:0 0 0 3px var(--bg);pointer-events:none}
+/* Друзья в профиле — лентой: «добавить» первым, дальше друзья со статусом утра. */
+.pp-frow{display:flex;gap:4px;margin:0 -20px;padding:2px 20px 4px;overflow-x:auto;scrollbar-width:none}
+.pp-frow::-webkit-scrollbar{display:none}
+.pp-fc{flex:none;width:78px;display:grid;justify-items:center;gap:7px;color:var(--ink)}
+.pp-fc>.pp-av{box-shadow:none}
+.pp-fc small{max-width:100%;font-size:12.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp-fc.add small{color:#0A84FF}
+.pp-fc.add .pp-av{background:rgba(10,132,255,.14);color:#0A84FF}
+.pp-fc .pp-dot{width:20px;height:20px;box-shadow:0 0 0 3px var(--bg)}
+/* Значки в профиле — лентой, лучшие первыми. */
+.pp-brow{display:flex;gap:2px;margin:0 -20px;padding:2px 20px 6px;overflow-x:auto;scrollbar-width:none}
+.pp-brow::-webkit-scrollbar{display:none}
+.pp-brow .pp-bd{width:86px;gap:9px}
+.pp-brow .pp-bd small{max-width:84px;overflow:hidden;text-overflow:ellipsis}
+.pp-brow .pp-bd:not(.on){opacity:.7}
+.pp-more{width:50px;height:55px;display:grid;place-items:center;border-radius:16px;background:var(--card2);color:var(--mut2)}
+.pp-since{margin:22px 0 4px;text-align:center;font-size:13px;color:var(--mut)}
+.pp-all b{color:#0A84FF}
+/* Ник: «@» перед полем. */
+.pp-nick{display:flex;align-items:center;gap:1px;font-size:16.5px;font-weight:600;color:var(--mut)}
+.pp-nick input{flex:1;min-width:0}
+/* Цвета группы — шесть, точно под столбиками значков. */
+.pp-gcolors{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin-top:12px;justify-items:center}
+.pp-gcolors button{width:34px;height:34px;border-radius:50%;background:linear-gradient(160deg,var(--a),var(--b));transition:transform .15s}
+.pp-gcolors button.on{box-shadow:0 0 0 3px var(--bg),0 0 0 5.5px var(--b)}
+.pp-gcolors button:active{transform:scale(.9)}
+.pp-gwheel{margin-top:10px}
+
 /* Сообщение внизу листа: появляется и само уходит. */
 .sheet.ap-sheet>.pp-toast{animation:none}
 .pp-toast{position:absolute;left:50%;bottom:44px;z-index:6;max-width:calc(100% - 40px);padding:11px 18px;border-radius:22px;background:rgba(28,28,30,.94);color:#fff;font-size:14.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;box-shadow:0 14px 30px -14px rgba(0,0,0,.55);opacity:0;transform:translate(-50%,12px);transition:opacity .22s ease-out,transform .3s cubic-bezier(.2,.8,.2,1)}

@@ -189,11 +189,11 @@
    Цвет и значок у каждой свои; играет — столбики вместо ▶. Название — максимум в две строки, внутри обложки. */
 .tp-covers{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 10px) / 2);gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:2px 0 -4px;padding:2px 0 18px}
 .tp-covers::-webkit-scrollbar{display:none}
-.tp-cover{position:relative;min-width:0;height:116px;scroll-snap-align:start;border-radius:22px;padding:12px 14px 12px;display:flex;flex-direction:column;align-items:flex-start;text-align:left;color:#fff;overflow:hidden;background:radial-gradient(120% 100% at 15% 0%,color-mix(in srgb,var(--c) 58%,#fff) 0%,var(--c) 48%,color-mix(in srgb,var(--c) 55%,#000) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 0 0 .5px rgba(255,255,255,.18),0 8px 14px -10px color-mix(in srgb,var(--c) 75%,#000);transition:transform .15s cubic-bezier(.3,.7,.4,1)}
+.tp-cover{position:relative;min-width:0;height:126px;scroll-snap-align:start;border-radius:22px;padding:12px 14px 12px;display:flex;flex-direction:column;align-items:flex-start;text-align:left;color:#fff;overflow:hidden;background:radial-gradient(120% 100% at 15% 0%,color-mix(in srgb,var(--c) 58%,#fff) 0%,var(--c) 48%,color-mix(in srgb,var(--c) 55%,#000) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 0 0 .5px rgba(255,255,255,.18),0 8px 14px -10px color-mix(in srgb,var(--c) 75%,#000);transition:transform .15s cubic-bezier(.3,.7,.4,1)}
 .tp-cover:nth-child(even){scroll-snap-align:none}
 .tp-cover:active{transform:scale(.97)}
 .tp-cv-ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);margin-bottom:auto;flex:none}
-.tp-cover b{max-width:100%;font-size:14.5px;font-weight:750;line-height:1.2;letter-spacing:-.15px;text-wrap:balance;overflow-wrap:anywhere;text-shadow:0 1px 6px rgba(0,0,0,.18)}
+.tp-cover b{max-width:100%;margin-top:8px;font-size:14.5px;font-weight:750;line-height:1.2;letter-spacing:-.15px;text-wrap:balance;overflow-wrap:anywhere;text-shadow:0 1px 6px rgba(0,0,0,.18)}
 .tp-cover small{max-width:100%;margin-top:2px;font-size:12px;font-weight:600;opacity:.8;white-space:nowrap;overflow:hidden}
 .tp-cv-pl{position:absolute;right:12px;top:12px;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#0D0D0F;box-shadow:0 4px 10px -4px rgba(0,0,0,.4)}
 .tp-cv-pl>.ic{margin-left:2px}
@@ -208,4 +208,4 @@
 .tp-dots i.on{width:18px;background:rgba(255,255,255,.6)}
 @media (prefers-reduced-motion:reduce){.tp-cv-eq u{animation:none;height:70%}}
 .tp-tune .tp-ans{margin-top:4px}
-@media (max-height:720px){.tp-cover{height:104px;padding:10px 12px}.tp-covers{padding-bottom:8px}.tp-dots{margin-bottom:10px}.tp-cv-ic{width:32px;height:32px;border-radius:10px}.tp-cv-ic .ic{width:20px;height:20px}.tp-cv-pl{width:28px;height:28px;right:10px;top:10px}}
+@media (max-height:720px){.tp-cover{height:114px;padding:10px 12px}.tp-covers{padding-bottom:8px}.tp-dots{margin-bottom:10px}.tp-cv-ic{width:32px;height:32px;border-radius:10px}.tp-cv-ic .ic{width:20px;height:20px}.tp-cv-pl{width:28px;height:28px;right:10px;top:10px}}

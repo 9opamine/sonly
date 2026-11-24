@@ -53,7 +53,6 @@
   const OPEN = [G('yoga', 'Йога по утрам', 'leaf', 3, 450, ['katya', 'polina', 'sonya'], 'SG-Y4GA', 'katya'), G('birds', 'Ранние пташки', 'sunrise', 5, 390, ['igor', 'vika', 'polina', 'ira'], 'SG-P7TX', 'igor')];
   const GLYPHS = [['sunrise', 'Рассвет'], ['footprints', 'Бег'], ['dumbbell', 'Спорт'], ['bike', 'Велосипед'], ['leaf', 'Йога'], ['coffee', 'Кофе'],
     ['house', 'Дом'], ['heart', 'Сердце'], ['briefcase', 'Работа'], ['graduation-cap', 'Учёба'], ['book-open', 'Книги'], ['music', 'Музыка']];
-  const GOALS = [null, 360, 390, 420, 450, 480, 510, 540];
   const EXAMPLE = [{ n: 'Аня', g: 'f', c: 4, k: 'up', t: '06:48' }, { n: 'Макс', g: 'm', c: 2, k: 'up', t: '07:02' }, { n: 'Лена', g: 'f', c: 5, k: 'late', t: '07:30' }, { n: 'Дима', g: 'm', c: 1, k: 'sleep', t: '08:15' }];
   const DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
   const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
@@ -71,6 +70,7 @@
     if (!m.ban) m.ban = 'g:dawn';
     if (!m.frame) m.frame = 'none';
     if (m.bio == null) m.bio = '';
+    if (m.nick == null) m.nick = '';
     return m;
   }
 
@@ -190,12 +190,13 @@
   }
   function draw(flow, view, enter) {
     const i = view.indexOf(':'), k = i < 0 ? view : view.slice(0, i), a = i < 0 ? '' : view.slice(i + 1);
-    if (k === 'together') together(flow, enter);
-    else if (k === 'people') peopleSheet(flow, enter);
+    if (k === 'together') together(flow, enter, a);
+    else if (k === 'people') together(flow, enter, 'friends');
     else if (k === 'friend') person(flow, enter, a);
     else if (k === 'group') groupSheet(flow, enter, a);
     else if (k === 'gedit') groupEdit(flow, enter, a);
     else if (k === 'ginv') groupInvite(flow, enter, a);
+    else if (k === 'gjoin') groupJoin(flow, enter);
     else if (k === 'edit') editSheet(flow, enter);
     else profile(flow, enter);
     toast(flow);
@@ -295,33 +296,53 @@
     return `<button class="pp-row pp-grow" data-act="pp-group:${g.id}"><span class="pp-who">${gtile(g, 46)}<span class="pp-tx"><b class="pp-one">${esc(g.name)}</b><small>${people(all)}${g.goal != null ? ` · до ${K.fmtMin(g.goal)}` : ''}</small></span></span>${ring(up, all)}</button>`;
   }
   function groupsBlock(s) {
-    const gs = groups(s);
-    return `<h3 class="pp-h">Группы${gs.length ? `<button class="pp-hl" data-act="pp-gnew">${ic('plus', 16, 2.6)}Новая</button>` : ''}</h3>
-      ${gs.length ? `<div class="ap-card pp-list">${gs.map((g) => gRow(s, g)).join('')}</div>`
-        : `<button class="ap-card pp-list pp-row pp-grow" data-act="pp-gnew"><span class="pp-who"><i class="pp-gt ghost" style="--s:46px">${ic('plus', 22, 2.4)}</i><span class="pp-tx"><b class="pp-one">Создать группу</b><small>Для семьи, бега или работы</small></span></span>${K.chev()}</button>`}`;
+    const gs = groups(s), n = net(s);
+    return `${n.inv.map((x) => invCard(s, x)).join('')}
+      ${gs.length ? `<div class="ap-card pp-list">${gs.map((g) => gRow(s, g)).join('')}</div>` : '<div class="pp-empty sm"><b>Групп пока нет</b><p>Семья, бег, работа — у каждой своя цель и своё утро</p></div>'}
+      <div class="ap-card pp-list pp-after">
+        <button class="pp-row pp-grow" data-act="pp-gcode"><span class="pp-who"><i class="pp-gt ghost" style="--s:46px">${ic('hash', 21, 2.4)}</i><span class="pp-tx"><b class="pp-one">Вступить по коду</b><small>Код вида SG-P7TX</small></span></span>${K.chev()}</button></div>`;
   }
-  function together(flow, enter = '') {
-    const s = flow.state, fr = mates(s), my = myStatus(s), ask = asking(s), n = net(s);
+  /** Утро друзей: кто встал, кто спит, кто проспал; неделя. Без друзей — пример и как это работает. */
+  function morningPane(s) {
+    const fr = mates(s), my = myStatus(s), n = net(s);
     const up = fr.filter((f) => statusOf(f).k === 'up').length + (my.k === 'up' ? 1 : 0), total = fr.length + 1;
     const late = fr.filter((f) => statusOf(f).k === 'late'), wake = late.filter((f) => !n.nudge[f.id]);
-    let body = n.inv.map((x) => invCard(s, x)).join('');
-    if (ask.length) body += `<button class="ap-card pp-reqs" data-act="pp-people:push"><span class="pp-stack">${ask.slice(0, 3).map((p) => avatar(flat(p), 36)).join('')}</span><span class="pp-tx"><b>Заявки в друзья</b><small>${esc(ask.map((p) => p.n).join(', '))}</small></span><b class="pp-badge">${ask.length}</b>${K.chev()}</button>`;
     if (!fr.length) {
-      body += `<div class="pp-empty"><span class="pp-trio">${avatar({ n: 'А', c: 4 }, 56)}${avatar(flat(meP(s)), 72)}${avatar({ n: 'М', c: 2 }, 56)}</span><b>Вставайте вместе</b><p>Утром видно, кто уже встал, а кто проспал — его можно разбудить</p></div>
+      return `<div class="pp-empty"><span class="pp-trio">${avatar({ n: 'А', c: 4 }, 56)}${avatar(flat(meP(s)), 72)}${avatar({ n: 'М', c: 2 }, 56)}</span><b>Вставайте вместе</b><p>Утром видно, кто уже встал, а кто проспал — его можно разбудить</p></div>
         <div class="ap-card pp-list ex"><div class="pp-list-h"><b>Утро друзей</b><span class="pp-tag">Пример</span></div>
           ${EXAMPLE.map((x) => `<div class="pp-row ${x.k}"><span class="pp-who">${avatar(x, 46, dotOf(x.k))}<span class="pp-tx"><b>${x.n}</b><small>${x.k === 'up' ? `${v(x, 'встал', 'встала')} в ${x.t}` : x.k === 'late' ? `${v(x, 'не встал', 'не встала')} в ${x.t}` : `спит · будильник в ${x.t}`}</small></span></span>${x.k === 'up' ? `<span class="pp-cheer">${ic('party-popper', 18, 2.2)}</span>` : x.k === 'late' ? `<span class="pp-wake">${ic('bell-ring', 15, 2.4)}Разбудить</span>` : ''}</div>`).join('')}</div>`;
-      body += groupsBlock(s);
-    } else {
-      const day = morning(s, fr), strip = [{ ...meP(s), k: my.k }].concat(day.order.map((f) => ({ ...f, k: statusOf(f).k })));
-      body += `<div class="ap-card pp-sum"><b>${up === total ? 'Сегодня встали все' : `Уже встали ${up} из ${total}`}</b>
-          <small>${wake.length ? `${wake.map((f) => f.n).join(', ')} ${wake.length > 1 ? 'не встали' : v(wake[0], 'не встал', 'не встала')} — можно разбудить` : late.length ? `${late.map((f) => f.n).join(', ')} — уже будим` : up === total ? 'Хорошее утро у всех' : 'Остальные ещё спят — их будильник впереди'}</small>
-          <div class="pp-strip">${strip.slice(0, strip.length > 6 ? 5 : 6).map((x) => `<span class="pp-sv ${x.k}">${avatar(flat(x), 36)}</span>`).join('')}${strip.length > 6 ? `<span class="pp-sv more">+${strip.length - 5}</span>` : ''}</div>
-          <div class="pp-bar"><i style="--p:${(up / total).toFixed(3)}"></i></div></div>
-        ${groupsBlock(s)}
-        <h3 class="pp-h">Сегодня<span>${fr.length} ${K.pl(fr.length, 'друг', 'друга', 'друзей')}</span></h3>${day.html}
-        ${board(s, fr)}`;
     }
-    flow.sheet(`${head(flow, 'Вставай вместе')}<div class="ap-sh-body scroll" data-pp="together">${body}</div><div class="ap-sh-foot"><button class="ap-btn" data-act="pp-people:push">${ic('search', 19, 2.4)}Найти друзей</button></div>`, cls(enter));
+    const day = morning(s, fr), strip = [{ ...meP(s), k: my.k }].concat(day.order.map((f) => ({ ...f, k: statusOf(f).k })));
+    return `<div class="ap-card pp-sum"><b>${up === total ? 'Сегодня встали все' : `Уже встали ${up} из ${total}`}</b>
+        <small>${wake.length ? `${wake.map((f) => f.n).join(', ')} ${wake.length > 1 ? 'не встали' : v(wake[0], 'не встал', 'не встала')} — можно разбудить` : late.length ? `${late.map((f) => f.n).join(', ')} — уже будим` : up === total ? 'Хорошее утро у всех' : 'Остальные ещё спят — их будильник впереди'}</small>
+        <div class="pp-strip">${strip.slice(0, strip.length > 6 ? 5 : 6).map((x) => `<span class="pp-sv ${x.k}">${avatar(flat(x), 36)}</span>`).join('')}${strip.length > 6 ? `<span class="pp-sv more">+${strip.length - 5}</span>` : ''}</div>
+        <div class="pp-bar"><i style="--p:${(up / total).toFixed(3)}"></i></div></div>
+      <h3 class="pp-h">Сегодня<span>${fr.length} ${K.pl(fr.length, 'друг', 'друга', 'друзей')}</span></h3>${day.html}
+      ${board(s, fr)}`;
+  }
+  /** Друзья: поиск сверху, ниже заявки, «возможно, знакомы», отправленные, друзья и свой код. */
+  const friendsPane = (s) => `<div class="pp-q${s._ppQ ? ' has' : ''}">${ic('search', 18, 2.4)}<input class="js-ppq" type="search" value="${esc(s._ppQ || '')}" placeholder="Имя, ник или код" maxlength="40" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Поиск: имя, ник или код"><button class="pp-qx" data-act="pp-qx" aria-label="Очистить поиск">${ic('x', 13, 3.2)}</button></div>
+    <div class="pp-res">${results(s, s._ppQ || '')}</div>`;
+  const TABS = [['morning', 'Утро'], ['groups', 'Группы'], ['friends', 'Друзья']];
+  /*
+   * «Вставай вместе» — три вкладки: утро друзей, группы, друзья. Вкладки меняются сразу, без анимации.
+   * Справа сверху — добавить друга (со счётчиком заявок). Кнопка внизу — то, что нужно на этой вкладке.
+   */
+  function together(flow, enter = '', tab = '') {
+    const s = flow.state, ask = asking(s).length, inv = net(s).inv.length;
+    if (tab) s._ppTab = tab;
+    const t = TABS.some((x) => x[0] === s._ppTab) ? s._ppTab : 'morning';
+    const dot = (id) => (id === 'friends' && ask ? `<b class="pp-badge sm">${ask}</b>` : id === 'groups' && inv ? `<b class="pp-badge sm">${inv}</b>` : '');
+    const seg = `<div class="ap-seg pp-tabs" role="tablist">${TABS.map(([id, name]) => `<button class="${t === id ? 'on' : ''}" data-act="pp-tab:${id}" role="tab" aria-selected="${t === id}">${name}${dot(id)}</button>`).join('')}</div>`;
+    const add = `<button class="ap-x lg pp-hb" data-act="pp-tab:friends" aria-label="${ask ? `Добавить друга, заявок: ${ask}` : 'Добавить друга'}">${ic('user-plus', 19, 2.3)}${ask ? `<b class="pp-badge dot">${ask}</b>` : ''}</button>`;
+    const body = t === 'groups' ? groupsBlock(s) : t === 'friends' ? friendsPane(s) : morningPane(s);
+    const foot = t === 'groups' ? `<button class="ap-btn" data-act="pp-gnew">${ic('plus', 19, 2.6)}Новая группа</button>` : t === 'friends' ? `<button class="ap-btn" data-act="pp-invite">${ic('send', 19, 2.3)}Позвать друга</button>` : mates(s).length ? '' : `<button class="ap-btn" data-act="pp-tab:friends">${ic('search', 19, 2.4)}Найти друзей</button>`;
+    flow.sheet(`${head(flow, 'Вставай вместе', add)}<div class="pp-tabbar">${seg}</div><div class="ap-sh-body scroll pp-tb-${t}" data-pp="together:${t}">${body}</div>${foot ? `<div class="ap-sh-foot">${foot}</div>` : ''}`, cls(enter));
+    const inp = flow.sheets.querySelector('.js-ppq'), res = flow.sheets.querySelector('.pp-res');
+    if (inp) {
+      inp.addEventListener('input', () => { s._ppQ = inp.value; inp.parentElement.classList.toggle('has', !!inp.value); res.innerHTML = results(s, inp.value); });
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') inp.blur(); });
+    }
   }
 
   /* ── Друзья: поиск, заявки, список ──────────────────────── */
@@ -361,18 +382,6 @@
     h += `<div class="ap-card pp-code"><span><small>Твой код</small><b>${m.code}</b></span><button class="pp-copy" data-act="pp-copy">${ic('copy', 16, 2.3)}Копировать</button></div>`;
     return h;
   }
-  function peopleSheet(flow, enter = '') {
-    const s = flow.state, q = s._ppQ || '';
-    flow.sheet(`${head(flow, 'Друзья')}<div class="ap-sh-body scroll" data-pp="people">
-        <div class="pp-q${q ? ' has' : ''}">${ic('search', 18, 2.4)}<input class="js-ppq" type="search" value="${esc(q)}" placeholder="Имя, ник или код" maxlength="40" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Поиск: имя, ник или код"><button class="pp-qx" data-act="pp-qx" aria-label="Очистить поиск">${ic('x', 13, 3.2)}</button></div>
-        <div class="pp-res">${results(s, q)}</div></div>
-      <div class="ap-sh-foot"><button class="ap-btn" data-act="pp-invite">${ic('send', 19, 2.3)}Позвать друга</button></div>`, cls(enter));
-    const inp = flow.sheets.querySelector('.js-ppq'), res = flow.sheets.querySelector('.pp-res');
-    if (!inp) return;
-    inp.addEventListener('input', () => { s._ppQ = inp.value; inp.parentElement.classList.toggle('has', !!inp.value); res.innerHTML = results(s, inp.value); });
-    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') inp.blur(); });
-  }
-
   /* ── Человек: друг, участник группы или кто-то из поиска ── */
   function person(flow, enter, id) {
     const s = flow.state, p = byId(s, id);
@@ -431,7 +440,7 @@
   /** Черновик группы: новая или копия существующей — правки применяются по «Готово». */
   function draftFor(s, id) {
     const g = id === 'new' ? null : groupOf(s, id);
-    s._ppDraft = g ? { id: g.id, name: g.name, icon: g.icon, c: g.c, goal: g.goal, members: g.members.slice() } : { id: null, name: '', icon: 'sunrise', c: (groups(s).length * 2 + 4) % AV.length, goal: null, members: [] };
+    s._ppDraft = g ? { id: g.id, name: g.name, icon: g.icon, c: g.c % 6, goal: g.goal, members: g.members.slice() } : { id: null, name: '', icon: 'sunrise', c: (groups(s).length * 2 + 4) % 6, goal: null, members: [] };
     return s._ppDraft;
   }
   function keepDraft(flow) {
@@ -448,15 +457,23 @@
       <div class="ap-card pp-form"><label><small>Название</small><input class="js-pgname" value="${esc(d.name)}" maxlength="22" placeholder="Например: Утренний бег" autocomplete="off"></label></div>
       <h3 class="pp-h">Значок</h3>
       <div class="pp-glyphs" role="radiogroup" aria-label="Значок группы" style="--a:${a};--b:${b}">${GLYPHS.map(([x, name]) => `<button class="${d.icon === x ? 'on' : ''}" data-act="pp-gicon:${x}" role="radio" aria-checked="${d.icon === x}" aria-label="${name}">${ic(x, 22, 2.2)}</button>`).join('')}</div>
-      <div class="pp-colors" role="radiogroup" aria-label="Цвет группы">${AV.map(([x, y], i) => `<button class="${i === d.c ? 'on' : ''}" style="--a:${x};--b:${y}" data-act="pp-gcolor:${i}" role="radio" aria-checked="${i === d.c}" aria-label="Цвет ${i + 1}"></button>`).join('')}</div>
-      <h3 class="pp-h">Цель<span>во сколько встать</span></h3>
-      <div class="pp-goals" role="radiogroup" aria-label="Цель по времени">${GOALS.map((x) => `<button class="${d.goal === x ? 'on' : ''}" data-act="pp-ggoal:${x == null ? 'none' : x}" role="radio" aria-checked="${d.goal === x}">${x == null ? 'Без цели' : K.fmtMin(x)}</button>`).join('')}</div>
+      <div class="pp-gcolors" role="radiogroup" aria-label="Цвет группы">${AV.slice(0, 6).map(([x, y], i) => `<button class="${i === d.c ? 'on' : ''}" style="--a:${x};--b:${y}" data-act="pp-gcolor:${i}" role="radio" aria-checked="${i === d.c}" aria-label="Цвет ${i + 1}"></button>`).join('')}</div>
+      <h3 class="pp-h">Цель</h3>
+      <div class="ap-card ap-list"><div class="ap-row tall"><i class="ap-row-i">${ic('target', 17, 2.2)}</i><span>Цель по времени<small class="js-ggt">${d.goal != null ? `Встать до ${K.fmtMin(d.goal)}` : 'Без цели по времени'}</small></span><button class="ap-tg sm${d.goal != null ? ' on' : ''}" data-act="pp-ggoal" role="switch" aria-checked="${d.goal != null}" aria-label="Цель по времени"></button></div></div>
+      ${d.goal != null ? '<div class="ap-card ap-ed-time pp-gwheel"><div class="js-gwheel"></div></div>' : ''}
       <h3 class="pp-h">Участники<span>${d.members.length ? `выбрано ${d.members.length}` : 'кроме тебя'}</span></h3>`;
     body += list.length ? `<div class="ap-card pp-list">${list.map((p) => { const on = d.members.includes(p.id); return `<button class="pp-row pp-chk${on ? ' on' : ''}" data-act="pp-gm:${p.id}" role="checkbox" aria-checked="${on}"><span class="pp-who">${avatar(flat(p), 46)}<span class="pp-tx"><b class="pp-one">${esc(full(p))}</b><small>${relOf(s, p.id) === 'friend' ? '@' + esc(p.nick) : 'не в друзьях'}</small></span></span><i class="pp-box">${ic('check', 14, 3.4)}</i></button>`; }).join('')}</div>`
       : `<button class="ap-card pp-list pp-row pp-grow" data-act="pp-people:push"><span class="pp-who"><i class="pp-gt ghost" style="--s:46px">${ic('user-plus', 21, 2.3)}</i><span class="pp-tx"><b class="pp-one">Найти друзей</b><small>Позвать можно и потом</small></span></span>${K.chev()}</button>`;
-    if (isNew) body += `<h3 class="pp-h">Есть код группы?</h3><div class="ap-card pp-join"><input class="js-pgcode" placeholder="Например, SG-P7TX" maxlength="60" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Код группы"><button class="pp-add" data-act="pp-gjoin">Вступить</button></div>`;
-    else body += `<button class="ap-card pp-danger${ask ? ' ask' : ''}" data-act="pp-gleave:${id}">${ic(own ? 'trash-2' : 'log-out', 18, 2.3)}${ask ? (own ? 'Точно удалить группу?' : 'Точно выйти из группы?') : (own ? 'Удалить группу' : 'Выйти из группы')}</button>`;
+    if (!isNew) body += `<button class="ap-card pp-danger${ask ? ' ask' : ''}" data-act="pp-gleave:${id}">${ic(own ? 'trash-2' : 'log-out', 18, 2.3)}${ask ? (own ? 'Точно удалить группу?' : 'Точно выйти из группы?') : (own ? 'Удалить группу' : 'Выйти из группы')}</button>`;
     flow.sheet(`${head(flow, isNew ? 'Новая группа' : 'Группа', `<button class="pp-ed" data-act="pp-gsave">${isNew ? 'Создать' : 'Готово'}</button>`)}<div class="ap-sh-body scroll" data-pp="gedit:${id}">${body}</div>`, cls(enter));
+    const host = flow.sheets.querySelector('.js-gwheel');
+    if (host && d.goal != null) Sonly.wheel(host, { h: Math.floor(d.goal / 60), m: d.goal % 60, onChange: (h, m) => { d.goal = h * 60 + m; const g = flow.sheets.querySelector('.js-ggt'); if (g) g.textContent = `Встать до ${K.fmtMin(d.goal)}`; } });
+  }
+  /** Вступить в группу по коду. */
+  function groupJoin(flow, enter) {
+    flow.sheet(`${head(flow, 'Вступить по коду')}<div class="ap-sh-body scroll" data-pp="gjoin">
+        <div class="pp-empty sm"><i class="pp-gt ghost" style="--s:72px">${ic('hash', 32, 2.3)}</i><b>Код группы</b><p>Его даёт тот, кто создал группу</p></div>
+        <div class="ap-card pp-join"><input class="js-pgcode" placeholder="Например, SG-P7TX" maxlength="60" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Код группы"><button class="pp-add" data-act="pp-gjoin">Вступить</button></div></div>`, cls(enter));
   }
   function groupInvite(flow, enter, gid) {
     const s = flow.state, g = groupOf(s, gid);
@@ -481,35 +498,49 @@
 
   /* ── Профиль ────────────────────────────────────────────── */
   /** Четыре цифры без повторов: пока серия не рвалась, рекорд и «утр всего» равны ей — вместо них другие факты. */
-  function facts(s) {
+  function numbers(s) {
     const st = K.stats(s), h = st.h, wakes = h.map((x) => x.wake).sort((a, b) => a - b), secs = h.filter((x) => x.secs).map((x) => x.secs);
-    const bd = K.badges ? K.badges(s) : [], got = bd.filter((b) => b.on).length;
-    const streak = tile('fire', si('flame', 18), st.streak, `${K.pl(st.streak, 'день', 'дня', 'дней')} подряд`), badges = tile('gold', ic('award', 17, 2.4), `${got}/${bd.length}`, 'значков');
-    if (!h.length) return [streak, tile('sun', si('rise', 18), 0, 'утр всего'), badges, tile('blue', ic('alarm-clock', 17, 2.4), '—', 'обычно встаёшь')].join('');
+    const streak = tile('fire', si('flame', 18), st.streak, `${K.pl(st.streak, 'день', 'дня', 'дней')} подряд`);
+    if (!h.length) return [streak, tile('sun', si('rise', 18), 0, 'утр всего'), tile('gold', ic('trophy', 17, 2.4), 0, 'рекорд серии'), tile('blue', ic('alarm-clock', 17, 2.4), '—', 'обычно встаёшь')].join('');
     const out = [streak];
     if (st.best > st.streak) out.push(tile('gold', ic('trophy', 17, 2.4), st.best, 'рекорд серии'));
     if (h.length > st.best) out.push(tile('sun', si('rise', 18), h.length, `${K.pl(h.length, 'утро', 'утра', 'утр')} всего`));
     out.push(tile('sun', si('rise', 18), K.fmtMin(wakes[0]), 'самый ранний'));
     if (secs.length) out.push(tile('violet', ic('zap', 17, 2.4), `${Math.min(...secs)} с`, 'быстрее всего'));
-    out.push(badges);
+    out.push(tile('blue', ic('alarm-clock', 17, 2.4), K.fmtMin(Math.round(wakes.reduce((a, x) => a + x, 0) / wakes.length)), 'обычно встаёшь'));
     return out.slice(0, 4).join('');
   }
+  const TIER_RANK = { myth: 0, legend: 1, epic: 2, rare: 3, common: 4 };
+  /** Аватар, по которому можно сразу выбрать своё фото: значок камеры в углу. */
+  const avUp = (s, size) => `<label class="pp-avup" aria-label="Поставить своё фото">${avatar(meP(s), size, '', 'big')}<b class="pp-cam">${ic('camera', 15, 2.4)}</b><input type="file" accept="image/*" class="js-ppphoto"></label>`;
   function profile(flow, enter = '') {
     const s = flow.state, m = me(s), h = K.stats(s).h;
-    const fr = mates(s), gs = groups(s), ask = asking(s).length, my = myStatus(s), up = fr.filter((f) => statusOf(f).k === 'up').length + (my.k === 'up' ? 1 : 0);
-    const bd = K.badges ? K.badges(s) : [], got = bd.filter((b) => b.on).length;
+    const fr = mates(s), gs = groups(s), ask = asking(s).length;
+    const bd = K.badges ? K.badges(s) : [], got = bd.filter((b) => b.on).sort((a, b) => TIER_RANK[a.tier] - TIER_RANK[b.tier]);
     /* «С какого времени в sonly» — не позже первого подъёма в истории (в демо история начинается раньше первого открытия профиля). */
     const sd = new Date(Math.min(m.since, h.length ? h[0].d.getTime() : m.since)), since = `${MONTHS[sd.getMonth()]} ${sd.getFullYear()}`;
-    const sub = fr.length ? `${fr.length} ${K.pl(fr.length, 'друг', 'друга', 'друзей')} · ${gs.length ? `${gs.length} ${K.pl(gs.length, 'группа', 'группы', 'групп')}` : `встали ${up} из ${fr.length + 1}`}` : ask ? `Заявки в друзья: ${ask}` : gs.length ? `${gs.length} ${K.pl(gs.length, 'группа', 'группы', 'групп')}` : 'Позови друзей';
+    const friendsRow = `<div class="pp-frow"><button class="pp-fc add" data-act="pp-tfriends"><i class="pp-av ghost" style="--s:58px">${ic('user-plus', 22, 2.3)}</i><small>${ask ? `Заявки: ${ask}` : 'Добавить'}</small></button>${fr.map((f) => `<button class="pp-fc" data-act="pp-friend:${f.id}" aria-label="Профиль: ${esc(f.n)}">${avatar(flat(f), 58, dotOf(statusOf(f).k))}<small>${esc(f.n)}</small></button>`).join('')}</div>`;
+    const badgeRow = `<div class="pp-brow">${(got.length ? got : bd.slice(0, 5)).slice(0, 8).map((b) => `<button class="pp-bd${b.on ? ' on' : ''}" data-act="st-badge:${b.id}" aria-label="${K.bdName(b)}${b.on ? '' : ' — ещё не получен'}">${K.hex(b, 50)}<small>${K.bdName(b)}</small></button>`).join('')}<button class="pp-bd more" data-act="st-badges" aria-label="Все значки"><i class="pp-more">${ic('chevron-right', 20, 2.6)}</i><small>Все</small></button></div>`;
     flow.sheet(`${head(flow, 'Профиль', '<button class="pp-ed" data-act="pp-edit">Изменить</button>')}
       <div class="ap-sh-body scroll" data-pp="profile">
         <button class="pp-cover" data-act="pp-edit" aria-label="Изменить оформление">${banner(m.ban)}</button>
-        <div class="pp-id">${avatar(meP(s), 96, '', 'big')}<div class="pp-id-t">${m.name ? `<b>${esc(m.name)}</b>` : '<button class="pp-noname" data-act="pp-edit">Добавить имя</button>'}${m.bio ? `<p>${esc(m.bio)}</p>` : ''}<small>${m.code} · с ${since}</small></div></div>
-        <div class="pp-stats">${facts(s)}</div>
-        <button class="ap-card mo-group pp-entry" data-act="pp-together:push"><span class="pp-stack">${fr.length ? fr.slice(0, 3).map((f) => avatar(flat(f), 40)).join('') : `<i class="pp-av ghost" style="--s:40px">${ic('user-plus', 18, 2.4)}</i>`}</span><span><b>Вставай вместе</b><small>${sub}</small></span>${K.chev()}</button>
-        ${bd.length ? `<h3 class="pp-h">Значки<span>${got} из ${bd.length}</span></h3><div class="pp-badges">${bd.map((b) => `<button class="pp-bd${b.on ? ' on' : ''}" data-act="pp-badges" aria-label="${b.name}${b.on ? '' : ' — ещё не получен'}">${K.hex ? K.hex(b) : ''}<small>${b.name}</small></button>`).join('')}</div>` : ''}
+        <div class="pp-id">${avUp(s, 96)}<div class="pp-id-t">${m.name ? `<b>${esc(m.name)}</b>` : '<button class="pp-noname" data-act="pp-edit">Добавить имя</button>'}${m.bio ? `<p>${esc(m.bio)}</p>` : ''}<small>${m.nick ? `@${esc(m.nick)} · ` : ''}${m.code}</small></div></div>
+        <div class="pp-stats">${numbers(s)}</div>
+        <h3 class="pp-h">Друзья<span>${fr.length ? `${fr.length} ${K.pl(fr.length, 'друг', 'друга', 'друзей')}` : 'утром видно, кто встал'}</span></h3>
+        ${friendsRow}
+        <h3 class="pp-h">Группы${gs.length ? `<span>${gs.length}</span>` : ''}</h3>
+        ${gs.length ? `<div class="ap-card pp-list">${gs.slice(0, 3).map((g) => gRow(s, g)).join('')}${gs.length > 3 ? `<button class="pp-row pp-grow pp-all" data-act="pp-tgroups"><span class="pp-who"><span class="pp-tx"><b class="pp-one">Все группы</b></span></span>${K.chev()}</button>` : ''}</div>`
+          : `<button class="ap-card pp-list pp-row pp-grow" data-act="pp-tgroups"><span class="pp-who"><i class="pp-gt ghost" style="--s:46px">${ic('users-round', 21, 2.3)}</i><span class="pp-tx"><b class="pp-one">Вставай с группой</b><small>Семья, бег или работа</small></span></span>${K.chev()}</button>`}
+        ${bd.length ? `<h3 class="pp-h">Значки<span>${got.length} из ${bd.length}</span></h3>${badgeRow}` : ''}
         <button class="ap-card pp-album" data-act="mo-album"><i class="pp-ic" style="--a:#BF5AF2;--b:#8944D8">${si('cards', 18)}</i><span><b>Открытки утра</b><small>${h.length ? `${h.length} ${K.pl(h.length, 'открытка', 'открытки', 'открыток')}` : 'Первая — завтра утром'}</small></span>${K.chev()}</button>
+        <p class="pp-since">В sonly с ${since}</p>
       </div>`, cls(enter));
+    hookPhoto(flow);
+  }
+  /** Выбор фото с телефона — на аватаре профиля и в «Оформлении». */
+  function hookPhoto(flow) {
+    const file = flow.sheets.querySelector('.js-ppphoto');
+    if (file) file.addEventListener('change', () => photo(flow, file.files && file.files[0]));
   }
 
   /* ── Оформление профиля ─────────────────────────────────── */
@@ -528,7 +559,8 @@
         <div class="pp-colors" role="radiogroup" aria-label="Цвет">${AV.map(([a, c], i) => `<button class="${i === m.c ? 'on' : ''}" style="--a:${a};--b:${c}" data-act="pp-color:${i}" role="radio" aria-checked="${i === m.c}" aria-label="Цвет ${i + 1}"></button>`).join('')}</div>
         <h3 class="pp-h">Имя и о себе</h3>
         <div class="ap-card pp-form"><label><small>Имя</small><input class="js-ppname" value="${esc(m.name)}" maxlength="20" placeholder="Как тебя зовут" autocomplete="given-name"></label>
-          <label><small>О себе</small><input class="js-ppbio" value="${esc(m.bio)}" maxlength="34" placeholder="Например: бегаю до работы" autocomplete="off"></label></div>
+          <label><small>О себе</small><input class="js-ppbio" value="${esc(m.bio)}" maxlength="34" placeholder="Например: бегаю до работы" autocomplete="off"></label>
+          <label><small>Ник — по нему тебя найдут</small><span class="pp-nick">@<input class="js-ppnick" value="${esc(m.nick)}" maxlength="20" placeholder="например, nazar.up" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></span></label></div>
         <h3 class="pp-h">Обложка<span>пейзажи открывает серия</span></h3>
         <div class="pp-bans">${GRAD.map(([id, name]) => `<button class="pp-ban${m.ban === 'g:' + id ? ' on' : ''}" data-act="pp-ban:g:${id}"><span class="pp-ban-c">${banner('g:' + id)}</span><small>${name}</small></button>`).join('')}${scenes.map(([id, full2, need]) => ({ id, need, name: id === 'aurora' ? 'Сияние' : full2 })).map(({ id, name, need }) => (need <= b
           ? `<button class="pp-ban${m.ban === 'l:' + id ? ' on' : ''}" data-act="pp-ban:l:${id}"><span class="pp-ban-c">${banner('l:' + id)}</span><small>${name}</small></button>`
@@ -538,8 +570,7 @@
           ? `<button class="pp-frm${m.frame === id ? ' on' : ''}" data-act="pp-frame:${id}">${avatar({ ...meP(s), frame: id }, 52)}<small>${name}</small></button>`
           : `<span class="pp-frm off">${avatar({ ...meP(s), frame: id }, 52)}${lockTag(need)}<small>${name}</small></span>`)).join('')}</div>
       </div>`, cls(enter));
-    const file = flow.sheets.querySelector('.js-ppphoto');
-    if (file) file.addEventListener('change', () => photo(flow, file.files && file.files[0]));
+    hookPhoto(flow);
   }
   /** Фото с телефона: квадрат по центру, 256 × 256, чтобы не хранить мегабайты. */
   function photo(flow, f) {
@@ -564,6 +595,13 @@
     const m = me(flow.state), n = flow.sheets.querySelector('.js-ppname'), b = flow.sheets.querySelector('.js-ppbio');
     if (n) m.name = n.value.trim().slice(0, 20);
     if (b) m.bio = b.value.trim().slice(0, 34);
+    const k = flow.sheets.querySelector('.js-ppnick');
+    if (k) {
+      /* Ник: латиница, цифры, точка и подчёркивание; занятый ник из примера не берём. */
+      const v2 = k.value.toLowerCase().replace(/^@+/, '').replace(/[^a-z0-9._]/g, '').slice(0, 20);
+      if (v2 && DIR.some((p) => p.nick === v2)) flow.state._ppMsg = `Ник @${v2} уже занят`;
+      else m.nick = v2.length >= 3 ? v2 : '';
+    }
   }
   const syncTabs = (flow) => { if (flow.id === 'home' || flow.id === 'settings' || flow.id === 'morning') flow.rerender(true); };
   function redrawEdit(flow) { redraw(flow); syncTabs(flow); }
@@ -589,15 +627,22 @@
     /** Маленький аватар для шапки главной и карточки в настройках. */
     avatar: (s, size) => { const p = meP(s); return avatar(p, p.frame && p.frame !== 'none' ? size - 10 : size); },
     name: (s) => me(s).name,
+    /** Для значков: друзья, группы, поздравлял ли, будил ли, есть ли имя с аватаром, встала ли вся группа до цели. */
+    facts(s) {
+      const n = net(s), m = me(s), gs = groups(s), my = myStatus(s);
+      const squad = gs.some((g) => { const ms = membersOf(s, g); return g.goal != null && ms.length && my.k === 'up' && my.t <= g.goal && ms.every((p) => { const x = statusOf(p); return x.k === 'up' && x.t <= g.goal; }); });
+      return { friends: mates(s).length, groups: gs.length, cheer: +Object.values(n.cheer).some(Boolean), nudge: +Object.values(n.nudge).some(Boolean), face: +!!(m.name && ((m.ava === 'photo' && m.photo) || m.ava === 'brain')), squad: +squad };
+    },
     /** Снимки и проверки: лист сразу, со стопкой «назад», как если бы до него дошли пальцем. */
     preview(flow, what) {
       const s = flow.state, st = nav(s), [k, a] = what.split(/-(.*)/s);
       st.length = 0;
       const show = (...views) => { st.push(...views); draw(flow, views[views.length - 1], ''); };
-      if (k === 'together') show('together');
+      if (k === 'together') show('together:' + (a || 'morning'));
       else if (k === 'edit') show('profile', 'edit');
-      else if (k === 'people') show('together', 'people');
-      else if (k === 'q') { s._ppQ = a || ''; show('together', 'people'); }
+      else if (k === 'people') show('together:friends');
+      else if (k === 'q') { s._ppQ = a || ''; show('together:friends'); }
+      else if (k === 'gjoin') show('together:groups', 'gjoin');
       else if (k === 'friend') show('together', 'friend:' + (a || 'anya'));
       else if (k === 'group') show('together', 'group:' + (a || 'run'));
       else if (k === 'gedit') { draftFor(s, a || 'new'); show('together', 'gedit:' + (a || 'new')); }
@@ -609,8 +654,24 @@
       const say = (msg) => { s._ppMsg = msg; redraw(flow); };
       switch (act) {
         case 'pp-profile': keep(flow); syncTabs(flow); open(flow, 'profile', arg === 'push' ? 'push' : ''); return true;
-        case 'pp-together': open(flow, 'together', arg === 'push' ? 'push' : ''); return true;
-        case 'pp-people': open(flow, 'people', arg === 'push' ? 'push' : ''); return true;
+        case 'pp-together': if (arg !== 'push') s._ppTab = 'morning'; open(flow, 'together', arg === 'push' ? 'push' : ''); return true;
+        case 'pp-people': {
+          const st = nav(s);
+          if ((st[st.length - 1] || '').startsWith('together')) { this.on(flow, 'pp-tab', 'friends'); return true; }
+          open(flow, 'together:friends', arg === 'push' ? 'push' : '');
+          return true;
+        }
+        case 'pp-tfriends': open(flow, 'together:friends', 'push'); return true;
+        case 'pp-tgroups': open(flow, 'together:groups', 'push'); return true;
+        case 'pp-gcode': open(flow, 'gjoin', 'push'); return true;
+        /* Вкладки «Вставай вместе» меняются на месте, без анимации, прокрутка — к началу. */
+        case 'pp-tab': {
+          const st = nav(s);
+          s._ppTab = arg;
+          if ((st[st.length - 1] || '').startsWith('together')) st[st.length - 1] = 'together:' + arg; else st.push('together:' + arg);
+          draw(flow, 'together:' + arg, '');
+          return true;
+        }
         case 'pp-friend': open(flow, 'friend:' + arg, 'push'); return true;
         case 'pp-group': open(flow, 'group:' + arg, 'push'); return true;
         case 'pp-back': keepDraft(flow); back(flow); return true;
@@ -687,7 +748,7 @@
         case 'pp-ginv': open(flow, 'ginv:' + arg, 'push'); return true;
         case 'pp-gicon': keepDraft(flow); s._ppDraft.icon = arg; redraw(flow); return true;
         case 'pp-gcolor': keepDraft(flow); s._ppDraft.c = +arg; redraw(flow); return true;
-        case 'pp-ggoal': keepDraft(flow); s._ppDraft.goal = arg === 'none' ? null : +arg; redraw(flow); return true;
+        case 'pp-ggoal': keepDraft(flow); s._ppDraft.goal = s._ppDraft.goal == null ? 420 : null; redraw(flow); return true;
         case 'pp-gm': {
           keepDraft(flow);
           const d = s._ppDraft;
@@ -738,7 +799,7 @@
           }
           if (!og) return true;
           const g = join(flow, og);
-          if (nav(s)[nav(s).length - 1].startsWith('gedit')) swap(flow, 'group:' + g.id); else open(flow, 'group:' + g.id, 'push');
+          if (/^(gedit|gjoin)/.test(nav(s)[nav(s).length - 1])) swap(flow, 'group:' + g.id); else open(flow, 'group:' + g.id, 'push');
           syncTabs(flow);
           return true;
         }

@@ -53,7 +53,7 @@
 .ap-alarm-main small{display:block;font-size:13.5px;font-weight:600;color:var(--mut)}
 .ap-alarm-main b{display:block;font-family:var(--disp);font-stretch:112%;font-variation-settings:'wdth' 112;font-weight:800;font-size:44px;letter-spacing:-1.4px;line-height:1.12;font-variant-numeric:tabular-nums;transition:color .2s}
 /* Дни буквами и время до звонка. */
-.al-when{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px;min-height:30px}
+.al-when{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px;min-height:30px}
 .al-days{display:flex;gap:3px;flex:none}
 .al-days i{position:relative;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:11.5px;font-weight:700;color:var(--mut);background:var(--card2);transition:background .2s,color .2s}
 .ap-alarm.on .al-days i.on{background:var(--y);color:#0D0D0F}
@@ -234,7 +234,7 @@
 .phone.instant .ap-chart-svg *{animation:none}
 .ap-ch{position:relative;margin:0 -4px}
 .ap-ch.scrub .gd,.ap-ch.scrub .sel{opacity:1}
-.ap-tip{position:absolute;transform:translate(-50%,calc(-100% - 14px));display:grid;gap:1px;padding:6px 10px 7px;border-radius:12px;background:var(--btn);color:var(--btn-ink);text-align:center;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 8px 18px -8px rgba(0,0,0,.45)}
+.ap-tip{position:absolute;left:0;top:0;will-change:transform;transform:translate(-50%,calc(-100% - 14px));display:grid;gap:1px;padding:6px 10px 7px;border-radius:12px;background:var(--btn);color:var(--btn-ink);text-align:center;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 8px 18px -8px rgba(0,0,0,.45)}
 .ap-ch.scrub .ap-tip{opacity:1}
 .ap-tip small{font-size:11px;font-weight:600;opacity:.7}
 .ap-tip b{font-size:15px;font-weight:750;font-variant-numeric:tabular-nums}
@@ -395,17 +395,61 @@
 .bd-count b{position:relative;font-family:var(--disp);font-stretch:118%;font-variation-settings:'wdth' 118;font-weight:850;font-size:28px;color:#0D0D0F}
 .bd-count.none>svg path{fill:var(--card2);stroke:var(--line);filter:none}
 .bd-count.none b{color:var(--mut)}
-.bd-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.bd{border-radius:22px;background:var(--card);box-shadow:var(--elev);padding:18px 12px 16px;display:grid;justify-items:center;align-content:start;gap:4px;text-align:center}
-.bd b{margin-top:6px;font-size:15px;font-weight:700;letter-spacing:-.2px}
-.bd small{font-size:12.5px;line-height:1.3;color:var(--mut)}
+/* Значки по редкости: обычный — серебро, редкий — синий, эпический — фиолетовый, легендарный — золото со свечением, мифический — переливается. */
+.t-common{--t1:#F2F2F5;--t2:#A9A9B2;--tk:#2C2C30;--tc:#AEAEB6}
+.t-rare{--t1:#7FD4FF;--t2:#0A7AFF;--tk:#fff;--tc:#3FA2FF}
+.t-epic{--t1:#D29BFF;--t2:#7D3FE0;--tk:#fff;--tc:#B47BFF}
+.t-legend{--t1:#FFE680;--t2:#F59E00;--tk:#3A2600;--tc:#FFB800}
+.t-myth{--t1:#FF7AA8;--t2:#7A5CFF;--tk:#fff;--tc:#FF6FB5}
+.bd-sum{display:grid;justify-items:center;gap:4px;padding:18px 16px 16px;text-align:center}
+.bd-sum>b{font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:840;font-size:34px;letter-spacing:-.8px;line-height:1.05}
+.bd-sum>b u{text-decoration:none;font-size:18px;font-weight:700;color:var(--mut)}
+.bd-sum>small{font-size:13.5px;color:var(--mut2)}
+.bd-tiers{display:grid;gap:8px;width:100%;margin-top:14px}
+.bd-tiers span{display:grid;grid-template-columns:96px minmax(0,1fr) 40px;align-items:center;gap:10px;min-width:0;text-align:left}
+.bd-tiers i{display:block;width:100%;height:6px;border-radius:3px;background:var(--card2);overflow:hidden;position:relative}
+.bd-tiers i::after{content:'';position:absolute;inset:0 auto 0 0;width:calc(var(--p) * 100%);border-radius:3px;background:linear-gradient(90deg,var(--t1),var(--t2))}
+.bd-tiers small{font-size:13px;font-weight:650;color:var(--tc);white-space:nowrap}
+.bd-tiers b{justify-self:end;font-size:13px;font-weight:750;color:var(--mut2);font-variant-numeric:tabular-nums}
+.bd-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;color:var(--tc)}
+.bd-h span{font-size:13.5px;font-weight:500;color:var(--mut)}
+.bd-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.bd{position:relative;border-radius:22px;background:var(--card);box-shadow:var(--elev);padding:14px 6px 12px;display:grid;justify-items:center;align-content:start;gap:3px;text-align:center;color:var(--ink);overflow:hidden;transition:transform .15s}
+.bd:active{transform:scale(.96)}
+.bd b{max-width:100%;margin-top:8px;font-size:13px;font-weight:700;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bd small{font-size:11.5px;font-weight:600;color:var(--mut);white-space:nowrap;font-variant-numeric:tabular-nums}
 .bd:not(.on) b{color:var(--mut2)}
-.bd-hex{position:relative;width:62px;height:68px;display:grid;place-items:center}
+.bd.on.t-legend,.bd.on.t-myth{box-shadow:var(--elev),inset 0 0 0 1.5px color-mix(in oklab,var(--tc) 55%,transparent)}
+.bd-hex{position:relative;width:var(--s,62px);height:calc(var(--s,62px) * 1.1);display:grid;place-items:center;font-style:normal}
 .bd-hex>svg:first-child{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .bd-hex>svg:first-child path{fill:var(--card2);stroke:var(--line);stroke-width:2.5;stroke-linejoin:round}
 .bd-hex .ic{position:relative;color:var(--mut)}
-.bd-hex.on>svg:first-child path{fill:#FFC62B;stroke:#E8A900}
-.bd-hex.on .ic{color:#0D0D0F}
+.bd-q{position:relative;font-size:calc(var(--s,62px) * .36);font-weight:850;color:var(--mut)}
+.bd-hex.on{background:linear-gradient(160deg,var(--t1),var(--t2));-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 66'%3E%3Cpath d='M30 3.5 55.5 18v30L30 62.5 4.5 48V18z' stroke='%23000' stroke-width='5' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% 100% no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 66'%3E%3Cpath d='M30 3.5 55.5 18v30L30 62.5 4.5 48V18z' stroke='%23000' stroke-width='5' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% 100% no-repeat}
+.bd-hex.on>svg:first-child{display:none}
+.bd-hex.on .ic{color:var(--tk)}
+/* Свечение легендарных и мифических — пятном позади значка (маска шестиугольника срезала бы тень). */
+.bd.on.t-legend::before,.bd.on.t-myth::before,.bd-one.on.t-legend::before,.bd-one.on.t-myth::before{content:'';position:absolute;left:50%;top:6px;width:96px;height:96px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,color-mix(in oklab,var(--tc) 45%,transparent),transparent);pointer-events:none}
+.bd-one{position:relative}
+.bd-one.on.t-legend::before,.bd-one.on.t-myth::before{top:0;width:190px;height:190px}
+.bd-hex.on.t-myth{background:linear-gradient(120deg,#FF7AA8,#FFB86B,#7AE3FF,#7A5CFF,#FF7AA8);background-size:300% 100%;animation:bd-shine 4s linear infinite}
+.bd-hex.on::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.45) 45%,transparent 60%);transform:translateX(-120%);animation:bd-glint 3.6s ease-in-out infinite}
+.bd-hex.on.t-common::after,.bd-hex.on.t-rare::after{animation:none;display:none}
+@keyframes bd-shine{to{background-position:300% 0}}
+@keyframes bd-glint{0%,55%{transform:translateX(-120%)}85%,100%{transform:translateX(120%)}}
+@media (prefers-reduced-motion:reduce){.bd-hex.on.t-myth,.bd-hex.on::after{animation:none}}
+/* Один значок крупно. */
+.bd-one{display:grid;justify-items:center;gap:6px;padding:8px 20px 28px;text-align:center}
+.bd-one>.bd-hex{margin:6px 0 8px}
+.bd-tag{display:inline-flex;align-items:center;height:24px;padding:0 11px;border-radius:12px;background:color-mix(in oklab,var(--tc) 18%,transparent);color:var(--tc);font-size:12.5px;font-weight:750;letter-spacing:.2px}
+.bd-one>b{margin-top:6px;font-family:var(--disp);font-stretch:112%;font-variation-settings:'wdth' 112;font-weight:820;font-size:25px;letter-spacing:-.5px}
+.bd-one>p{margin:0;max-width:300px;font-size:15px;line-height:1.4;color:var(--mut2);text-wrap:balance}
+.bd-got{display:inline-flex;align-items:center;gap:5px;height:28px;margin-top:8px;padding:0 12px;border-radius:14px;background:rgba(48,209,88,.15);color:#30D158;font-size:13.5px;font-weight:700}
+.bd-prog{width:200px;height:8px;margin-top:12px;border-radius:4px;background:var(--card2);overflow:hidden}
+.bd-prog i{display:block;width:calc(var(--p) * 100%);height:100%;border-radius:4px;background:linear-gradient(90deg,var(--t1),var(--t2))}
+.bd-pn{font-size:13px;font-weight:650;color:var(--mut2);font-variant-numeric:tabular-nums}
+.bd-pct{margin:6px 0 14px;font-size:13px;color:var(--mut)}
+.bd-one>.ap-btn{width:100%}
 
 /* Настройки: подарок другу, виджеты, подпись внизу. */
 .ap-gift{display:flex;align-items:center;gap:14px;width:100%;padding:16px;text-align:left;color:#0D0D0F;background:linear-gradient(135deg,#FFF1BE 0%,#FFD24A 100%);box-shadow:0 14px 26px -20px rgba(255,170,0,.9)}

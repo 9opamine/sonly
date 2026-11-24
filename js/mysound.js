@@ -5,7 +5,7 @@
   'use strict';
   const { ic, esc, pad } = Sonly;
   const RATE = 22050, REC_MAX = 30, CLIP_MAX = 60, BARS = 56, DB = 'sonly-sounds', STORE = 'sounds';
-  const COLOR = { mic: '#FF3B30', file: '#0A84FF' };
+  const COLOR = { mic: '#FF3B30', file: '#0A84FF', song: '#FA2D48' };
 
   let list = [];       // [{ id, name, kind: 'mic'|'file', rate, pcm: Int16Array, at }]
   let loaded = false;
@@ -248,6 +248,79 @@
     requestAnimationFrame(loop);
   }
 
+
+  /* ── Музыка: поиск по каталогу Apple и отрывок песни ───────
+     Каталог — открытый поиск iTunes: десятки миллионов песен, без ключа и без скачивания. Каждая песня даёт отрывок
+     в 30 секунд (обычно это припев); его режут, как в «Историях»: окно 10, 15 или 30 секунд двигается по волне.
+     В настоящем приложении — Apple Music через MusicKit: целые песни у тех, у кого есть подписка. */
+  const SUGG = ['Here Comes the Sun', 'Good Morning', 'Wake Me Up', 'Walking on Sunshine', 'Beautiful Day', 'Lovely Day', 'Mr. Blue Sky', 'Утро'];
+  const LENS = [10, 15, 30];
+  let found = { q: '', list: [], st: 'idle' };
+  let qTimer = 0;
+  let pv = null;       // { i, audio } — играет отрывок в результатах поиска
+  /** Магазин поиска по языку телефона: украинский — UA, польский — PL, немецкий — DE, остальные — US (там больше всего песен). */
+  const store = () => ({ uk: 'UA', pl: 'PL', de: 'DE', fr: 'FR', es: 'ES', it: 'IT' }[(Sonly.i18n && Sonly.i18n.lang !== 'ru' ? Sonly.i18n.lang : navigator.language || 'en').slice(0, 2)] || 'US');
+  function stopPv(flow) {
+    if (!pv) return;
+    try { pv.audio.pause(); } catch (e) { /* уже остановлен */ }
+    pv = null;
+    if (flow) paintRes(flow);
+  }
+  async function search(flow, q) {
+    found = { q, list: [], st: 'load' };
+    paintRes(flow);
+    try {
+      const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=25&country=${store()}`);
+      if (!r.ok) throw new Error(String(r.status));
+      const j = await r.json();
+      if (found.q !== q) return;
+      found = { q, st: 'ok', list: (j.results || []).filter((x) => x.previewUrl && x.trackName).map((x) => ({ title: x.trackName, artist: x.artistName || '', art: (x.artworkUrl100 || '').replace('100x100bb', '200x200bb'), url: x.previewUrl })) };
+    } catch (e) {
+      if (found.q === q) found = { q, list: [], st: 'err' };
+    }
+    paintRes(flow);
+  }
+  function paintRes(flow) {
+    const el = flow.sheets.querySelector('.js-msres');
+    if (el) el.innerHTML = musicList(flow.state);
+  }
+  function musicList(s) {
+    const q = ((s._my && s._my.q) || '').trim();
+    if (!q) return `<h3>Для утра</h3><div class="ms-sugg">${SUGG.map((x) => `<button data-act="ms-qset:${esc(x)}">${esc(x)}</button>`).join('')}</div>
+      <p class="ap-note ms-src">${ic('music', 14, 2.4)} Каталог Apple Music — миллионы песен. Ничего не скачивается: берём отрывок в 30 секунд.</p>`;
+    if (found.q !== q || found.st === 'load') return `<div class="ap-card ap-list ms-songs wait">${Array.from({ length: 6 }, () => '<div class="ap-row ms-song"><i class="ms-cover"></i><span><i class="ms-sk"></i><i class="ms-sk s"></i></span></div>').join('')}</div>`;
+    if (found.st === 'err') return `<div class="ms-empty"><i class="ms-big" style="--c:#FA2D48">${ic('wifi-off', 38, 2.2)}</i><b>Поиск не открылся</b><p>Проверь интернет и попробуй ещё раз.</p><button class="ms-retry" data-act="ms-qset:${esc(q)}">Повторить</button></div>`;
+    if (!found.list.length) return `<div class="ms-empty"><i class="ms-big" style="--c:#FA2D48">${ic('search-x', 38, 2.2)}</i><b>Ничего не нашли</b><p>Попробуй название песни или исполнителя по-другому.</p></div>`;
+    return `<div class="ap-card ap-list ms-songs">${found.list.map((x, i) => `<div class="ap-row ms-song"><button class="ms-pick" data-act="ms-song:${i}" aria-label="Выбрать: ${esc(x.title)} — ${esc(x.artist)}"></button>
+      <img class="ms-cover" src="${esc(x.art)}" alt="" loading="lazy"><span><b>${esc(x.title)}</b><small>${esc(x.artist)}</small></span>
+      <button class="ms-pv${pv && pv.i === i ? ' on' : ''}" data-act="ms-pv:${i}" aria-label="${pv && pv.i === i ? 'Остановить' : `Послушать: ${esc(x.title)}`}">${Sonly.si(pv && pv.i === i ? 'pause' : 'play', 16)}</button></div>`).join('')}</div>
+      <p class="ap-note ms-src">Нажми на песню, чтобы выбрать кусок.</p>`;
+  }
+  /** Песня выбрана: отрывок с серверов Apple → волна; окно сразу ставим на самое громкое место (обычно припев). */
+  async function fromSong(flow, x) {
+    const s = flow.state;
+    stopPv();
+    setMode(flow, 'load');
+    let ab = null;
+    try {
+      const raw = await (await fetch(x.url)).arrayBuffer();
+      const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+      try { ab = await decode(new OAC(1, 1, RATE), raw.slice(0)); } catch (e) { ab = await decode(Sonly.sound.ctx(), raw.slice(0)); }
+    } catch (e) { ab = null; }
+    if (!s._my || s._my.mode !== 'load') return;
+    if (!ab || ab.length < ab.sampleRate) { setMode(flow, 'bad', 'song'); return; }
+    const data = mono(ab), total = data.length / ab.sampleRate, len = Math.min(15, total);
+    /* Громкость по полусекундам — и окно той длины, где громче всего. */
+    const step = Math.floor(ab.sampleRate / 2), e = [];
+    for (let i = 0; i < data.length; i += step) { let m = 0; for (let j = i; j < Math.min(data.length, i + step); j += 8) m += data[j] * data[j]; e.push(m); }
+    const w = Math.max(1, Math.round(len * 2));
+    let best = 0, bestAt = 0;
+    for (let i = 0; i + w <= e.length; i++) { let sum = 0; for (let j = i; j < i + w; j++) sum += e[j]; if (sum > best) { best = sum; bestAt = i; } }
+    const a = Math.min(bestAt / 2, total - len) / total;
+    draft = { data, rate: ab.sampleRate, a, b: a + len / total, name: `${x.title} — ${x.artist}`.slice(0, 40), loud: false, kind: 'song', art: x.art, artist: x.artist, title: x.title };
+    setMode(flow, 'edit');
+  }
+
   /* ── Сохранение и удаление ───────────────────────────────── */
 
   async function save(flow) {
@@ -255,7 +328,7 @@
     if (!d) return;
     stopPrev();
     const field = flow.sheets.querySelector('.js-msname');
-    const name = ((field && field.value) || d.name || '').trim().slice(0, 24) || nextName('Мой звук');
+    const name = ((field && field.value) || d.name || '').trim().slice(0, d.kind === 'song' ? 40 : 24) || nextName('Мой звук');
     const s0 = Math.floor(d.a * d.data.length), s1 = Math.floor(d.b * d.data.length);
     const seg = resample(d.data.subarray(s0, s1), d.rate, RATE), g = d.loud ? gainOf(seg) : 1, fade = Math.floor(RATE * 0.02);
     const pcm = new Int16Array(seg.length);
@@ -265,7 +338,7 @@
       if (i > seg.length - fade) v *= (seg.length - i) / fade;
       pcm[i] = Math.round(clamp(v, -1, 1) * 32767);
     }
-    const x = { id: d.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, kind: d.kind, rate: RATE, pcm, at: d.at || Date.now() };
+    const x = { id: d.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, kind: d.kind, rate: RATE, pcm, at: d.at || Date.now(), ...(d.kind === 'song' ? { art: d.art, artist: d.artist, title: d.title } : {}) };
     const i = list.findIndex((y) => y.id === x.id);
     if (i < 0) list.push(x); else list[i] = x;
     try { await tx('readwrite', (st) => st.put({ ...x, pcm: pcm.buffer.slice(0) })); } catch (e) { /* без хранилища — до закрытия страницы */ }
@@ -283,6 +356,7 @@
   /** Возврат к списку звуков, откуда пришли. picked — новый звук, его сразу выбираем (и он звучит, как при выборе из списка). */
   function done(flow, picked) {
     const s = flow.state, back = (s._my && s._my.back) || 'set-snd';
+    stopPv();
     stopPrev();
     if (rec) endRec();
     s._my = null;
@@ -307,8 +381,8 @@
     K().openPage(flow, 'mysnd', mode, 'push');
   }
   const bars = (vals) => `<div class="ms-bars">${vals.map((h) => `<i style="--h:${h.toFixed(3)}"></i>`).join('')}</div>`;
-  const tile = (kind, size = 22) => `<i class="ap-row-i c" style="--c:${COLOR[kind] || COLOR.mic}">${Sonly.si(kind === 'file' ? 'folder' : 'mic', size)}</i>`;
-  const empty = (kind, title, note) => `<div class="ms-empty"><i class="ms-big" style="--c:${COLOR[kind]}">${Sonly.si(kind === 'file' ? 'folder' : 'mic', 40)}</i><b>${title}</b><p>${note}</p></div>`;
+  const tile = (kind, size = 22, art = '') => (kind === 'song' && art ? `<i class="ap-row-i ms-art"><img src="${esc(art)}" alt=""></i>` : `<i class="ap-row-i c" style="--c:${COLOR[kind] || COLOR.mic}">${kind === 'song' ? ic('music', size - 4, 2.3) : Sonly.si(kind === 'file' ? 'folder' : 'mic', size)}</i>`);
+  const empty = (kind, title, note) => `<div class="ms-empty"><i class="ms-big" style="--c:${COLOR[kind]}">${kind === 'song' ? ic('music', 38, 2.2) : Sonly.si(kind === 'file' ? 'folder' : 'mic', 40)}</i><b>${title}</b><p>${note}</p></div>`;
 
   /** Пример для снимков экрана (?sheet=page-mysnd.demo): восемь секунд «голоса» — нарастающие слоги. */
   function demoDraft() {
@@ -331,18 +405,26 @@
     if (mode === 'load') return ['Свой звук', `<div class="ap-card ms-stage load"><div class="ms-time"><b>Открываем…</b></div>${bars(Array(BARS).fill(0))}</div>`, '', back];
     if (mode === 'deny') return ['Запись', empty('mic', 'Нет доступа к микрофону', 'Разреши микрофон для этой страницы или выбери готовый файл.'), '<button class="ap-btn" data-act="ms-file">Выбрать файл</button>', back];
     if (mode === 'nomic') return ['Запись', empty('mic', 'Здесь записать не выйдет', 'Микрофон недоступен. Выбери готовый звук из файлов.'), '<button class="ap-btn" data-act="ms-file">Выбрать файл</button>', back];
+    if (mode === 'music') {
+      return ['Музыка', `<div class="ms-q${m.q ? ' has' : ''}">${ic('search', 18, 2.4)}<input class="js-msq" type="search" value="${esc(m.q || '')}" placeholder="Песня или исполнитель" maxlength="80" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Поиск песни"><button class="ms-qx" data-act="ms-qx" aria-label="Очистить поиск">${ic('x', 13, 3.2)}</button></div>
+        <div class="js-msres">${musicList(s)}</div>`, '', back];
+    }
+    if (mode === 'bad' && m.why === 'song') return ['Музыка', empty('song', 'Песня не загрузилась', 'Проверь интернет и выбери её ещё раз.'), '<button class="ap-btn" data-act="ms-music:">К поиску</button>', back];
     if (mode === 'bad') return ['Свой звук', empty('file', m.why === 'big' ? 'Файл слишком большой' : 'Этот файл не открыть', m.why === 'big' ? 'Подойдёт файл до 40 МБ.' : 'Подойдут mp3, m4a и wav.'), '<button class="ap-btn" data-act="ms-file">Выбрать другой</button>', back];
     /* edit: волна целиком, жёлтая рамка — то, что будет звонить. */
     const d = draft;
     if (!d) return ['Свой звук', empty('mic', 'Звук не найден', 'Вернись к списку и выбери снова.'), '', back];
     const total = d.data.length / d.rate;
-    return ['Свой звук', `<div class="ap-card ms-stage edit"><div class="ms-time"><b class="js-msl">${fmt((d.b - d.a) * total)}</b><span class="js-msr">${fmt(d.a * total)} – ${fmt(d.b * total)}</span></div>
+    const song = d.kind === 'song', len = Math.round((d.b - d.a) * total);
+    const head = song ? `<div class="ms-songhead"><img class="ms-cover lg" src="${esc(d.art)}" alt=""><span><b>${esc(d.title)}</b><small>${esc(d.artist)}</small></span></div>` : '';
+    const lens = song ? `<div class="ap-seg sm ms-lens" role="radiogroup" aria-label="Длина куска">${LENS.filter((n) => n <= Math.round(total)).map((n) => `<button class="${len === n ? 'on' : ''}" data-act="ms-len:${n}" role="radio" aria-checked="${len === n}">${n} с</button>`).join('')}</div>` : '';
+    return [song ? 'Кусок песни' : 'Свой звук', `${head}<div class="ap-card ms-stage edit"><div class="ms-time"><b class="js-msl">${fmt((d.b - d.a) * total)}</b><span class="js-msr">${fmt(d.a * total)} – ${fmt(d.b * total)}</span></div>
         <div class="ms-wave js-wave" style="--a:${d.a};--b:${d.b};--p:${d.a}">${bars(peaks(d.data, BARS))}<i class="ms-dim l"></i><i class="ms-dim r"></i>
           <div class="ms-sel"><b class="ms-h l">${ic('chevron-left', 14, 3.4)}</b><b class="ms-h r">${ic('chevron-right', 14, 3.4)}</b></div><i class="ms-head"></i></div>
-        <p class="ms-hint">${total > CLIP_MAX ? `Двигай края — звонить будет до ${CLIP_MAX} секунд` : 'Двигай края, чтобы обрезать'}</p></div>
+        ${lens}<p class="ms-hint">${song ? 'Двигай рамку по песне или тяни за края' : total > CLIP_MAX ? `Двигай края — звонить будет до ${CLIP_MAX} секунд` : 'Двигай края, чтобы обрезать'}</p></div>
       <div class="ms-ctl"><button class="ms-play" data-act="ms-play" aria-label="Прослушать">${Sonly.si('play', 30)}</button></div>
       <div class="ap-card ap-list">
-        <label class="ap-row ms-name"><i class="ap-row-i">${ic('pencil', 16, 2.2)}</i><input class="js-msname" value="${esc(d.name)}" maxlength="24" placeholder="Название" aria-label="Название звука" autocomplete="off"></label>
+        <label class="ap-row ms-name"><i class="ap-row-i">${ic('pencil', 16, 2.2)}</i><input class="js-msname" value="${esc(d.name)}" maxlength="${song ? 40 : 24}" placeholder="Название" aria-label="Название звука" autocomplete="off"></label>
         <div class="ap-row"><i class="ap-row-i">${Sonly.si('volume')}</i><span>Сделать громче</span><button class="ap-tg sm${d.loud ? ' on' : ''}" data-act="ms-loud" role="switch" aria-checked="${d.loud}" aria-label="Сделать громче"></button></div>
       </div>
       ${d.id ? `<button class="ms-del" data-act="ms-del">${ic('trash-2', 17, 2.2)}Удалить звук</button>` : ''}`,
@@ -351,6 +433,20 @@
 
   /** Перетаскивание краёв: ближний к пальцу край едет за ним; кусок — от секунды до минуты. */
   function mount(flow) {
+    const s = flow.state, q = flow.sheets.querySelector('.js-msq');
+    if (q) {
+      /* Страница открыта сразу (снимок, ссылка): запоминаем, куда вернуться. */
+      if (!s._my) s._my = { back: 'set-snd', mode: 'music', q: '' };
+      q.addEventListener('input', () => {
+        s._my.q = q.value;
+        q.parentElement.classList.toggle('has', !!q.value);
+        clearTimeout(qTimer);
+        const v = q.value.trim();
+        if (!v) { found = { q: '', list: [], st: 'idle' }; paintRes(flow); return; }
+        qTimer = setTimeout(() => search(flow, v), 380);
+      });
+      q.addEventListener('keydown', (e) => { if (e.key === 'Enter') { clearTimeout(qTimer); q.blur(); if (q.value.trim() && found.q !== q.value.trim()) search(flow, q.value.trim()); } });
+    }
     const w = flow.sheets.querySelector('.js-wave'), d = draft;
     const field = flow.sheets.querySelector('.js-msname');
     if (field && d) field.addEventListener('input', () => { d.name = field.value; });
@@ -368,30 +464,35 @@
     const move = (ev) => {
       if (!side) return;
       const x = at(ev);
+      if (side === 'move') { const L = d.b - d.a; d.a = clamp(x - grab, 0, 1 - L); d.b = d.a + L; paint(); return; }
       if (side === 'a') d.a = clamp(x, Math.max(0, d.b - maxL), d.b - minL);
       else d.b = clamp(x, d.a + minL, Math.min(1, d.a + maxL));
       paint();
     };
+    let grab = 0;
     w.addEventListener('pointerdown', (ev) => {
       ev.stopPropagation();
       stopPrev();
-      const x = at(ev);
+      const x = at(ev), edge = 14 / w.getBoundingClientRect().width;
+      /* Внутри рамки и не у края — двигаем всю рамку; иначе — ближний край. */
+      if (x > d.a + edge && x < d.b - edge) { side = 'move'; grab = x - d.a; w.classList.add('drag', 'move'); try { w.setPointerCapture(ev.pointerId); } catch (e) { /* без захвата тоже работает */ } return; }
       side = Math.abs(x - d.a) <= Math.abs(x - d.b) ? 'a' : 'b';
       w.classList.add('drag', side);
       try { w.setPointerCapture(ev.pointerId); } catch (e) { /* без захвата тоже работает */ }
       move(ev);
     });
     w.addEventListener('pointermove', move);
-    const up = () => { side = null; w.classList.remove('drag', 'a', 'b'); };
+    const up = () => { side = null; w.classList.remove('drag', 'a', 'b', 'move'); };
     w.addEventListener('pointerup', up);
     w.addEventListener('pointercancel', up);
   }
 
   /** Раздел «Свои» в списке звуков. act — что делает выбор строки там, где список открыт (ed-snd или set-snd). */
-  const mineRows = (cur, act) => list.map((x) => `<div class="ap-row ap-snd my${cur === key(x) ? ' on' : ''}"><button class="ms-pick" data-act="${act}:${key(x)}" aria-label="${esc(x.name)}"></button>${tile(x.kind)}<span>${esc(x.name)}</span><em>${fmt(dur(x))}</em><b class="ap-radio">${ic('check', 13, 3.4)}</b><button class="ms-more" data-act="ms-edit:${x.id}:${act}" aria-label="Изменить «${esc(x.name)}»">${ic('ellipsis', 18, 2.6)}</button></div>`).join('');
+  const mineRows = (cur, act) => list.map((x) => `<div class="ap-row ap-snd my${cur === key(x) ? ' on' : ''}"><button class="ms-pick" data-act="${act}:${key(x)}" aria-label="${esc(x.name)}"></button>${tile(x.kind, 22, x.art)}<span class="ms-nm"><b>${esc(x.kind === 'song' && x.title ? x.title : x.name)}</b>${x.kind === 'song' && x.artist ? `<small>${esc(x.artist)}</small>` : ''}</span><em>${fmt(dur(x))}</em><b class="ap-radio">${ic('check', 13, 3.4)}</b><button class="ms-more" data-act="ms-edit:${x.id}:${act}" aria-label="Изменить «${esc(x.name)}»">${ic('ellipsis', 18, 2.6)}</button></div>`).join('');
   function rows(cur, act) {
     /* Обёртка без своей коробки: список, открытый раньше, чем звуки прочитались с телефона, дорисуется сам. */
-    return `<h3>Свои</h3><div class="ap-card ap-list"><div class="ms-mine" data-cur="${esc(cur || '')}" data-base="${act}">${mineRows(cur, act)}</div>
+    return `<h3>Музыка</h3><div class="ap-card ap-list"><button class="ap-row tall" data-act="ms-music:${act}"><i class="ap-row-i c" style="--c:${COLOR.song}">${ic('music', 18, 2.3)}</i><span>Найти песню<small>Миллионы песен — без скачивания</small></span>${K().chev()}</button></div>
+      <h3>Свои</h3><div class="ap-card ap-list"><div class="ms-mine" data-cur="${esc(cur || '')}" data-base="${act}">${mineRows(cur, act)}</div>
       <button class="ap-row" data-act="ms-new:${act}"><i class="ap-row-i">${Sonly.si('mic')}</i><span>Записать звук</span>${K().chev()}</button>
       <button class="ap-row" data-act="ms-file:${act}"><i class="ap-row-i">${Sonly.si('folder')}</i><span>Выбрать файл</span>${K().chev()}</button></div>`;
   }
@@ -440,7 +541,61 @@
       }
       case 'ms-keep': K().openPage(flow, 'mysnd', 'edit'); return true;
       case 'ms-del-yes': if (draft) remove(flow, draft.id); return true;
-      case 'ms-back': done(flow, ''); return true;
+      case 'ms-back':
+        /* Из куска песни — назад к результатам поиска, а не к списку звуков. */
+        if (draft && draft.kind === 'song' && !draft.id && s._my) { stopPrev(); draft = null; setMode(flow, 'music'); return true; }
+        done(flow, '');
+        return true;
+      case 'ms-music':
+        if (arg) s._my = { back: arg, q: (s._my && s._my.q) || '' };
+        draft = null;
+        Sonly.sound.unlock();
+        setMode(flow, 'music');
+        return true;
+      case 'ms-qset': {
+        s._my = s._my || { back: 'set-snd', mode: 'music' };
+        s._my.q = arg;
+        const q = flow.sheets.querySelector('.js-msq');
+        if (q) { q.value = arg; q.parentElement.classList.add('has'); }
+        search(flow, arg);
+        return true;
+      }
+      case 'ms-qx': {
+        s._my = s._my || { back: 'set-snd', mode: 'music' };
+        s._my.q = '';
+        found = { q: '', list: [], st: 'idle' };
+        stopPv();
+        const q = flow.sheets.querySelector('.js-msq');
+        if (q) { q.value = ''; q.parentElement.classList.remove('has'); q.focus({ preventScroll: true }); }
+        paintRes(flow);
+        return true;
+      }
+      case 'ms-pv': {
+        const i = +arg, x = found.list[i];
+        if (!x) return true;
+        if (pv && pv.i === i) { stopPv(flow); return true; }
+        stopPv();
+        Sonly.sound.stop();
+        const audio = new Audio(x.url);
+        audio.volume = Math.min(1, (s.volume || 70) / 100);
+        audio.addEventListener('ended', () => { if (pv && pv.audio === audio) stopPv(flow); });
+        audio.play().catch(() => { if (pv && pv.audio === audio) stopPv(flow); });
+        pv = { i, audio };
+        paintRes(flow);
+        return true;
+      }
+      case 'ms-song': { const x = found.list[+arg]; if (x) fromSong(flow, x); return true; }
+      case 'ms-len': {
+        if (!draft) return true;
+        stopPrev();
+        const total = draft.data.length / draft.rate, L = Math.min(1, +arg / total);
+        draft.a = clamp(draft.a, 0, 1 - L);
+        draft.b = draft.a + L;
+        const f = flow.sheets.querySelector('.js-msname');
+        if (f) draft.name = f.value;
+        K().openPage(flow, 'mysnd', 'edit');
+        return true;
+      }
       default: return false;
     }
   }
