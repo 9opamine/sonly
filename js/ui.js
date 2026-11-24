@@ -49,7 +49,7 @@
   const nextRing = (s, now) => s.alarms.map((a) => ({ a, at: nextOf(a, now) })).filter((x) => x.at).sort((x, y) => x.at - y.at)[0];
   const until = (d, now) => {
     const min = Math.max(1, Math.round((d - now) / 60000)), h = Math.floor(min / 60), dd = Math.floor(h / 24);
-    return dd ? `${dd}<u>д</u> ${h % 24}<u>ч</u>` : h ? `${h}<u>ч</u> ${min % 60}<u>мин</u>` : `${min}<u>мин</u>`;
+    return dd ? `${dd}<u data-k="дней·коротко">д</u> ${h % 24}<u>ч</u>` : h ? `${h}<u>ч</u> ${min % 60}<u>мин</u>` : `${min}<u>мин</u>`;
   };
   /* Коротко для плашки под «Зазвонит через»: «сегодня в», «завтра в», «пн,» — чтобы обе плашки всегда стояли в один ряд. */
   const shortWhen = (d, now) => { const k = Math.round((day0(d) - day0(now)) / 864e5); return k === 0 ? 'сегодня в' : k === 1 ? 'завтра в' : ['пн,', 'вт,', 'ср,', 'чт,', 'пт,', 'сб,', 'вс,'][(d.getDay() + 6) % 7]; };
@@ -185,7 +185,7 @@
     const when = range === '7' ? 'неделей раньше' : range === '30' ? 'месяцем раньше' : range === '90' ? 'тремя месяцами раньше' : 'в первые дни', was = (d ? 'чем ' : 'как ') + when;
     const chip = d == null ? '' : !d ? `<em>${ic('equal', 14, 2.6)}так же</em>`
       : `<em class="${d < 0 ? 'good' : 'bad'}">${ic(d < 0 ? 'trending-down' : 'trending-up', 14, 2.6)}${task ? `${d < 0 ? 'быстрее' : 'медленнее'} на ${Math.abs(d)} с` : `на ${Math.abs(d)} мин ${d < 0 ? 'раньше' : 'позже'}`}</em>`;
-    return `<div class="ap-ch-sum"><div><b>${task ? `${Math.round(avg)}<u>с</u>` : fmtMin(Math.round(avg))}</b><small>${task ? 'в среднем на задание' : 'в среднем подъём'}</small></div>${chip ? `<span>${chip}<small>${was}</small></span>` : ''}</div>`;
+    return `<div class="ap-ch-sum"><div><b>${task ? `${Math.round(avg)}<u data-k="секунд·коротко">с</u>` : fmtMin(Math.round(avg))}</b><small>${task ? 'в среднем на задание' : 'в среднем подъём'}</small></div>${chip ? `<span>${chip}<small>${was}</small></span>` : ''}</div>`;
   }
   function chart(list, metric) {
     const task = metric === 'task', vals = list.map((x) => (task ? x.secs : x.wake)), n = vals.length;
@@ -311,7 +311,7 @@
   }
 
   /** Дни недели буквами: включённые подсвечены, сегодняшний — с точкой снизу. */
-  const dayDots = (a, now) => { const t = (now.getDay() + 6) % 7; return `<span class="al-days" role="img" aria-label="${cap(daysText(a.days))}">${DAYS.map((d, k) => `<i class="${a.days.includes(k) ? 'on' : ''}${k === t ? ' now' : ''}">${d[0]}</i>`).join('')}</span>`; };
+  const dayDots = (a, now) => { const t = (now.getDay() + 6) % 7; return `<span class="al-days" role="img" aria-label="${cap(daysText(a.days))}">${DAYS.map((d, k) => `<i class="${a.days.includes(k) ? 'on' : ''}${k === t ? ' now' : ''}" data-ini="${d}">${d[0]}</i>`).join('')}</span>`; };
   const inText = (d, now) => { const min = Math.max(1, Math.round((d - now) / 60000)), h = Math.floor(min / 60), dd = Math.floor(h / 24); return dd ? `через ${dd} д ${h % 24} ч` : h ? `через ${h} ч` : `через ${min} мин`; };
 
   /**
@@ -521,7 +521,7 @@
             <button class="ap-card ap-big" data-act="st-badges"><span class="bd-count${got ? '' : ' none'}"><svg viewBox="0 0 60 66" aria-hidden="true"><path d="${HEX}"/></svg><b>${got}</b></span><small>${pl(got, 'значок', 'значка', 'значков')} из ${bd.length}</small></button></div>
           <div class="ap-duo" data-in style="--i:2">
             <div class="ap-card ap-stat"><i>${ic('sunrise', 20, 2.1)}</i><b>${st.h.length}</b><small>${pl(st.h.length, 'подъём', 'подъёма', 'подъёмов')} всего</small></div>
-            <div class="ap-card ap-stat"><i>${ic('timer', 20, 2.1)}</i><b>${st.h.length ? Math.round(st.h.reduce((a, x) => a + x.secs, 0) / st.h.length) : '—'}<u>${st.h.length ? 'с' : ''}</u></b><small>в среднем на\u00a0задание</small></div></div>
+            <div class="ap-card ap-stat"><i>${ic('timer', 20, 2.1)}</i><b>${st.h.length ? Math.round(st.h.reduce((a, x) => a + x.secs, 0) / st.h.length) : '—'}<u data-k="секунд·коротко">${st.h.length ? 'с' : ''}</u></b><small>в среднем на\u00a0задание</small></div></div>
           ${weekCard(s, st, 3)}
           <div class="ap-card ap-chart" data-in style="--i:4"><div class="ap-card-h">${seg('st-metric', s.metric, [['wake', 'Подъём'], ['task', 'Задание']])}</div>
             ${list.length >= 3 ? chartSum(per, s.metric, s.range) + chart(list, s.metric) : `<div class="ap-empty">${ic('chart-spline', 26, 1.8)}<span>${st.h.length >= 3 ? 'За эти дни мало подъёмов — выбери период длиннее' : 'График появится после трёх подъёмов'}</span></div>`}
@@ -690,7 +690,24 @@
   Sonly.appPreview = (st) => `<div class="ap" data-theme="${sysDark() ? 'dark' : 'light'}"><div class="statusbar"><span>9:41</span><i class="sb-island"></i><span class="sb-right">${SB_ICONS}</span></div>
     <section class="screen">${homeHtml({ data: 'new', shareHidden: true, alarms: [alarmFrom(st)] })}</section><div class="dock">${tabbar('home')}</div><div class="homebar"></div></div>`;
 
-  Sonly.appKit = { taskOf, tic, hm, fmtMin, stats, pl, day0, copy, blank, editor, taskPicker, poolOf, nextRing, dayWord, chev, row, FLAME, keepTop, setTop, shareText, code4, refOf, openPage, soundPicker, badges, hex, bdName, pctStr, TIERS };
+  /** Список значков по редкости: сводка сверху, ниже сетки от обычных к мифическим. act — что делает нажатие на значок. */
+  function badgeList(s, act) {
+    const bd = badges(s), got = bd.filter((b) => b.on).length;
+    const tiers = TIERS.map(([id, one, many]) => ({ id, one, many, list: bd.filter((b) => b.tier === id) }));
+    return `<div class="ap-card bd-sum"><b>${got}<u> из ${bd.length}</u></b><small>Чем реже значок, тем он ярче</small>
+        <div class="bd-tiers">${tiers.map((x) => `<span class="t-${x.id}"><small>${x.many}</small><i style="--p:${(x.list.filter((b) => b.on).length / x.list.length).toFixed(3)}"></i><b>${x.list.filter((b) => b.on).length}/${x.list.length}</b></span>`).join('')}</div></div>
+      ${tiers.map((x) => `<h3 class="bd-h t-${x.id}">${x.many}<span>${x.list.filter((b) => b.on).length} из ${x.list.length}</span></h3>
+        <div class="bd-grid">${x.list.map((b) => `<button class="bd t-${b.tier}${b.on ? ' on' : ''}" data-act="${act}:${b.id}" aria-label="${bdName(b)}${b.on ? '' : ' — ещё не получен'}">${hex(b, 58)}<b>${bdName(b)}</b><small>${!b.on && b.need > 1 ? `${b.cur} из ${b.need}` : `есть у ${pctStr(b.pct)}`}</small></button>`).join('')}</div>`).join('')}`;
+  }
+  /** Один значок крупно: редкость, условие, прогресс и у скольких он есть. foot — кнопка под ним (на отдельном листе). */
+  function badgeOne(b, foot = '') {
+    const t = tierOf(b.tier);
+    return `<div class="bd-one t-${b.tier}${b.on ? ' on' : ''}">${hex(b, 112)}<span class="bd-tag t-${b.tier}">${t[1]}</span>
+        <b>${bdName(b)}</b><p>${b.secret && !b.on ? 'Условие откроется, когда получишь' : b.note}</p>
+        ${b.on ? `<span class="bd-got">${ic('check', 15, 3)}Получен</span>` : b.need > 1 ? `<div class="bd-prog"><i style="--p:${(b.cur / b.need).toFixed(3)}"></i></div><small class="bd-pn">${b.cur} из ${b.need}</small>` : ''}
+        <small class="bd-pct">Есть у ${pctStr(b.pct)} пользователей</small>${foot}</div>`;
+  }
+  Sonly.appKit = { taskOf, tic, hm, fmtMin, stats, pl, day0, copy, blank, editor, taskPicker, poolOf, nextRing, dayWord, chev, row, FLAME, keepTop, setTop, shareText, code4, refOf, openPage, soundPicker, badges, hex, bdName, pctStr, TIERS, badgeList, badgeOne };
 
   Sonly.register({
     id: 'app', name: 'Приложение', cls: 'ap',
@@ -815,25 +832,25 @@
           return true;
         case 'st-badges': {
           /* Значки по редкости: сверху сколько собрано и полоска каждой редкости, ниже — сетки от обычных к мифическим. */
-          const bd = badges(s), got = bd.filter((b) => b.on).length;
-          const tiers = TIERS.map(([id, one, many]) => ({ id, one, many, list: bd.filter((b) => b.tier === id) }));
+          const y = arg === 'back' ? s._bdY || 0 : 0;
           flow.sheet(`<div class="ap-sh-head"><button class="ap-x lg" data-act="sheet-close" aria-label="Закрыть">${ic('x', 20, 2.3)}</button><b>Значки</b><span class="ap-x ghost"></span></div>
-            <div class="ap-sh-body scroll"><div class="ap-card bd-sum"><b>${got}<u> из ${bd.length}</u></b><small>Чем реже значок, тем он ярче</small>
-              <div class="bd-tiers">${tiers.map((x) => `<span class="t-${x.id}"><small>${x.many}</small><i style="--p:${(x.list.filter((b) => b.on).length / x.list.length).toFixed(3)}"></i><b>${x.list.filter((b) => b.on).length}/${x.list.length}</b></span>`).join('')}</div></div>
-            ${tiers.map((x) => `<h3 class="bd-h t-${x.id}">${x.many}<span>${x.list.filter((b) => b.on).length} из ${x.list.length}</span></h3>
-              <div class="bd-grid">${x.list.map((b) => `<button class="bd t-${b.tier}${b.on ? ' on' : ''}" data-act="st-badge:${b.id}" aria-label="${bdName(b)}${b.on ? '' : ' — ещё не получен'}">${hex(b, 58)}<b>${bdName(b)}</b><small>${!b.on && b.need > 1 ? `${b.cur} из ${b.need}` : `есть у ${pctStr(b.pct)}`}</small></button>`).join('')}</div>`).join('')}</div>`, 'ap-sheet bd-sheet');
+            <div class="ap-sh-body scroll">${badgeList(s, 'st-badge')}</div>`, `ap-sheet bd-sheet${arg === 'back' ? ' back' : ''}`);
+          const sc = flow.sheets.querySelector('.scroll');
+          if (sc && y) sc.scrollTop = y;
           return true;
         }
         case 'st-badge': {
-          /* Один значок крупно: редкость, условие, прогресс и у скольких он есть. */
+          /* Один значок крупно. Из списка значков — на том же большом листе, со стрелкой назад к списку; отдельно — нижним листом. */
           const b = badges(s).find((x) => x.id === arg);
           if (!b) return true;
-          const t = tierOf(b.tier), back = flow.sheets.querySelector('.bd-sheet') ? 'st-badges' : flow.sheets.querySelector('[data-pp="profile"]') ? 'pp-profile' : 'sheet-close';
-          flow.sheet(`<div class="pay-grab"></div><div class="bd-one t-${b.tier}${b.on ? ' on' : ''}">${hex(b, 112)}<span class="bd-tag t-${b.tier}">${t[1]}</span>
-              <b>${bdName(b)}</b><p>${b.secret && !b.on ? 'Условие откроется, когда получишь' : b.note}</p>
-              ${b.on ? `<span class="bd-got">${ic('check', 15, 3)}Получен</span>` : b.need > 1 ? `<div class="bd-prog"><i style="--p:${(b.cur / b.need).toFixed(3)}"></i></div><small class="bd-pn">${b.cur} из ${b.need}</small>` : ''}
-              <small class="bd-pct">Есть у ${pctStr(b.pct)} пользователей</small>
-              <button class="ap-btn" data-act="${back}">${back === 'st-badges' ? 'Ко всем значкам' : back === 'pp-profile' ? 'К профилю' : 'Понятно'}</button></div>`, 'ap-low');
+          const list = flow.sheets.querySelector('.bd-sheet .scroll');
+          if (list) {
+            s._bdY = list.scrollTop;
+            flow.sheet(`<div class="ap-sh-head"><button class="ap-x lg" data-act="st-badges:back" aria-label="Ко всем значкам">${ic('chevron-left', 22, 2.4)}</button><b data-k="Значок·награда">Значок</b><span class="ap-x ghost"></span></div>
+              <div class="ap-sh-body scroll bd-page">${badgeOne(b)}</div>`, 'ap-sheet bd-sheet push');
+            return true;
+          }
+          flow.sheet(`<div class="pay-grab"></div>${badgeOne(b, '<button class="ap-btn" data-act="sheet-close">Понятно</button>')}`, 'ap-low');
           return true;
         }
         case 'soon': soon(flow, arg); return true;
@@ -855,7 +872,7 @@
           return true;
         }
         case 'ref-copy': case 'ref-share':
-          shareText(act === 'ref-copy' ? refOf(s) : `sonly — будильник, который нельзя отложить: выключается только заданием. Промокод ${refOf(s)} — −25 % на первый год и 3 дня бесплатно.`, false, (msg) => { s._copied = act === 'ref-copy' && /^Текст/.test(msg) ? 'Код скопирован' : msg; if (s._page && s._page[0] === 'share') openPage(flow, 'share'); });
+          shareText(act === 'ref-copy' ? refOf(s) : (Sonly.i18n ? Sonly.i18n.t : (k, v) => k.replace('{code}', v.code))('sonly — будильник, который нельзя отложить: выключается только заданием. Промокод {code} — −25 % на первый год и 3 дня бесплатно.', { code: refOf(s) }), false, (msg) => { s._copied = act === 'ref-copy' && /^Текст/.test(msg) ? 'Код скопирован' : msg; if (s._page && s._page[0] === 'share') openPage(flow, 'share'); });
           return true;
         case 'msg-topic': {
           /* Тема меняется на месте: набранный текст не пропадает. */
@@ -887,7 +904,10 @@
           if (done === 'keep') return true;
           if (done) {
             const o = TO.get(e, e.task);
-            if ((act === 'to-obj' || act === 'to-all') && !flow.still && TO.sync(flow.sheets, e.task, o)) { const b = flow.sheets.querySelector('.ap-sh-foot .ap-btn'); if (b) b.disabled = !TO.valid(e.task, o); return true; }
+            const foot = () => { const b = flow.sheets.querySelector('.ap-sh-foot .ap-btn'); if (b) b.disabled = !TO.valid(e.task, o); };
+            if ((act === 'to-obj' || act === 'to-all') && !flow.still && TO.sync(flow.sheets, e.task, o)) { foot(); return true; }
+            /* Остальное (количество, сложность, тема) — тоже на месте: предпросмотр не начинается заново. */
+            if (TO.update(flow.sheets, e.task, o)) { foot(); return true; }
             taskSetup(flow, '');
             return true;
           }

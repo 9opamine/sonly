@@ -225,7 +225,20 @@
 button.mo-card:active{transform:scale(.95)}
 .mo-card-sun{position:absolute;left:calc(50% + var(--sx,0%));bottom:calc(-62% + var(--sun,.5) * 28%);width:112%;aspect-ratio:1;margin-left:-56%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,248,214,.98),rgba(255,214,96,.62) 40%,rgba(255,200,80,0) 72%);pointer-events:none}
 .mo-card.night::after{content:'';position:absolute;inset:0 0 45% 0;pointer-events:none;opacity:.85;background-image:radial-gradient(1.3px 1.3px at 18% 34%,#fff 98%,transparent),radial-gradient(1px 1px at 64% 22%,#fff 98%,transparent),radial-gradient(1.4px 1.4px at 82% 46%,#fff 98%,transparent),radial-gradient(1px 1px at 40% 60%,#fff 98%,transparent),radial-gradient(1.1px 1.1px at 90% 12%,#fff 98%,transparent)}
-.mo-card>*:not(.mo-card-sun):not(.mo-land):not(.mo-rec):not(.mo-find-tag){position:relative;z-index:1}
+.mo-card>*:not(.mo-card-sun):not(.mo-land):not(.mo-art):not(.mo-stk):not(.mo-rec):not(.mo-find-tag){position:relative;z-index:1}
+/* Картинка открытки поверх запасного рисунка; находка-стикер — в небе над ней. */
+.mo-card>.mo-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;user-select:none}
+.mo-card>.mo-stk{position:absolute;height:auto;pointer-events:none;user-select:none;transform-origin:50% 50%}
+.mo-card>.mo-stk.flip{transform:scaleX(-1)}
+.mo-card>.mo-stk.arc{-webkit-mask-image:linear-gradient(#000 62%,transparent);mask-image:linear-gradient(#000 62%,transparent)}
+@media (prefers-reduced-motion:no-preference){
+  .mo-big-card .mo-stk.f-balloon,.mo-big-card .mo-stk.f-kite{animation:mo-bob 5.6s ease-in-out infinite}
+  .mo-big-card .mo-stk.f-birds{animation:mo-glide 9s ease-in-out infinite}
+  .mo-big-card .mo-stk.f-shooting,.mo-big-card .mo-stk.f-comet{animation:mo-twinkle 3.2s ease-in-out infinite}
+}
+@keyframes mo-bob{50%{translate:0 -6%}}
+@keyframes mo-glide{50%{translate:6% -3%}}
+@keyframes mo-twinkle{50%{opacity:.72}}
 /* Редкая находка на открытке — искорка в углу; очень редкая — золотая. */
 .mo-card>.mo-find-tag{position:absolute;right:7px;bottom:7px;z-index:2;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.9);color:#B07800;box-shadow:0 2px 6px -2px rgba(0,0,0,.35)}
 .mo-card>.mo-find-tag.top{background:#FFD12E;color:#0D0D0F}

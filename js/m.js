@@ -243,7 +243,7 @@
         const list = ALARM_SETS[c.s.alarms] || ALARM_FULL;
         const t = c.s.task ? taskOf(c.s) : { lu: 'zap' };
         return `${head('Пора настроить твой будильник')}
-          <div class="m-duo" data-in style="--i:1">
+          <div class="m-cmp"><div class="m-duo" data-in style="--i:1">
             <div class="m-duo-col"><b>Обычный будильник</b>
               <div class="m-ph js-lp"><div class="m-ph-scr"><div class="m-ph-now"><small>сейчас</small><b class="js-ln"></b></div>
                 ${list.map(([l, tm]) => `<div class="m-al js-l" data-t="${tm}"><span><small>${l}</small><b>${tm}</b></span><i class="m-tg red"></i></div>`).join('')}</div></div>
@@ -255,7 +255,7 @@
                 <div class="m-party"><span class="m-party-c">${ic('check', 28, 2.8)}</span>${bits(0.6)}</div></div></div>
               <span class="m-duo-cap g">${ic('check', 13, 3.2)}1 звонок</span></div>
           </div>
-          <p class="m-duo-t"><b>Будильник замолчит только после задания.</b>Без повторов и запасных будильников.</p>${cta('Продолжить')}`;
+          <p class="m-duo-t"><b>Будильник замолчит только после задания.</b>Без повторов и запасных будильников.</p></div>${cta('Продолжить')}`;
       },
       /* Оба телефона идут одновременно: слева будильники звонят по очереди и откладываются, справа один звонок закрывается заданием. */
       mount(el, c) {
@@ -360,8 +360,11 @@
         const done = TO.act(t.id, o, act, arg);
         if (!done) return false;
         if (done === 'keep') return true;
-        /* Предметы переключаются на месте, с анимацией; остальные настройки перерисовывают экран. */
-        if ((act === 'to-obj' || act === 'to-all') && !c.still && TO.sync(c.el, t.id, o)) { const b = c.q('.a-cta'); if (b) b.disabled = !TO.valid(t.id, o); return true; }
+        /* Предметы переключаются на месте, с анимацией. */
+        const foot = () => { const b = c.q('.a-cta'); if (b) b.disabled = !TO.valid(t.id, o); };
+        if ((act === 'to-obj' || act === 'to-all') && !c.still && TO.sync(c.el, t.id, o)) { foot(); return true; }
+        /* Количество, сложность, тема — на месте: человек в предпросмотре не начинает упражнение заново. */
+        if (TO.update(c.el, t.id, o)) { foot(); return true; }
         c.flow.rerender();
         return true;
       },
@@ -430,7 +433,7 @@
         const text = !n ? 'Выбери хотя бы один день' : n === 7 ? 'Каждый день' : `${cap(daysText(c.s.days))} · ${n} ${pl(n, 'день', 'дня', 'дней')} в неделю`;
         return `${head('В какие дни звонить?')}
           <div class="a-days-wrap"><span class="m-days-cap${n ? '' : ' none'}">${ic('calendar-days', 15, 2.1)}${text}</span>
-            <div class="a-days">${DAYS.map((d, i) => `<button class="a-day${c.s.days.includes(i) ? ' on' : ''}" data-act="day:${i}"><b>${d[0]}</b><small>${d}</small></button>`).join('')}</div>
+            <div class="a-days">${DAYS.map((d, i) => `<button class="a-day${c.s.days.includes(i) ? ' on' : ''}" data-act="day:${i}"><b data-ini="${d}">${d[0]}</b><small>${d}</small></button>`).join('')}</div>
             <div class="a-presets">${preset('week', '01234', 'Будни')}${preset('all', '0123456', 'Каждый день')}${preset('weekend', '56', 'Выходные')}</div></div>
           ${cta('Продолжить', { need: 'days' })}`;
       },
@@ -516,7 +519,7 @@
             <div class="a-step ok"><i>${ic('check', 16, 3.2)}</i><span>Ты на ногах. День начался.</span></div></div>
           <b class="m-res-every" data-in style="--i:8">${every}</b>
           <div class="a-res-days" data-in style="--i:9"><div>${DAYS.map((d, i) => `<i class="${c.s.days.includes(i) ? 'on' : ''}${i === n.d && c.s.days.includes(i) ? ' next' : ''}">${d}</i>`).join('')}</div></div>
-          <div class="a-card a-res-sign" data-in style="--i:10"><span class="a-cap">Твоё обещание</span><svg viewBox="0 0 342 160"><path d="${c.s.sign || SIGN_DEMO}"/></svg><small>Подписано ${today()}</small></div>
+          <div class="a-card a-res-sign" data-in style="--i:10"><span class="a-cap">Твоё обещание</span><svg viewBox="0 0 342 160"><path d="${c.s.sign || SIGN_DEMO}"/></svg><small>Подписано <span data-v>${today()}</span></small></div>
         </div>${cta('Продолжить', { float: true })}`;
       },
       /* Время докручивается от нынешнего подъёма до нового, затем рисуется стрелка к плану. */
@@ -608,7 +611,11 @@
             <span class="m-done-chip" data-in style="--i:6">${ic('flame', 16, 2.2)}Серия начнётся ${when(c.s)}</span></div>
           <footer class="a-foot" data-in style="--i:8"><button class="a-cta m-open" data-act="open-app">Открыть ${Sonly.logo()}</button></footer>`;
       },
-      mount(el, c) { c.seq([[1150, () => c.q('.js-tg').classList.add('on')], [1350, () => c.q('.m-party').classList.add('go')]]); },
+      mount(el, c) {
+        /* На другом языке вторая строка бывает длиннее («See you tomorrow.»): не влезла в одну строку — шрифт поменьше (после перевода). */
+        requestAnimationFrame(() => { const sp = c.q('.a-done h1 span:nth-child(2)'); if (sp && sp.offsetHeight > parseFloat(getComputedStyle(sp).lineHeight) * 1.5) sp.classList.add('sm'); });
+        c.seq([[1150, () => c.q('.js-tg').classList.add('on')], [1350, () => c.q('.m-party').classList.add('go')]]);
+      },
     },
   };
 

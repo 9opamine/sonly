@@ -346,7 +346,8 @@
    * Возвращает отметки по каждому знаку образца ('ok', 'no', 'cur' — следующий, '' — ещё не набран) и готовность.
    */
   function typed(text, val) {
-    const keep = (ch) => /[a-zа-яё0-9 ]/i.test(ch), low = (ch) => ch.toLowerCase().replace('ё', 'е');
+    const keep = (ch) => /[\p{L}\p{N} ]/u.test(ch);
+    const low = (ch) => { const c = ch.toLowerCase(); if (c === 'ё') return 'е'; const b = c.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); return /^[a-z]$/.test(b) ? b : c; };
     const got = [...val.replace(/\s+/g, ' ').replace(/^ /, '')].filter(keep).map(low);
     const marks = [];
     let j = 0, bad = 0, lastSpace = true, cur = false;
@@ -383,7 +384,7 @@
     quiz: (k) => {
       const q = k.list[Math.min(k.i, k.n - 1)];
       return `<div class="tk-body tk-quiz">${prog(k.n, k.i)}<div class="tk-qcard${k.ok == null && !k.bad.length ? ' new' : ''}"><i class="tk-qglow"></i><span class="tk-flag">${emo(q.flag, 'tk-flagimg')}</span><h2 class="tk-h">${q.q}</h2></div>
-        <div class="tk-ans">${q.opts.map((x, j) => { const cl = k.ok === j ? 'ok' : k.bad.includes(j) ? 'no' : ''; return `<button class="${cl}" data-act="ans:${j}"${k.ok != null || k.bad.includes(j) ? ' disabled' : ''}><i>${cl === 'ok' ? ic('check', 18, 3.4) : cl === 'no' ? ic('x', 18, 3.4) : 'АБВГ'[j]}</i><span>${esc(x)}</span></button>`; }).join('')}</div></div>`;
+        <div class="tk-ans">${q.opts.map((x, j) => { const cl = k.ok === j ? 'ok' : k.bad.includes(j) ? 'no' : ''; return `<button class="${cl}" data-act="ans:${j}"${k.ok != null || k.bad.includes(j) ? ' disabled' : ''}><i>${cl === 'ok' ? ic('check', 18, 3.4) : cl === 'no' ? ic('x', 18, 3.4) : (Sonly.i18n && !['ru', 'uk'].includes(Sonly.i18n.lang) ? 'ABCD' : 'АБВГ')[j]}</i><span>${esc(x)}</span></button>`; }).join('')}</div></div>`;
     },
     pairs: (k) => `<div class="tk-body tk-pairs">${prog(k.n, k.i)}<h2 class="tk-h">${k.i >= k.n ? 'Все пары найдены' : 'Найди пары'}</h2>
         <div class="tk-cards${k.cards.length > 16 ? ' c5' : ''}">${k.cards.map((c) => `<button class="tk-cardx${c.open || c.done ? ' open' : ''}${c.done ? ' done' : ''}${k.just === c.id ? ' flip' : ''}${k.wait && c.open && !c.done ? ' no' : ''}" data-act="card:${c.id}" aria-label="Карточка"><i class="tk-back">${Sonly.mark()}</i>${pic(c.p)}</button>`).join('')}</div></div>`,
@@ -457,7 +458,7 @@
     k.heard = '';
     k.got = [];
     k.eng = S.listen({
-      lang: 'ru-RU',
+      lang: Sonly.i18n ? Sonly.i18n.locale : 'ru-RU',
       onText(list) {
         const m = S.match(k.text, list);
         k.heard = list[0] || '';

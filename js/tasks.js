@@ -36,6 +36,87 @@
     },
   };
 
+  /*
+   * Те же тексты на других языках. Скороговорку не переведёшь — у каждого языка свои, народные; фразы — свои, по смыслу те же.
+   * Первый текст уровня — пример в меню. Язык берётся из интерфейса, и распознаётся речь на нём же.
+   */
+  const BANKS = {
+    en: {
+      phrase: {
+        short: ['Good morning, I am up', 'I am awake and rising', 'A new day has begun', 'Getting up, no excuses', 'Today is my day', 'Awake and full of energy'],
+        mid: ['Today I get up at the first ring', 'I get up because it matters to me', 'The pillow can wait, the day will not', 'A good morning starts with me', 'I am stronger than the urge to sleep'],
+        long: ['Every morning starts with one decision: to get up', 'The earlier I get up, the more I get done today', 'I choose to get up now, not in five minutes', 'Sleep is over, a new day and new plans are ahead'],
+      },
+      tongue: {
+        easy: ['Red lorry, yellow lorry', 'Toy boat, toy boat, toy boat', 'Fresh fried fish, fish fresh fried', 'A proper copper coffee pot'],
+        mid: ['She sells seashells by the seashore', 'Peter Piper picked a peck of pickled peppers', 'How can a clam cram in a clean cream can?', 'I saw Susie sitting in a shoeshine shop'],
+        hard: ['How much wood would a woodchuck chuck if a woodchuck could chuck wood?', 'The sixth sick sheik’s sixth sheep’s sick', 'Betty Botter bought some butter, but she said the butter’s bitter'],
+      },
+    },
+    uk: {
+      phrase: {
+        short: ['Доброго ранку, я встаю', 'Я прокинувся і встаю', 'Новий день почався', 'Встаю без відмовок', 'Сьогодні мій день', 'Я бадьорий і сповнений сил'],
+        mid: ['Сьогодні я встаю з першого дзвінка', 'Я встаю, бо це для мене важливо', 'Подушка почекає, а день — ні', 'Гарний ранок починається з мене', 'Я сильніший за бажання ще поспати'],
+        long: ['Кожен ранок починається з одного рішення — встати', 'Що раніше я встану, то більше встигну за цей день', 'Я обираю встати зараз, а не за п’ять хвилин', 'Сон закінчився, попереду новий день і нові справи'],
+      },
+      tongue: {
+        easy: ['Сів шпак на шпаківню, заспівав шпак півню', 'На подвір’ї трава, на траві дрова', 'Чапля, чапленя, чапленятко'],
+        mid: ['Бабин біб розцвів у дощ — буде бабі біб у борщ', 'Босий хлопець сіно косить, роса росить ноги босі', 'Ішов Прокіп, кипів окріп'],
+        hard: ['Ішов Прокіп, кипів окріп, прийшов Прокіп — кипить окріп, як при Прокопові кипів окріп', 'Наш Полкан з Байкалу лакав, лакав Полкан, лакав, та не змілів Байкал'],
+      },
+    },
+    pl: {
+      phrase: {
+        short: ['Dzień dobry, wstaję', 'Wstaję i działam', 'Nowy dzień się zaczął', 'Wstaję bez wymówek', 'Dziś jest mój dzień'],
+        mid: ['Dziś wstaję po pierwszym dzwonku', 'Wstaję, bo to dla mnie ważne', 'Poduszka poczeka, a dzień nie', 'Dobry poranek zaczyna się ode mnie', 'Mam więcej siły niż chęci na sen'],
+        long: ['Każdy poranek zaczyna się od jednej decyzji: wstać', 'Im wcześniej wstanę, tym więcej zrobię tego dnia', 'Wybieram wstać teraz, a nie za pięć minut', 'Sen się skończył, przede mną nowy dzień i nowe sprawy'],
+      },
+      tongue: {
+        easy: ['Czy tata czyta cytaty Tacyta?', 'Szedł Sasza suchą szosą', 'Cesarz często czesał cesarzową', 'Ząb zupa zębowa, dąb zupa dębowa'],
+        mid: ['Król Karol kupił królowej Karolinie korale koloru koralowego', 'Stół z powyłamywanymi nogami', 'W Szczebrzeszynie chrząszcz brzmi w trzcinie'],
+        hard: ['Trzynastego w Szczebrzeszynie chrząszcz się zaczął tarzać w trzcinie', 'Wyindywidualizowaliśmy się z rozentuzjazmowanego tłumu', 'Grzegorz Brzęczyszczykiewicz z Chrząszczyżewoszyc'],
+      },
+    },
+    de: {
+      phrase: {
+        short: ['Guten Morgen, ich stehe auf', 'Ich bin wach und stehe auf', 'Ein neuer Tag beginnt', 'Aufstehen ohne Ausreden', 'Heute ist mein Tag'],
+        mid: ['Heute stehe ich beim ersten Klingeln auf', 'Ich stehe auf, weil es mir wichtig ist', 'Das Kissen kann warten, der Tag nicht', 'Ein guter Morgen beginnt mit mir', 'Ich bin stärker als die Lust zu schlafen'],
+        long: ['Jeder Morgen beginnt mit einer Entscheidung: aufstehen', 'Je früher ich aufstehe, desto mehr schaffe ich heute', 'Ich stehe jetzt auf und nicht erst in fünf Minuten', 'Der Schlaf ist vorbei, vor mir liegt ein neuer Tag'],
+      },
+      tongue: {
+        easy: ['Fischers Fritz fischt frische Fische', 'Esel essen Nesseln nicht, Nesseln essen Esel nicht', 'Brautkleid bleibt Brautkleid', 'Blaukraut bleibt Blaukraut'],
+        mid: ['Blaukraut bleibt Blaukraut und Brautkleid bleibt Brautkleid', 'Der Cottbuser Postkutscher putzt den Cottbuser Postkutschkasten', 'Wenn hinter Fliegen Fliegen fliegen, fliegen Fliegen Fliegen nach'],
+        hard: ['Zwischen zwei Zwetschgenzweigen sitzen zwei zwitschernde Schwalben', 'Fischers Fritz fischt frische Fische, frische Fische fischt Fischers Fritz', 'Bierbrauer Bauer braut braunes Bier, braunes Bier braut Bierbrauer Bauer'],
+      },
+    },
+    es: {
+      phrase: {
+        short: ['Buenos días, me levanto', 'Me levanto sin excusas', 'Empieza un nuevo día', 'Hoy es mi día', 'Me levanto con ganas'],
+        mid: ['Hoy me levanto con el primer tono', 'Me levanto porque me importa', 'La almohada puede esperar, el día no', 'Una buena mañana empieza conmigo', 'Soy más fuerte que las ganas de dormir'],
+        long: ['Cada mañana empieza con una decisión: levantarse', 'Cuanto antes me levante, más haré en este día', 'Elijo levantarme ahora, no dentro de cinco minutos', 'El sueño terminó, me espera un día con nuevos planes'],
+      },
+      tongue: {
+        easy: ['Tres tristes tigres', 'Pablito clavó un clavito', 'Como poco coco como, poco coco compro', 'El perro de San Roque no tiene rabo'],
+        mid: ['Tres tristes tigres tragaban trigo en un trigal', 'Pablito clavó un clavito, ¿qué clavito clavó Pablito?', 'Erre con erre cigarro, erre con erre barril'],
+        hard: ['El cielo está enladrillado, ¿quién lo desenladrillará?', 'Parra tenía una perra, Guerra tenía una parra; la perra de Parra subió a la parra de Guerra', 'Si yo como como como, y tú comes como comes, ¿cómo comes como como?'],
+      },
+    },
+    fr: {
+      phrase: {
+        short: ['Bonjour, je me lève', 'Je me lève sans excuses', 'Un nouveau jour commence', 'Aujourd’hui, c’est mon jour', 'Debout, la journée attend'],
+        mid: ['Aujourd’hui, je me lève à la première sonnerie', 'Je me lève parce que c’est important pour moi', 'L’oreiller peut attendre, la journée non', 'Une bonne matinée commence avec moi', 'J’ai plus d’énergie que d’envie de dormir'],
+        long: ['Chaque matin commence par une seule décision : se lever', 'Plus tôt je me lève, plus j’en fais dans la journée', 'Je choisis de me lever maintenant, pas dans cinq minutes', 'La nuit est finie, une nouvelle journée commence'],
+      },
+      tongue: {
+        easy: ['Six saucisses sèches', 'Un chasseur sachant chasser', 'Suis-je bien chez ce cher Serge ?', 'Ton thé t’a-t-il ôté ta toux ?'],
+        mid: ['Les chaussettes de l’archiduchesse sont-elles sèches ?', 'Un chasseur sachant chasser doit savoir chasser sans son chien', 'Si six scies scient six cyprès'],
+        hard: ['Les chaussettes de l’archiduchesse sont-elles sèches ou archi-sèches ?', 'Si six scies scient six cyprès, six cent six scies scient six cent six cyprès', 'Cinq gros rats grillent dans la grosse graisse grasse'],
+      },
+    },
+  };
+  /** Набор текстов задания на языке интерфейса (по-русски — исходный). */
+  const bankOf = (id) => { const l = typeof Sonly !== 'undefined' && Sonly.i18n && Sonly.i18n.lang; return (l && l !== 'ru' && BANKS[l] && BANKS[l][id]) || BANK[id]; };
+
   /* ask — заголовок экрана настройки, hint — пояснение под ним, ctl — что именно настраивается. */
   const OPTS = {
     hunt: { ask: 'Что будем искать?', hint: 'Убери то, чего у тебя нет.', ctl: [{ kind: 'objects', key: 'off', min: 5 }] },
@@ -141,11 +222,11 @@
         + stepper(C('pairs', 'n'), o);
     },
     phrase(o) {
-      return `<div class="to-cards c1">${C('phrase', 'len').opts.map(([v, name, text]) => card('len', v, o.len === v, `<small>${name} · ${text.replace(/[^а-яёa-z0-9]/gi, '').length} букв</small><b class="tp-text">${glue(text)}</b>`, 'wide')).join('')}</div>`;
+      return `<div class="to-cards c1">${C('phrase', 'len').opts.map(([v, name]) => [v, name, TO.sample('phrase', 'len', v)]).map(([v, name, text]) => card('len', v, o.len === v, `<small>${name} · ${text.replace(/[^\p{L}\p{N}]/gu, '').length} букв</small><b class="tp-text">${glue(text)}</b>`, 'wide')).join('')}</div>`;
     },
     tongue(o) {
       const say = canSpeak();
-      return `<div class="to-cards c1">${C('tongue', 'level').opts.map(([v, name, text]) => `<div class="tp-say">${card('level', v, o.level === v, `<small>${name}</small><b class="tp-text">${glue(text.replace(/-/g, '‑'))}</b>`, 'wide')}${say ? `<button class="tp-play" data-act="to-say:${v}" aria-label="Послушать">${ic('volume-2', 18, 2.3)}</button>` : ''}</div>`).join('')}</div>`;
+      return `<div class="to-cards c1">${C('tongue', 'level').opts.map(([v, name]) => [v, name, TO.sample('tongue', 'level', v)]).map(([v, name, text]) => `<div class="tp-say">${card('level', v, o.level === v, `<small>${name}</small><b class="tp-text">${glue(text.replace(/-/g, '‑'))}</b>`, 'wide')}${say ? `<button class="tp-play" data-act="to-say:${v}" aria-label="Послушать">${ic('volume-2', 18, 2.3)}</button>` : ''}</div>`).join('')}</div>`;
     },
     /*
      * Угадай мелодию: все мелодии задания — обложками, как пластинки. Нажал на обложку — играет её отрывок (тот самый,
@@ -176,6 +257,22 @@
   ['squat', 'pushup', 'jump'].forEach((id) => {
     VIEW[id] = (o) => (Sonly.ringer && Sonly.ringer.anim ? prev('tp-fig', Sonly.ringer.anim(id)) : '') + stepper(ctlOf(id)[0], o);
   });
+
+  /**
+   * Переносит в живое меню только то, что изменилось: число, отметку, лишнюю или недостающую плитку.
+   * Остальные узлы остаются теми же — их анимации (упражнение в предпросмотре, появление плиток) не начинаются заново.
+   */
+  function morph(a, b) {
+    if (a.nodeType !== b.nodeType || a.nodeName !== b.nodeName) { a.replaceWith(b); return; }
+    if (a.nodeType === 3) { if (a.nodeValue !== b.nodeValue) a.nodeValue = b.nodeValue; return; }
+    if (a.nodeType !== 1) return;
+    for (const at of [...a.attributes]) if (!b.hasAttribute(at.name)) a.removeAttribute(at.name);
+    for (const at of [...b.attributes]) if (a.getAttribute(at.name) !== at.value) a.setAttribute(at.name, at.value);
+    if ('disabled' in a && a.disabled !== b.disabled) a.disabled = b.disabled;
+    const ac = [...a.childNodes], bc = [...b.childNodes];
+    bc.forEach((n, i) => { if (i < ac.length) morph(ac[i], n); else a.appendChild(n); });
+    for (let i = bc.length; i < ac.length; i++) ac[i].remove();
+  }
 
   const TO = {
     has: (id) => ctlOf(id).length > 0,
@@ -223,7 +320,12 @@
       return true;
     },
     /** Текст выбранного варианта: сама фраза или скороговорка. */
-    sample(id, key, val) { const c = ctlOf(id).find((x) => x.key === key); return ((c && c.opts.find((x) => x[0] === val)) || [0, 0, ''])[2]; },
+    sample(id, key, val) {
+      const own = bankOf(id) !== BANK[id] && bankOf(id)[val];
+      if (own && own.length) return own[0];
+      const c = ctlOf(id).find((x) => x.key === key);
+      return ((c && c.opts.find((x) => x[0] === val)) || [0, 0, ''])[2];
+    },
     /** Текст на это утро: любой из набора уровня (без пары пробелов и неразрывных — их ставит только меню), иначе — пример из меню. */
     /** Свой код sonly: 12 цифр, создаётся один раз и хранится на телефоне (в начале 2 — внутренний код, не совпадёт с товаром). */
     ownCode() {
@@ -242,7 +344,7 @@
       return TO._bc;
     },
     pick(id, val, rnd = Math.random) {
-      const list = BANK[id] && BANK[id][val];
+      const list = bankOf(id) && bankOf(id)[val];
       if (!list || !list.length) return '';
       /* ?example=1 — всегда пример из меню (он в наборе первый): проверки речи и снимки состояний. */
       if (typeof location !== 'undefined' && /[?&]example=1/.test(location.search)) return list[0];
@@ -261,13 +363,27 @@
       just = '';
       return `<div class="to">${out}</div>`;
     },
+    /**
+     * Меню задания после нажатия обновляется на месте (без перерисовки листа): «+» у отжиманий меняет число,
+     * а человек в предпросмотре продолжает упражнение. false — меню на экране нет.
+     */
+    update(root, id, o) {
+      const live = root && root.querySelector('.to');
+      if (!live || typeof document === 'undefined') return false;
+      const box = document.createElement('div');
+      box.innerHTML = TO.html(id, o);
+      morph(live, box.firstElementChild);
+      /* Пружинка на только что изменённом — заново при каждом нажатии. */
+      live.querySelectorAll('.pop').forEach((el) => { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); });
+      return true;
+    },
     /** Применяет нажатие к настройкам. Возвращает true, если нажатие было по настройке задания. */
     act(id, o, act, arg) {
       if (act === 'to-obj') { o.off = o.off.includes(arg) ? o.off.filter((x) => x !== arg) : [...o.off, arg]; return true; }
       if (act === 'to-say') {
         /* Читаем скороговорку вслух голосом телефона, чтобы было понятно, как её говорить. */
         const text = TO.sample('tongue', 'level', arg);
-        if (canSpeak() && text) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'ru-RU'; u.rate = 0.95; speechSynthesis.speak(u); }
+        if (canSpeak() && text) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = Sonly.i18n ? Sonly.i18n.locale : 'ru-RU'; u.rate = 0.95; speechSynthesis.speak(u); }
         return 'keep';
       }
       if (act === 'to-code') {
@@ -282,7 +398,7 @@
             g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
             g.drawImage(img, pad, pad);
             g.fillStyle = '#0D0D0F'; g.font = '600 34px Inter, system-ui, sans-serif'; g.textAlign = 'center';
-            g.fillText('sonly — отсканируй утром', cv.width / 2, cv.height - 40);
+            g.fillText(Sonly.i18n ? Sonly.i18n.t('sonly — отсканируй утром') : 'sonly — отсканируй утром', cv.width / 2, cv.height - 40);
             const a = document.createElement('a');
             a.href = cv.toDataURL('image/png'); a.download = 'sonly-kod.png';
             document.body.appendChild(a); a.click(); a.remove();

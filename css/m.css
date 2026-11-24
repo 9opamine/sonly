@@ -87,7 +87,9 @@
 .vm .m-boot small{font-size:12.5px;font-weight:500;color:var(--mut)}
 
 /* Сравнение: два телефона проживают одно и то же утро одновременно. */
-.vm .m-duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 22px 0}
+/* Два телефона и подпись — по центру свободного места между заголовком и кнопкой, а не прижаты к заголовку. */
+.vm .m-cmp{flex:1;display:flex;flex-direction:column;justify-content:center;padding:6px 0 18px;min-height:0}
+.vm .m-duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 22px}
 .vm .m-duo-col{display:grid;gap:8px;justify-items:center;min-width:0}
 .vm .m-duo-col>b{font-size:13.5px;font-weight:700;letter-spacing:-.1px;display:flex;align-items:center;gap:6px;height:18px}
 .vm .m-duo-col>b .logo{height:18px;width:auto}
@@ -141,7 +143,7 @@
 .vm .m-duo-cap.in{opacity:1;transform:none}
 .vm .m-duo-cap.r{background:var(--red-bg);color:var(--red)}
 .vm .m-duo-cap.g{background:var(--green-bg);color:var(--green)}
-.vm .m-duo-t{margin:14px 30px 0;text-align:center;font-size:15px;line-height:1.36;color:var(--mut2);opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;text-wrap:balance}
+.vm .m-duo-t{margin:22px 30px 0;text-align:center;font-size:15px;line-height:1.36;color:var(--mut2);opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;text-wrap:balance}
 .vm .m-duo-t.in{opacity:1;transform:none}
 .vm .m-duo-t b{display:block;color:var(--ink);font-weight:700;font-size:16px;margin-bottom:3px}
 
@@ -340,13 +342,16 @@
 .vm .m-clocks .main .bl{fill:var(--y-deep)}
 .vm .m-clocks .dim{opacity:.45}
 .vm .m-card.on .m-clocks span{color:#fff;animation:m-clk .42s ease-in-out var(--d) 2}
-.vm .m-card.on .m-clocks .bd{fill:#26262B}
+/* Выбранная карточка чёрная — часики на ней остаются белыми, со стрелками цвета текста: не сливаются с фоном. */
+.vm .m-card.on .m-clocks .bd{fill:#fff}
+.vm .m-card.on .m-clocks .hd{stroke:var(--ink)}
 @keyframes m-clk{25%{transform:translateX(-50%) rotate(calc(var(--r) - 9deg))}75%{transform:translateX(-50%) rotate(calc(var(--r) + 9deg))}}
 
 /* ── Экраны-ответы: общий вид, полоса «сколько утра ушло», полный макет iPhone ── */
 .vm .m-th{flex:1;padding:0 24px 6px;display:flex;flex-direction:column;justify-content:center;gap:14px}
 .vm .m-th .a-big{font-size:36px}
-.vm .m-th-t{font-size:16.5px;line-height:1.36;font-weight:600;text-align:center;text-wrap:balance}
+/* Вывод появляется в конце сцены и места в раскладке не занимает: сцена стоит по центру и до него, а он встаёт под ней. */
+.vm .m-th-t{height:0;overflow:visible;font-size:16.5px;line-height:1.36;font-weight:600;text-align:center;text-wrap:balance}
 .vm .m-lost{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:var(--mut)}
 .vm .m-lost i{height:8px;border-radius:4px;background:#ECECF1;overflow:hidden}
 .vm .m-lost u{display:block;height:100%;width:0;border-radius:4px;background:#E5484D;transition:width .8s cubic-bezier(.22,1,.36,1)}

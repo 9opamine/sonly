@@ -3,6 +3,10 @@
 (() => {
   'use strict';
   const { ic, esc, pad, TASKS, appKit: K } = Sonly;
+  /* Для текста не на экране (картинка открытки, «Поделиться»): язык интерфейса. */
+  const LOC = () => (Sonly.i18n ? Sonly.i18n.locale : 'ru-RU');
+  const WD = (x) => (Sonly.i18n ? Sonly.i18n.word(x) : x);
+  const T = (key, vars) => (Sonly.i18n ? Sonly.i18n.t(key, vars) : key.replace(/\{(\w+)\}/g, (m, k) => vars[k]));
   const si = (id, size) => Sonly.si(id, size);
   const app = Sonly.concepts.app;
   const doy = (d = new Date()) => Math.round((K.day0(d) - new Date(d.getFullYear(), 0, 0)) / 864e5);
@@ -185,8 +189,10 @@
   /* Небо карточки утра: чем раньше встал, тем темнее. Опорные точки по минутам суток, между ними цвет плавно смешивается. */
   const SKY = [[240, [14, 20, 46], [52, 42, 92]], [330, [27, 35, 70], [226, 116, 92]], [390, [50, 64, 122], [252, 160, 92]], [450, [76, 118, 196], [255, 204, 104]], [510, [124, 176, 234], [255, 230, 166]], [600, [146, 196, 242], [255, 242, 190]]];
 
-  const wordOf = () => WORDS[doy() % WORDS.length];
-  const sayingOf = () => SAYINGS[doy() % SAYINGS.length];
+  /* На другом языке — свои слова и пословицы (js/i18n/words.js): русское слово дня в переводе теряет смысл. */
+  const ownOf = (k) => { const l = Sonly.i18n && Sonly.i18n.lang, L = l && l !== 'ru' && Sonly.I18N_WORDS && Sonly.I18N_WORDS[l]; return L && L[k] && L[k].length ? L[k] : null; };
+  const wordOf = () => { const list = ownOf('words') || WORDS; return list[doy() % list.length]; };
+  const sayingOf = () => { const list = ownOf('sayings') || SAYINGS; return list[doy() % list.length]; };
   /* Подарки за серию: пейзажи, которые открывает серия (SCENES ниже), — по лучшей серии, навсегда. */
   const REWARDS = [[3, 'sea'], [7, 'mountains'], [14, 'forest'], [21, 'dunes'], [30, 'aurora']];
   const rewards = (s) => { const best = K.stats(s).best; return REWARDS.map(([n, id]) => ({ n, id, name: sceneOf(id)[1], open: best >= n })); };
@@ -426,6 +432,34 @@
   /** Солнце над горизонтом: чем раньше встал, тем ниже оно стоит. Пейзаж лежит поверх — солнце встаёт из-за него. */
   const sunSvg = (t) => (t.k.sun ? `<g class="mo-sun"><circle cx="${f1(t.x)}" cy="${f1(130 - t.k.sun * 34)}" r="17" fill="#FFE9A6" opacity=".28"/><circle cx="${f1(t.x)}" cy="${f1(130 - t.k.sun * 34)}" r="7.5" fill="#FFF3C4"/></g>` : '');
   const landSvg = (x, land, t, f = findOf(x, land, t)) => `<svg class="mo-land" viewBox="0 0 120 160" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${sunSvg(t)}${f ? f.back : ''}${LAND[land](rnd(x.d.getTime() + 3), t)}${f ? f.front : ''}</svg>`;
+  /*
+   * Открытки — картинки в одном стиле (img/cards): пейзаж и небо по времени подъёма — ночь до 5:30, рассвет до 7:00, дальше утро;
+   * «Северное сияние» — всегда ночь. Нарисованный SVG лежит под картинкой: пока она грузится или если не загрузилась, виден он.
+   */
+  const phaseOf = (wake, land) => (land === 'aurora' || wake < 330 ? 'night' : wake < 420 ? 'dawn' : 'morning');
+  const PHASE = { night: ['#0E142E', '#342A5C', '#fff'], dawn: ['#32407A', '#FCA05C', '#fff'], morning: ['#7CB0EA', '#FFE6A6', '#0D0D0F'] };
+  const artOf = (land, wake) => `${land}-${phaseOf(wake, land)}.webp`;
+  /* Маленькая картинка для плиток и стопок, большая — для открытки крупно и для «Сохранить». */
+  const artImg = (land, wake, sizes) => `<img class="mo-art" src="img/cards/s/${artOf(land, wake)}" srcset="img/cards/s/${artOf(land, wake)} 360w, img/cards/${artOf(land, wake)} 1080w" sizes="${sizes}" alt="" decoding="async" draggable="false" onerror="this.remove()">`;
+  /*
+   * Находка — стикер в небе: где (доля ширины и высоты открытки, от левого верхнего угла) и какого размера (доля ширины).
+   * Небо сверху занято датой и временем, горизонт — на 70 % высоты; радуга встаёт ногами на горизонт и тает к земле.
+   */
+  const STICK = {
+    birds: (r) => ({ w: 28, x: 10 + r() * 50, y: 36 + r() * 12 }),
+    rainbow: (r) => ({ w: 64, x: r() > 0.5 ? 2 : 34, y: 46.5, arc: true }),
+    double: (r) => ({ w: 72, x: r() > 0.5 ? 0 : 28, y: 42, arc: true }),
+    balloon: (r) => ({ w: 15, x: 10 + r() * 64, y: 30 + r() * 14 }),
+    kite: (r) => ({ w: 12, x: 12 + r() * 64, y: 30 + r() * 12 }),
+    plane: (r) => ({ w: 20, x: 22 + r() * 46, y: 25 + r() * 12, flip: r() > 0.5 }),
+    shooting: (r) => ({ w: 24, x: 50 + r() * 22, y: 14 + r() * 14 }),
+    comet: (r) => ({ w: 32, x: 52 + r() * 12, y: 12 + r() * 12 }),
+  };
+  const stickOf = (f, x) => (f && STICK[f.id] ? STICK[f.id](mix(x.d.getTime(), 4243)) : null);
+  const stickImg = (f, x) => {
+    const p = stickOf(f, x);
+    return p ? `<img class="mo-stk f-${f.id}${p.arc ? ' arc' : ''}${p.flip ? ' flip' : ''}" src="img/cards/find-${f.id}.webp" alt="" style="left:${f1(p.x)}%;top:${f1(p.y)}%;width:${p.w}%" decoding="async" draggable="false" onerror="this.remove()">` : '';
+  };
   /** Рекорды коллекции: самый ранний подъём и самое быстрое задание. */
   const records = (h) => ({ early: Math.min(...h.map((x) => x.wake)), fast: Math.min(...h.filter((x) => x.secs).map((x) => x.secs)) });
   /**
@@ -433,20 +467,51 @@
    * На маленькой — только время и дата; рекорд — золотая рамка и значок.
    */
   function cardOf(x, o = {}) {
-    const land = o.land || landOf(x, o.best == null ? 0 : o.best), t = tone(x, land), k = t.k, tag = o.tag || 'button', f = findOf(x, land, t);
+    const land = o.land || landOf(x, o.best == null ? 0 : o.best), t = tone(x, land), tag = o.tag || 'button', f = findOf(x, land, t), [ca, cb, ink] = PHASE[phaseOf(x.wake, land)];
     const early = o.rec && x.wake === o.rec.early, fast = o.rec && x.secs === o.rec.fast;
     const act = tag === 'button' ? ` data-act="mo-card:${x.d.getTime()}" aria-label="Открытка за ${x.d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, подъём ${K.fmtMin(x.wake)}"` : '';
-    return `<${tag} class="mo-card${early || fast ? ' gold' : ''}"${act} style="--a:${k.a};--b:${k.b};--t:${k.ink};--sun:${k.sun.toFixed(2)};--sx:${t.sx}%">
-      <i class="mo-card-sun"></i>${landSvg(x, land, t, f)}<small>${dShort(x.d)}</small><b>${K.fmtMin(x.wake)}</b>${f && f.lvl ? `<i class="mo-find-tag${f.lvl === 2 ? ' top' : ''}" title="${f.name}">${ic('sparkles', 11, 2.6)}</i>` : ''}
+    return `<${tag} class="mo-card${early || fast ? ' gold' : ''}"${act} style="--a:${ca};--b:${cb};--t:${ink};--sun:${t.k.sun.toFixed(2)};--sx:${t.sx}%">
+      <i class="mo-card-sun"></i>${landSvg(x, land, t, f)}${artImg(land, x.wake, o.sizes || '120px')}${stickImg(f, x)}<small>${dShort(x.d)}</small><b>${K.fmtMin(x.wake)}</b>${f && f.lvl ? `<i class="mo-find-tag${f.lvl === 2 ? ' top' : ''}" title="${f.name}">${ic('sparkles', 11, 2.6)}</i>` : ''}
       ${early || fast ? `<i class="mo-rec">${early ? `<b title="Самый ранний подъём">${si('rise', 12)}</b>` : ''}${fast ? `<b title="Быстрее всего задание">${ic('zap', 11, 2.6)}</b>` : ''}</i>` : ''}</${tag}>`;
   }
   /** Образец пейзажа для подарков: тот же рисунок на рассветном небе. */
   const sample = (land, i = 0) => cardOf({ d: new Date(2026, 0, 3 + i * 5), wake: 400 }, { tag: 'div', land });
   const ghostStack = () => `<div class="mo-card ghost">${si('cards', 26)}</div>`;
 
-  /** Картинка открытки 1080 × 1440 для «Сохранить»: небо, солнце, пейзаж и подписи. Пейзаж рисуется тем же SVG. */
+  /** Картинка открытки 1080 × 1440 для «Сохранить»: пейзаж этого утра, находка в небе и подписи — как на экране. */
   function cardPng(x, n, best, done) {
-    const land = landOf(x, best), t = tone(x, land), k = t.k, tk = x.task && TASKS.find((y) => y.id === x.task);
+    const land = landOf(x, best), t = tone(x, land), f = findOf(x, land, t), p = stickOf(f, x), ink = PHASE[phaseOf(x.wake, land)][2];
+    const load = (src) => new Promise((ok) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = src; });
+    Promise.all([load(`img/cards/${artOf(land, x.wake)}`), p ? load(`img/cards/find-${f.id}.webp`) : null]).then(([bg, st]) => {
+      if (!bg) { cardPngSvg(x, n, best, done); return; }
+      const cv = document.createElement('canvas'), g = cv.getContext('2d'), w = 1080, h = 1440;
+      cv.width = w; cv.height = h;
+      g.drawImage(bg, 0, 0, w, h);
+      if (st) {
+        const sw = (w * p.w) / 100, sh = (sw * st.height) / st.width, off = document.createElement('canvas'), o = off.getContext('2d');
+        off.width = Math.round(sw); off.height = Math.round(sh);
+        if (p.flip) { o.translate(off.width, 0); o.scale(-1, 1); }
+        o.drawImage(st, 0, 0, off.width, off.height);
+        if (p.arc) { o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = 'destination-in'; const gr = o.createLinearGradient(0, 0, 0, off.height); gr.addColorStop(0.62, '#000'); gr.addColorStop(1, 'rgba(0,0,0,0)'); o.fillStyle = gr; o.fillRect(0, 0, off.width, off.height); }
+        g.drawImage(off, (w * p.x) / 100, (h * p.y) / 100);
+      }
+      cardText(g, x, n, land, ink, w, h);
+      done(cv.toDataURL('image/png'));
+    });
+  }
+  /** Подписи на сохранённой открытке: дата, время подъёма, день недели и задание, внизу sonly и номер. */
+  function cardText(g, x, n, land, ink, w, h) {
+    const tk = x.task && TASKS.find((y) => y.id === x.task);
+    g.fillStyle = ink;
+    g.globalAlpha = 0.85; g.font = '600 50px Inter, sans-serif'; g.fillText(x.d.toLocaleDateString(LOC(), { day: 'numeric', month: 'long' }), 92, 172);
+    g.globalAlpha = 1; g.font = '800 252px "Roboto Flex", Inter, sans-serif'; g.fillText(K.fmtMin(x.wake), 78, 420);
+    g.globalAlpha = 0.88; g.font = '600 50px Inter, sans-serif'; g.fillText(cap(x.d.toLocaleDateString(LOC(), { weekday: 'long' })) + (tk ? ` · ${WD(tk.name)}` : ''), 92, 506);
+    g.globalAlpha = 1; g.fillStyle = '#fff'; g.font = '800 66px "Roboto Flex", Inter, sans-serif'; g.fillText('sonly', 92, h - 104);
+    g.textAlign = 'right'; g.font = '700 46px Inter, sans-serif'; g.fillText(`№ ${n} · ${WD(sceneOf(land)[1])}`, w - 92, h - 108);
+  }
+  /** Запасной путь «Сохранить» без картинок: тот же нарисованный SVG. */
+  function cardPngSvg(x, n, best, done) {
+    const land = landOf(x, best), t = tone(x, land), k = t.k;
     const cy = 160 - (160 * (-0.62 + 0.28 * k.sun) + 67.2);
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 120 160"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${k.a}"/><stop offset="1" stop-color="${k.b}"/></linearGradient>
       <radialGradient id="s"><stop offset="0" stop-color="#FFF8D6"/><stop offset=".4" stop-color="#FFD660" stop-opacity=".62"/><stop offset=".72" stop-color="#FFC850" stop-opacity="0"/><stop offset="1" stop-color="#FFC850" stop-opacity="0"/></radialGradient></defs>
@@ -456,12 +521,7 @@
       const cv = document.createElement('canvas'), g = cv.getContext('2d'), w = 1080, h = 1440;
       cv.width = w; cv.height = h;
       g.drawImage(img, 0, 0, w, h);
-      g.fillStyle = k.ink;
-      g.globalAlpha = 0.85; g.font = '600 50px Inter, sans-serif'; g.fillText(x.d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }), 92, 172);
-      g.globalAlpha = 1; g.font = '800 252px "Roboto Flex", Inter, sans-serif'; g.fillText(K.fmtMin(x.wake), 78, 420);
-      g.globalAlpha = 0.88; g.font = '600 50px Inter, sans-serif'; g.fillText(cap(x.d.toLocaleDateString('ru-RU', { weekday: 'long' })) + (tk ? ` · ${tk.name}` : ''), 92, 506);
-      g.globalAlpha = 1; g.fillStyle = '#fff'; g.font = '800 66px "Roboto Flex", Inter, sans-serif'; g.fillText('sonly', 92, h - 104);
-      g.textAlign = 'right'; g.font = '700 46px Inter, sans-serif'; g.fillText(`№ ${n} · ${sceneOf(land)[1]}`, w - 92, h - 108);
+      cardText(g, x, n, land, k.ink, w, h);
       done(cv.toDataURL('image/png'));
     };
     img.onerror = () => done(null);
@@ -546,7 +606,10 @@
           <span class="mo-ticks"><small>04:00</small><small>06:00</small><small>08:00</small><small>10:00</small></span></div>
         <div class="mo-legend"><span><b>${si('rise', 12)}</b>самый ранний подъём</span><span><b>${ic('zap', 11, 2.6)}</b>быстрее всего задание</span></div>`;
     }
-    flow.sheet(`${head('Открытки утра')}<div class="ap-sh-body scroll">${body}</div>`, `ap-sheet${enter ? ' ' + enter : ''}`);
+    /* Открыт из профиля — стрелка ведёт назад в профиль, а не закрывает всё до экрана под ним. */
+    if (flow.sheets.querySelector('[data-pp="profile"]')) s._albumFrom = 'profile';
+    const fromPP = s._albumFrom === 'profile';
+    flow.sheet(`${fromPP ? head('Открытки утра', 'mo-album-pp', 'back') : head('Открытки утра')}<div class="ap-sh-body scroll">${body}</div>`, `ap-sheet${enter ? ' ' + enter : ''}`);
   }
 
   /** Открытка крупно: что было этим утром, листать соседние, сохранить и отправить. */
@@ -558,7 +621,7 @@
     const vs = !dw ? 'как обычно' : `на ${Math.abs(dw)} мин ${dw < 0 ? 'раньше' : 'позже'} обычного`;
     const nav = (j, dir) => (h[j] ? `<button class="mo-nav ${dir}" data-act="mo-card:${h[j].d.getTime()}:${dir}" aria-label="${dir === 'prev' ? 'Предыдущая' : 'Следующая'} открытка">${ic(dir === 'prev' ? 'chevron-left' : 'chevron-right', 22, 2.4)}</button>` : `<span class="mo-nav ${dir} off"></span>`);
     flow.sheet(`${head(cap(x.d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })), 'mo-album-back', 'back')}<div class="ap-sh-body scroll">
-      <div class="mo-big-card">${nav(i - 1, 'prev')}${cardOf(x, { tag: 'div', land, rec: records(h) })}${nav(i + 1, 'next')}</div>
+      <div class="mo-big-card">${nav(i - 1, 'prev')}${cardOf(x, { tag: 'div', land, rec: records(h), sizes: '250px' })}${nav(i + 1, 'next')}</div>
       <div class="ap-card ap-list">
         <div class="ap-row tall"><i class="ap-row-i c" style="--c:#FF9500">${si('rise', 20)}</i><span>Подъём в ${K.fmtMin(x.wake)}<small>${vs}</small></span></div>
         ${tk ? `<div class="ap-row tall"><i class="ap-row-i c tb cat-${tk.cat}">${Sonly.ti(tk.id, 19)}</i><span>${tk.name}<small>${x.secs ? `выполнено за ${x.secs} с` : 'выполнено'}</small></span></div>` : ''}
@@ -671,7 +734,7 @@
     const seg = Math.max(...nb(nw.h).split(' ').map((w) => w.length)), hcls = seg > 15 ? 'l' : '';
     const date = cap(new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }));
     /* Две плитки одного устройства: значок и примета справа, крупная цифра, подпись. Погода открывает истории утра. */
-    const tile = (cls, icon, side, val, label, act) => `<${act ? `button type="button" data-act="${act}" aria-label="Погода: ${val}, ${label}. Открыть истории утра"` : 'div'} class="ws ${cls}"><header><i class="ws-ic">${icon}</i>${side}</header><b>${val}</b><small>${label}</small></${act ? 'button' : 'div'}>`;
+    const tile = (cls, icon, side, val, label, act) => `<${act ? `button type="button" data-act="${act}"` : 'div'} class="ws ${cls}"><header><i class="ws-ic">${icon}</i>${side}</header><b>${val}</b><small>${label}</small>${act ? '<span class="vh">Открыть истории утра</span>' : ''}</${act ? 'button' : 'div'}>`;
     const tiles = tile('sun', si('rise', 17), '', K.fmtMin(x.wake), x.secs ? `подъём за ${x.secs} с` : 'подъём')
       + tile('wx', si('weather', 18), `<em class="go">${ic('chevron-right', 16, 2.6)}</em>`, deg(W.now), `${W.text.toLowerCase()} · до ${deg(W.hi)}`, 'mo-story:weather');
     return `<header class="wk-top"><div><h1 class="wk-hi">Доброе утро</h1><small>${date}</small></div><div class="wk-logo js-wklogo">${logoParts()}</div></header>
@@ -788,13 +851,14 @@
           return true;
         }
         case 'mo-gifts': giftsSheet(flow); return true;
-        case 'mo-album': albumSheet(flow); return true;
+        case 'mo-album': s._albumFrom = ''; albumSheet(flow, flow.sheets.querySelector('[data-pp="profile"]') ? 'push' : ''); return true;
+        case 'mo-album-pp': s._albumFrom = ''; return Sonly.people ? (Sonly.people.on(flow, 'pp-profile', 'back'), true) : false;
         case 'mo-album-back': s._copied = ''; albumSheet(flow, 'back'); return true;
         case 'mo-card': { const [t, dir] = arg.split(':'); s._copied = ''; cardSheet(flow, t, dir === 'prev' ? 'back' : 'push'); return true; }
         case 'mo-share': {
           const h = K.stats(s).h, i = h.findIndex((x) => x.d.getTime() === +arg), x = h[i];
           if (!x) return true;
-          K.shareText(`Встал в ${K.fmtMin(x.wake)} — ${x.d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}. Открытка утра № ${i + 1} в sonly.`, true, (msg) => { s._copied = msg.replace(' с кодом', ''); const n = flow.sheets.querySelector('.mo-msg'); if (n) n.textContent = s._copied; });
+          K.shareText(T('Встал в {time} — {date}. Открытка утра № {n} в sonly.', { time: K.fmtMin(x.wake), date: x.d.toLocaleDateString(LOC(), { weekday: 'long', day: 'numeric', month: 'long' }), n: i + 1 }), true, (msg) => { s._copied = msg.replace(' с кодом', ''); const n = flow.sheets.querySelector('.mo-msg'); if (n) n.textContent = s._copied; });
           return true;
         }
         case 'mo-save': {

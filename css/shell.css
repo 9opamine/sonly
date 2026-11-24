@@ -43,6 +43,8 @@ body.shot .phone{border-radius:0;box-shadow:none}
 .phone *,.phone *::before,.phone *::after{box-sizing:border-box}
 .phone button{font-family:inherit}
 :where(.phone) :where(h1,p){margin:0}
+/* Текст только для VoiceOver: на экране его нет. */
+.vh{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 /* Заголовки и короткие подписи по центру — ровными строками; длинный текст — без одинокого слова в конце (pretty наследуется). */
 .phone .ap-sent p,.phone .pt-top p,.phone .pt-empty p,.phone .msg p{text-wrap:balance}
 .phone .ic{display:block;flex:none}

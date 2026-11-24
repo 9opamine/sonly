@@ -7,7 +7,7 @@
   else (root.Sonly = root.Sonly || {}).say = api;
 })(typeof self !== 'undefined' ? self : this, () => {
   'use strict';
-  const norm = (s) => String(s || '').toLowerCase().replace(/ё/g, 'е').replace(/[‐‑-]/g, '').replace(/[^a-zа-я0-9\s]/g, ' ');
+  const norm = (s) => String(s || '').toLowerCase().replace(/ё/g, 'е').normalize('NFD').replace(/([a-z])[\u0300-\u036f]+/g, '$1').normalize('NFC').replace(/[‐‑-]/g, '').replace(/[^\p{L}\p{N}\s]/gu, ' ');
   /** Слова текста: только буквы и цифры, дефисы склеивают («по-колпаковски» → «поколпаковски»). */
   const words = (s) => norm(s).split(/\s+/).filter(Boolean);
   function lev(a, b) {

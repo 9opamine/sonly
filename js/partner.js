@@ -157,7 +157,7 @@
   function blog(s) {
     const u = ui(s), f = u.form, a = s.blogApp;
     if (a) {
-      return ['Для блогеров', `<div class="ap-sent"><i>${ic('check', 26, 3)}</i><b>Заявка отправлена</b><p>Ответим на ${esc(a.mail)} в${NB}течение 5${NB}дней.</p></div>`,
+      return ['Для блогеров', `<div class="ap-sent"><i>${ic('check', 26, 3)}</i><b>Заявка отправлена</b><p>Ответим на <b data-v>${esc(a.mail)}</b> в${NB}течение 5${NB}дней.</p></div>`,
         '<button class="ap-btn" data-act="page:share">Готово</button>', 'page:share'];
     }
     const field = (key, label, ph, type = 'text', mode = 'text') => `<label class="pt-f"><span>${label}</span><input class="js-pf" data-k="${key}" type="${type}" inputmode="${mode}" value="${esc(f[key] || '')}" placeholder="${ph}" autocomplete="off" spellcheck="false"></label>`;
@@ -230,7 +230,7 @@
         case 'pt-save': {
           const inp = flow.sheets.querySelector('.js-ptcode'), v = clean(inp ? inp.value : u.draft).slice(0, CODE.max);
           u.draft = v;
-          u.codeErr = v.length < CODE.min ? `Нужно от ${CODE.min} знаков` : v !== s.ref && TAKEN.includes(v) ? `Код ${v} уже занят — попробуй другой` : '';
+          u.codeErr = v.length < CODE.min ? `Нужно от ${CODE.min} знаков` : v !== s.ref && TAKEN.includes(v) ? `Код «${v}» уже занят — попробуй другой` : '';
           if (!u.codeErr) { s._copied = v === s.ref ? '' : 'Код сохранён — старый больше не работает'; s.ref = v; u.edit = false; }
           K.openPage(flow, 'share');
           return true;

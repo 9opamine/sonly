@@ -1,8 +1,14 @@
 /*
  * Языки. Интерфейс написан по-русски; другой язык накладывается словарём на лету: каждая строка, которая появляется на экране
  * (текст, подсказка в поле, название кнопки для VoiceOver), заменяется переводом до того, как её увидят.
- * Ключ словаря — русская строка; числа (07:30, 29,99, 12) в ключе заменены на {0}, {1}…, имена людей из примера — на {n0}.
+ * Ключ словаря — русская строка; числа (07:30, 29,99, 12) в ключе заменены на {0}, {1}…, имена людей из примера — на {n0},
+ * название в кавычках — на «{q0}» (оно переводится отдельно, своей строкой).
+ * Строка с выделенным словом (<mark>, <b>…) переводится целиком: в ключе выделенное — в [квадратных скобках]:
+ * 'Держи [серию].' → 'Keep your [streak].' Так выделение встаёт на нужное слово в любом языке.
  * В переводе {0:день|дня} — форма слова по числу (у украинского и польского три формы: {0:день|дні|днів}).
+ * data-ini="Пн" у элемента — в нём первая буква перевода этой строки (буквы дней недели).
+ * data-k="ключ" — текст элемента переводится по этому ключу словаря (для коротких строк вроде «с» — секунд).
+ * Формы слов после числа сводятся к одной: ключ '{0} часов' подходит и к «1 час», и к «3 часа».
  * Словари — в js/i18n/<язык>.js (Sonly.I18N.en = { … }). ?lang=en — язык из адреса; ?i18n=collect — копить непереведённое.
  */
 (() => {
@@ -40,61 +46,182 @@
     const out = core.replace(/[А-Яа-яЁё]+\.?/g, (w) => { const k = w.replace(/\.$/, ''); const v = W[w] ?? W[k] ?? W[k.toLowerCase()]; if (v == null) { ok = false; return w; } return /^[А-ЯЁ]/.test(w) && v ? v[0].toUpperCase() + v.slice(1) : v; });
     return ok ? out : null;
   }
-  function fill(t, nums, names) {
+  /** Подставляет в перевод числа ({0}, {0:форма|формы}), имена ({n0}) и названия в кавычках ({q0}). */
+  function fill(t, nums, names, quotes = []) {
     const pl = PLURAL[lang] || PLURAL.en;
-    return t.replace(/\{(n?)(\d+)(?::([^}]*))?\}/g, (_, isName, i, forms) => {
-      if (isName) return nameIn(lang, names[+i] || '');
+    return t.replace(/\{([nq]?)(\d+)(?::([^}]*))?\}/g, (_, kind, i, forms) => {
+      if (kind === 'n') return nameIn(lang, names[+i] || '');
+      if (kind === 'q') return quotes[+i] ?? '';
       const raw = nums[+i] ?? '';
       if (!forms) return lang === 'en' && /^\d+,\d+$/.test(raw) ? raw.replace(',', '.') : raw;
       const f = forms.split('|'), n = Math.abs(parseInt(raw, 10) || 0);
       return f[Math.min(pl(n), f.length - 1)];
     });
   }
-  /** Перевод одной строки; null — переводить нечего или перевода нет. */
-  function tr(str) {
-    const d = dict();
-    if (!d || !str || !CYR.test(str)) return null;
-    const lead = str.match(/^\s*/)[0], trail = str.match(/\s*$/)[0], core = str.trim().replace(/\s+/g, ' ');
-    if (d[core] != null) return lead + d[core] + trail;
+  /** Ключ словаря для строки: числа → {0}, {1}…, имена → {n0}… */
+  function keyOf(core) {
     const nums = [], names = [];
     let key = core.replace(NUM, (m) => { nums.push(m); return `{${nums.length - 1}}`; });
     key = key.replace(NAME_RE, (m, pre, nm) => { names.push(nm); return `${pre}{n${names.length - 1}}`; });
-    if (d[key] != null) return lead + fill(d[key], nums, names) + trail;
+    return { key, nums, names };
+  }
+  /* Форма слова после числа сводится к одной («1 час», «2 часа», «5 часов» → «{0} часов»): одного ключа хватает на любые числа.
+     Сначала ищется точный ключ, так что словарные строки с нужной формой по-прежнему главнее. */
+  const FORMS = [['час', 'часа', 'часов'], ['минута', 'минуту', 'минуты', 'минут'], ['секунда', 'секунду', 'секунды', 'секунд'], ['день', 'дня', 'дней'], ['утро', 'утра', 'утр'],
+    ['неделя', 'неделю', 'недели', 'недель'], ['месяц', 'месяца', 'месяцев'], ['год', 'года', 'лет'], ['раза', 'раз'], ['звонок', 'звонка', 'звонков'], ['друг', 'друга', 'друзей'],
+    ['значок', 'значка', 'значков'], ['задание', 'задания', 'заданий'], ['открытка', 'открытки', 'открыток'], ['предмет', 'предмета', 'предметов'], ['человека', 'человек'],
+    ['шаг', 'шага', 'шагов'], ['пример', 'примера', 'примеров'], ['вопрос', 'вопроса', 'вопросов'], ['цент', 'цента', 'центов'], ['сутки', 'суток'], ['отжимание', 'отжимания', 'отжиманий'],
+    ['приседание', 'приседания', 'приседаний'], ['прыжок', 'прыжка', 'прыжков'], ['пара', 'пары', 'пар'], ['удар', 'удара', 'ударов'], ['группа', 'группы', 'групп'], ['заявка', 'заявки', 'заявок'],
+    ['подъём', 'подъёма', 'подъёмов'], ['будильник', 'будильника', 'будильников'], ['мелодия', 'мелодии', 'мелодий'], ['встряхивание', 'встряхивания', 'встряхиваний'], ['слово', 'слова', 'слов'], ['буква', 'буквы', 'букв'], ['раунд', 'раунда', 'раундов'], ['клетка', 'клетки', 'клеток']];
+  const CANON = {};
+  FORMS.forEach((f) => f.forEach((w) => { CANON[w] = f[f.length - 1]; }));
+  const FORM_RE = new RegExp('(\\{\\d+\\} )(' + Object.keys(CANON).sort((a, b) => b.length - a.length).join('|') + ')(?![А-Яа-яЁё])', 'g');
+  const norm = (key) => key.replace(FORM_RE, (m, n, w) => n + CANON[w]);
+  /** Прямой поиск: строка целиком или её ключ с числами и именами (и с формами слов, сведёнными к одной). */
+  function look(core) {
+    const d = dict();
+    if (!d) return null;
+    if (d[core] != null) return d[core];
+    const k = keyOf(core);
+    if (d[k.key] != null) return fill(d[k.key], k.nums, k.names);
+    const nk = norm(k.key);
+    return nk !== k.key && d[nk] != null ? fill(d[nk], k.nums, k.names) : null;
+  }
+  /** «Добавляем задание «Заправь кровать»»: в словаре — 'Добавляем задание «{q0}»', название переводится своей строкой. */
+  function quoted(core) {
+    const d = dict(), inner = [];
+    const bare = core.replace(/«([^«»]*)»/g, (m, x) => { inner.push(x); return '«\u0001»'; });
+    if (!inner.length) return null;
+    const k = keyOf(bare);
+    let n = 0;
+    let key = k.key.replace(/\u0001/g, () => `{q${n++}}`);
+    if (d[key] == null) key = norm(key);
+    if (d[key] == null) return null;
+    return fill(d[key], k.nums, k.names, inner.map((x) => { const t = tr(x); return t == null ? x : t.trim(); }));
+  }
+  /**
+   * Строка из двух частей через « · », « — » или «: » («Пн, Ср, Пт · 3 дня в неделю», «Отмечаем дни: по будням»):
+   * если целиком её в словаре нет, каждая часть переводится отдельно. Часть без кириллицы остаётся как есть.
+   */
+  let depth = 0;
+  function parts(core) {
+    if (depth > 3) return null;
+    for (const sep of [' · ', ' — ', ': ']) {
+      const i = core.indexOf(sep);
+      if (i <= 0 || i + sep.length >= core.length) continue;
+      const a = core.slice(0, i), b = core.slice(i + sep.length);
+      depth++;
+      const ta = CYR.test(a) ? tr(a, true) : a, tb = CYR.test(b) ? tr(b, true) : b;
+      depth--;
+      if (ta != null && tb != null) return ta.trim() + sep + tb.trim();
+    }
+    return null;
+  }
+  /** Перевод одной строки; null — переводить нечего или перевода нет. quiet — не записывать в непереведённое (часть строки). */
+  function tr(str, quiet) {
+    const d = dict();
+    if (!d || !str || !CYR.test(str)) return null;
+    const lead = str.match(/^\s*/)[0], trail = str.match(/\s*$/)[0], core = str.trim().replace(/\s+/g, ' ');
+    let t = look(core);
+    if (t == null && core.includes('«')) t = quoted(core);
     /* Хвосты вида «Лента — закрыто», «Неделя — ещё не получен»: основа из словаря + перевод хвоста (__suffix). */
-    for (const [suf, to] of Object.entries(d.__suffix || {})) if (core.endsWith(suf) && d[core.slice(0, -suf.length)] != null) return lead + d[core.slice(0, -suf.length)] + to + trail;
-    const w = byWords(core);
-    if (w != null) return lead + w + trail;
-    if (collect && !miss.has(key)) miss.set(key, core);
+    if (t == null) for (const [suf, to] of Object.entries(d.__suffix || {})) if (core.endsWith(suf) && d[core.slice(0, -suf.length)] != null) { t = d[core.slice(0, -suf.length)] + to; break; }
+    if (t == null) t = byWords(core);
+    if (t == null) t = parts(core);
+    if (t != null) return lead + t + trail;
+    if (collect && !quiet) { const k = keyOf(core).key; if (!miss.has(k)) miss.set(k, core); }
     return null;
   }
   const ATTRS = ['placeholder', 'aria-label', 'title'];
   /* Уже переведённое не трогаем повторно (украинский перевод тоже кириллица). */
-  const done = new WeakMap();
+  let done = new WeakMap();
+  /* Русский оригинал каждой переведённой строки: при смене языка экран сначала возвращается к нему,
+     иначе постоянные элементы (панель вкладок) остались бы на прошлом языке. */
+  const orig = new WeakMap();
+  const origA = new WeakMap();
+  /* Строки с выделением, переведённые целиком: что было до перевода и какой текст получился. */
+  const mix = new WeakMap();
   /* Буква на аватаре: на латинице — латинская. */
   const TRL = { А: 'A', Б: 'B', В: 'V', Г: 'G', Д: 'D', Е: 'E', Ё: 'E', Ж: 'Z', З: 'Z', И: 'I', Й: 'Y', К: 'K', Л: 'L', М: 'M', Н: 'N', О: 'O', П: 'P', Р: 'R', С: 'S', Т: 'T', У: 'U', Ф: 'F', Х: 'H', Ц: 'C', Ч: 'C', Ш: 'S', Щ: 'S', Э: 'E', Ю: 'Y', Я: 'Y' };
+  const put = (x, v, t) => { orig.set(x, v); x.nodeValue = t; done.set(x, t); };
+  /* По-английски цена пишется «€39.99», проценты — «25%»: цены и проценты отдельными строками (без слов) переписываются под язык. */
+  const enNum = (v) => v.replace(/^(\s*)(\d+(?:,\d+)?)[\s  ]?€(\s*)$/, (m, a, n, b) => `${a}€${n.replace(',', '.')}${b}`).replace(/^(\s*)([−-]?\d+)[\s  ]%(\s*)$/, '$1$2%$3');
   function text(x) {
     const v = x.nodeValue;
-    if (!CYR.test(v) || done.get(x) === v) return;
-    if (lang !== 'uk' && TRL[v.trim()] && x.parentElement && x.parentElement.classList.contains('pp-av')) { x.nodeValue = TRL[v.trim()]; done.set(x, x.nodeValue); return; }
+    if (done.get(x) === v) return;
+    if (!CYR.test(v)) { if (lang === 'en' && /\d/.test(v)) { const t = enNum(v); if (t !== v) put(x, v, t); } return; }
+    const p = x.parentElement;
+    if (p && p.dataset && p.dataset.ini) { const t = tr(p.dataset.ini); if (t && t.trim()) { put(x, v, t.trim()[0].toUpperCase()); return; } }
+    /* data-k — короткая строка, которую по одной букве не понять («с» — секунды): переводится по своему ключу. */
+    if (p && p.dataset && p.dataset.k) { const t = look(p.dataset.k); if (t != null) { put(x, v, t); return; } }
+    /* Подпись под числом («день подряд» под «41»): форма слова зависит от числа, а оно в соседнем элементе.
+       Переводим вместе с числом («41 день подряд» → «41 days in a row») и оставляем подпись без него. */
+    const num = p && p.previousElementSibling && p.previousElementSibling.textContent.trim();
+    if (num && /^\d+$/.test(num) && !/\d/.test(v)) {
+      const t = tr(`${num} ${v.trim()}`, true);
+      const m = t && t.trim().match(new RegExp(`^${num}[\\s\\u00a0]+(.+)$`));
+      if (m) { put(x, v, v.match(/^\s*/)[0] + m[1] + v.match(/\s*$/)[0]); return; }
+    }
+    if (lang !== 'uk' && TRL[v.trim()] && p && p.classList.contains('pp-av')) { put(x, v, TRL[v.trim()]); return; }
     const t = tr(v);
-    if (t != null && t !== v) { x.nodeValue = t; done.set(x, t); } else done.set(x, v);
+    if (t != null && t !== v) put(x, v, t); else done.set(x, v);
   }
   function attrs(x) {
     let m = done.get(x);
-    for (const a of ATTRS) {
+    /* Имя по умолчанию в поле («Будильник №2», группа «Семья») — тоже на языке интерфейса; набранное человеком не трогаем. */
+    const list = x.tagName === 'INPUT' && x.hasAttribute('value') && x.value === x.getAttribute('value') ? ATTRS.concat('value') : ATTRS;
+    for (const a of list) {
       const v = x.getAttribute(a);
       if (!v || !CYR.test(v) || (m && m[a] === v)) continue;
       const t = tr(v);
       if (!m) { m = {}; done.set(x, m); }
-      if (t != null && t !== v) { x.setAttribute(a, t); m[a] = t; } else m[a] = v;
+      if (t != null && t !== v) { let o = origA.get(x); if (!o) { o = {}; origA.set(x, o); } o[a] = v; x.setAttribute(a, t); m[a] = t; } else m[a] = v;
     }
+  }
+  const INLINE = /^(MARK|B|STRONG|EM|I|U|S|SPAN|SMALL|SUP|SUB|A)$/;
+  /** Строка с выделенным словом: текст и выделение вместе, ключ — 'Держи [серию].'. true — переведено целиком. */
+  function mixed(el) {
+    const kids = el.childNodes;
+    if (kids.length < 2) return false;
+    const was = mix.get(el);
+    if (was && was.now === el.textContent) return true;
+    let key = '', words = false;
+    const inl = [];
+    for (const k of kids) {
+      if (k.nodeType === 3) { key += k.nodeValue; if (k.nodeValue.trim()) words = true; continue; }
+      if (k.nodeType !== 1 || !INLINE.test(k.tagName) || k.firstElementChild || !k.textContent.trim()) return false;
+      inl.push(k);
+      /* data-v — переменная часть (почта, дата): в ключе пустые скобки, сам текст остаётся как есть. */
+      key += k.hasAttribute('data-v') ? '[]' : `[${k.textContent}]`;
+    }
+    if (!words || !inl.length || !CYR.test(key)) return false;
+    const t = look(key.trim().replace(/\s+/g, ' '));
+    if (t == null) return false;
+    const parts = t.split(/\[([^\]]*)\]/);
+    if (parts.length !== inl.length * 2 + 1) return false;
+    const before = [...kids].map((k) => (k.nodeType === 3 ? k : [k, k.textContent]));
+    const out = [];
+    parts.forEach((s, i) => {
+      if (i % 2) { const e = inl[(i - 1) / 2]; if (!e.hasAttribute('data-v')) { e.textContent = s; if (e.firstChild) done.set(e.firstChild, s); } out.push(e); return; }
+      if (!s) return;
+      const n = document.createTextNode(s);
+      done.set(n, s);
+      out.push(n);
+    });
+    el.replaceChildren(...out);
+    mix.set(el, { before, now: el.textContent });
+    return true;
+  }
+  function one(x) {
+    attrs(x);
+    mixed(x);
   }
   function node(n) {
     if (n.nodeType === 3) { if (n.parentElement && !n.parentElement.closest('script, style')) text(n); return; }
     if (n.nodeType !== 1 || n.closest('script, style')) return;
-    attrs(n);
+    one(n);
     const w = document.createTreeWalker(n, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
-    for (let x = w.nextNode(); x; x = w.nextNode()) { if (x.nodeType === 3) text(x); else if (!/^(SCRIPT|STYLE)$/.test(x.tagName)) attrs(x); }
+    for (let x = w.nextNode(); x; x = w.nextNode()) { if (x.nodeType === 3) text(x); else if (!/^(SCRIPT|STYLE)$/.test(x.tagName)) one(x); }
   }
   let mo = null;
   function watch() {
@@ -111,18 +238,46 @@
     });
     mo.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTRS });
   }
-  /** Меняет язык: запоминает на телефоне и перерисовывает экран из исходников (обратно на русский — тоже). */
+  /** Возвращает на экране русские оригиналы всего, что переводили и что с тех пор не менялось. */
+  function restore() {
+    if (!document.body) return;
+    const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+    for (let x = w.currentNode; x; x = w.nextNode()) {
+      if (x.nodeType === 3) { if (orig.has(x) && done.get(x) === x.nodeValue) x.nodeValue = orig.get(x); continue; }
+      const mx = mix.get(x);
+      if (mx && mx.now === x.textContent) { x.replaceChildren(...mx.before.map((o) => (Array.isArray(o) ? ((o[0].textContent = o[1]), o[0]) : o))); mix.delete(x); }
+      const o = origA.get(x), m = done.get(x);
+      if (o && m) for (const a of Object.keys(o)) if (m[a] === x.getAttribute(a)) x.setAttribute(a, o[a]);
+    }
+    done = new WeakMap();
+  }
+  /** Меняет язык: запоминает на телефоне, возвращает экран к оригиналу и переводит заново, затем перерисовывает экран. */
   function set(l, flow) {
     if (!LANGS.some((x) => x[0] === l)) return;
+    if (mo) { mo.disconnect(); mo = null; }
+    restore();
     lang = l;
     try { localStorage.setItem('sonly-lang', l); } catch (e) { /* без хранилища — до перезагрузки */ }
     watch();
     if (flow) { flow.rerender(true); }
   }
   if (document.body) watch(); else document.addEventListener('DOMContentLoaded', watch);
+  const LOCALE = { ru: 'ru-RU', en: 'en-GB', uk: 'uk-UA', pl: 'pl-PL', de: 'de-DE', es: 'es-ES', fr: 'fr-FR' };
   Sonly.i18n = {
     LANGS, tr, set, watch,
     get lang() { return lang; },
+    /** Язык для дат, распознавания и чтения вслух: 'en-GB', 'de-DE'… */
+    get locale() { return LOCALE[lang] || 'ru-RU'; },
+    /** Слово или название (задания, пейзажа) на текущем языке — для текста не на экране. */
+    word: (x) => { const t = tr(x); return t == null ? x : t.trim(); },
+    /**
+     * Текст не для экрана — «Поделиться», подписи на сохранённой картинке. Ключ с {именами}: значения подставляются после перевода,
+     * поэтому коды и ссылки с цифрами не мешают найти строку в словаре.
+     */
+    t(key, vars = {}) {
+      const d = dict(), s = lang !== 'ru' && d && d[key] != null ? d[key] : key;
+      return s.replace(/\{([a-z]\w*)\}/g, (m, k) => (vars[k] != null ? vars[k] : m));
+    },
     /** Флаг языка — картинкой Apple, как все эмодзи прототипа. */
     flag(l, cls = '') {
       const x = LANGS.find((y) => y[0] === l) || LANGS[0];
