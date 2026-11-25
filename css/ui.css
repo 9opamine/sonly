@@ -441,14 +441,13 @@
 .bd.on.t-legend::before,.bd.on.t-myth::before,.bd-one.on.t-legend::before,.bd-one.on.t-myth::before{content:'';position:absolute;left:50%;top:6px;width:96px;height:96px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,color-mix(in oklab,var(--tc) 45%,transparent),transparent);pointer-events:none}
 .bd-one{position:relative}
 .bd-one.on.t-legend::before,.bd-one.on.t-myth::before{top:0;width:190px;height:190px}
-.bd-hex.on.t-myth .bd-f{background:linear-gradient(120deg,#FF7AA8,#FFB86B,#7AE3FF,#7A5CFF,#FF7AA8);background-size:300% 100%;animation:bd-shine 4s linear infinite}
-.bd-f::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.5) 45%,transparent 60%);transform:translateX(-120%);animation:bd-glint 3.6s ease-in-out infinite}
+.bd-hex.on.t-myth .bd-f{background:linear-gradient(120deg,#FF7AA8,#FFB86B,#7AE3FF,#7A5CFF,#FF7AA8);background-size:300% 100%;animation:bd-shine 4s linear infinite;animation-delay:var(--gs,0s)}
+.bd-f::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.5) 45%,transparent 60%);transform:translateX(-120%);animation:bd-glint 3.6s ease-in-out infinite;animation-delay:var(--gd,0s)}
 .t-common .bd-f::after{display:none}
-.t-rare .bd-f::after{animation-duration:5.2s}
 /* Мифический: искры вокруг кристалла мерцают по очереди. */
 .bd-sp{position:absolute;inset:-14%;pointer-events:none;z-index:2}
-.bd-sp u{position:absolute;width:calc(var(--s,62px) * .16);aspect-ratio:1;background:#fff;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);opacity:0;animation:bd-tw 2.4s ease-in-out infinite}
-.bd-sp u:nth-child(1){left:6%;top:14%}.bd-sp u:nth-child(2){right:4%;top:30%;animation-delay:.6s}.bd-sp u:nth-child(3){left:14%;bottom:10%;animation-delay:1.2s;width:calc(var(--s,62px) * .11)}.bd-sp u:nth-child(4){right:12%;bottom:4%;animation-delay:1.8s;width:calc(var(--s,62px) * .12)}
+.bd-sp u{position:absolute;width:calc(var(--s,62px) * .16);aspect-ratio:1;background:#fff;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);opacity:0;animation:bd-tw 2.4s ease-in-out infinite;animation-delay:var(--gt,0s)}
+.bd-sp u:nth-child(1){left:6%;top:14%}.bd-sp u:nth-child(2){right:4%;top:30%;animation-delay:calc(var(--gt,0s) + .6s)}.bd-sp u:nth-child(3){left:14%;bottom:10%;animation-delay:calc(var(--gt,0s) + 1.2s);width:calc(var(--s,62px) * .11)}.bd-sp u:nth-child(4){right:12%;bottom:4%;animation-delay:calc(var(--gt,0s) + 1.8s);width:calc(var(--s,62px) * .12)}
 @keyframes bd-tw{0%,100%{opacity:0;transform:scale(.4) rotate(0)}40%{opacity:1;transform:scale(1) rotate(45deg)}70%{opacity:0;transform:scale(.6) rotate(90deg)}}
 @keyframes bd-shine{to{background-position:300% 0}}
 @keyframes bd-glint{0%,55%{transform:translateX(-120%)}85%,100%{transform:translateX(120%)}}

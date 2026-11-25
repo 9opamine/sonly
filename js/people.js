@@ -142,7 +142,13 @@
   const gtile = (g, size) => { const [a, b] = AV[(g.c || 0) % AV.length]; return `<i class="pp-gt" style="--a:${a};--b:${b};--s:${size}px">${ic(g.icon, Math.round(size * 0.48), 2.2)}</i>`; };
   /** Кольцо «встали N из M». */
   const ring = (up, all) => `<span class="pp-ring${up === all ? ' full' : ''}" aria-label="Встали ${up} из ${all}"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15.5"/>${up ? `<circle class="on" cx="18" cy="18" r="15.5" pathLength="100" stroke-dasharray="${Math.round((up / all) * 100)} 100"/>` : ''}</svg><b aria-hidden="true">${up}<u>/${all}</u></b></span>`;
-  const dotOf = (k) => (k === 'up' ? `<b class="pp-dot up">${ic('check', 10, 4)}</b>` : k === 'late' ? `<b class="pp-dot late">${ic('bell', 9, 3)}</b>` : k === 'sleep' ? `<b class="pp-dot sleep">${si('moon', 10)}</b>` : '');
+  /* Значок статуса на аватаре: свои рисунки в сетке 20 × 20, по центру круга — встал (галочка), проспал (колокольчик), спит (луна). */
+  const DOT = {
+    up: '<path d="M6 10.4 8.9 13.3 14.2 7.4" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>',
+    late: '<path d="M10 4.6c-2.3 0-3.8 1.8-3.8 4v2.5L5 13.1h10l-1.2-2V8.6c0-2.2-1.5-4-3.8-4Z" fill="#fff"/><path d="M8.5 14.3a1.5 1.5 0 0 0 3 0Z" fill="#fff"/>',
+    sleep: '<path d="M11.9 5.2a5 5 0 1 0 3.2 8.6 4.1 4.1 0 0 1-3.2-8.6Z" fill="#fff"/>',
+  };
+  const dotOf = (k) => (DOT[k] ? `<b class="pp-dot ${k}"><svg viewBox="0 0 20 20" aria-hidden="true">${DOT[k]}</svg></b>` : '');
   const tile = (cls, icon, val, label) => `<div class="pp-st ${cls}"><i class="pp-ic">${icon}</i><b>${val}</b><small>${label}</small></div>`;
 
   /* Неделя: сколько утр с понедельника по сегодня встал и во сколько в среднем. */

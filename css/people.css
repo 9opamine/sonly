@@ -22,8 +22,9 @@
 .pp-brain .br-lid{fill:#FFB8CB;transform:translateY(-29px)}
 .pp-brain .br-ck{fill:#FF6F93;opacity:.42}
 /* Значок статуса в углу: встал — зелёный, проспал — красный с колокольчиком, спит — луна. Лежит ровно на краю круга. */
-.pp-dot{position:absolute;right:-2px;bottom:-2px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;color:#fff;box-shadow:0 0 0 2.5px var(--card-s,#fff)}
-.pp-dot .ic,.pp-dot .si{width:10px;height:10px}
+.pp-av .pp-dot{position:absolute;right:-3px;bottom:-3px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;gap:0;padding:0;font-size:0;line-height:0;color:#fff;box-shadow:0 0 0 2.5px var(--card-s,#fff)}
+/* Значок статуса нарисован под свои 20 точек — ровно по центру и чётко даже на обычном экране. */
+.pp-av .pp-dot>svg{display:block;width:20px;height:20px}
 .pp-dot.up{background:#30D158}
 .pp-dot.late{background:#FF453A}
 .pp-dot.sleep{background:#7D7AFF}
@@ -334,7 +335,8 @@
 .pp-fc small{max-width:100%;font-size:12.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pp-fc.add small{color:#0A84FF}
 .pp-fc.add .pp-av{background:rgba(10,132,255,.14);color:#0A84FF}
-.pp-fc .pp-dot{width:20px;height:20px;box-shadow:0 0 0 3px var(--bg)}
+.pp-fc .pp-av .pp-dot{width:22px;height:22px;box-shadow:0 0 0 3px var(--bg)}
+.pp-fc .pp-av .pp-dot>svg{width:22px;height:22px}
 /* Значки в профиле — лентой, лучшие первыми. */
 .pp-brow{display:flex;gap:2px;margin:0 -20px;padding:2px 20px 6px;overflow-x:auto;scrollbar-width:none}
 .pp-brow::-webkit-scrollbar{display:none}

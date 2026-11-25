@@ -180,7 +180,9 @@
   const tierOf = (t) => TIERS.find((x) => x[0] === t) || TIERS[0];
   const pctStr = (p) => (p < 1 ? String(p).replace('.', ',') : p < 10 ? String(p).replace('.', ',') : Math.round(p)) + NBSP + '%';
   /** Значок своей формы и цвета по редкости; не полученный — серый контур той же формы с замком (секретный — со знаком вопроса). */
-  const hex = (b, size = 62) => `<i class="bd-hex t-${b.tier}${b.on ? ' on' : ''}" style="--s:${size}px"><svg class="bd-ol" viewBox="0 0 60 66" aria-hidden="true"><path d="${SHAPE[b.tier] || SHAPE.common}"/></svg>${b.on ? `<i class="bd-f"><svg viewBox="0 0 60 66" aria-hidden="true">${DECO[b.tier] || ''}</svg></i>` : ''}${b.on ? ic(b.icon, Math.round(size * 0.38), 2.2) : b.secret ? `<b class="bd-q">?</b>` : ic('lock', Math.round(size * 0.29), 2.2)}${b.on && b.tier === 'myth' ? '<i class="bd-sp" aria-hidden="true"><u></u><u></u><u></u><u></u></i>' : ''}</i>`;
+  /* Блик, перелив и искры у всех значков идут в одном такте от часов — где и когда бы значок ни появился, они вспыхивают вместе. */
+  const beat = () => { const t = Date.now(), d = (ms) => `-${((t % ms) / 1000).toFixed(2)}s`; return `--gd:${d(3600)};--gs:${d(4000)};--gt:${d(2400)}`; };
+  const hex = (b, size = 62) => `<i class="bd-hex t-${b.tier}${b.on ? ' on' : ''}" style="--s:${size}px;${beat()}"><svg class="bd-ol" viewBox="0 0 60 66" aria-hidden="true"><path d="${SHAPE[b.tier] || SHAPE.common}"/></svg>${b.on ? `<i class="bd-f"><svg viewBox="0 0 60 66" aria-hidden="true">${DECO[b.tier] || ''}</svg></i>` : ''}${b.on ? ic(b.icon, Math.round(size * 0.38), 2.2) : b.secret ? `<b class="bd-q">?</b>` : ic('lock', Math.round(size * 0.29), 2.2)}${b.on && b.tier === 'myth' ? '<i class="bd-sp" aria-hidden="true"><u></u><u></u><u></u><u></u></i>' : ''}</i>`;
   const bdName = (b) => (b.secret && !b.on ? 'Секретный' : b.name);
 
   /* ── График статистики ───────────────────────────────────── */

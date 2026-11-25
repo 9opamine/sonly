@@ -224,7 +224,10 @@
     sound.stop();
     s._ring = null;
     /* Откуда пришла проверка: после «Я не сплю» человек возвращается туда же, а не на главную. */
-    s._check = { a: K.copy(alarm), t0: Date.now(), from: ['ring', 'task', 'woke', 'streak', 'check'].includes(flow.id) ? 'home' : flow.id };
+    /* Открытый лист (профиль, друзья, страница настроек) тоже запоминаем — после «Я не сплю» он вернётся на место. */
+    const sh = flow.sheets.classList.contains('open') && flow.sheets.querySelector('.sheet');
+    const sheet = sh && sh.classList.contains('pp-sheet') && s._ppNav && s._ppNav.length ? { pp: s._ppNav.slice() } : sh && s._page ? { page: s._page.slice() } : null;
+    s._check = { a: K.copy(alarm), t0: Date.now(), from: ['ring', 'task', 'woke', 'streak', 'check'].includes(flow.id) ? 'home' : flow.id, sheet };
     buzz(false);
     if (!flow.shot) awake(true);
     flow.closeSheet(true);
@@ -293,7 +296,13 @@
     const k = flow.state._check, root = flow.cur && flow.cur.querySelector('.ck');
     if (k) k.ok = true;
     awake(false);
-    const go = () => { flow.state._check = null; flow.go((k && k.from) || 'home', 2); };
+    const go = () => {
+      flow.state._check = null;
+      flow.go((k && k.from) || 'home', 2);
+      const sh = k && k.sheet;
+      if (sh && sh.pp && Sonly.people && Sonly.people.restore) Sonly.people.restore(flow, sh.pp);
+      else if (sh && sh.page) K.openPage(flow, sh.page[0], sh.page[1] || '');
+    };
     if (!root || flow.still || REDUCE()) { go(); return; }
     root.classList.add('ok');
     flow.at(700, go);
