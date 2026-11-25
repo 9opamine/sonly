@@ -208,9 +208,19 @@
       inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') flow.sheets.querySelector('[data-act="pt-save"]').click(); });
       if (!inp.closest('.instant')) setTimeout(() => { if (inp.isConnected) { inp.focus({ preventScroll: true }); inp.setSelectionRange(inp.value.length, inp.value.length); } }, 380);
     },
-    on(flow, act, arg) {
+    on(flow, act, arg, el) {
       const s = flow.state, u = ui(s);
       switch (act) {
+        /* Раскрыть строку (вопрос, выплата, «Куда»): открыта одна — остальные в этой карточке сворачиваются. */
+        case 'br-open': {
+          const row = el && el.closest('.br-row');
+          if (!row) return true;
+          const open = !row.classList.contains('open');
+          row.parentNode.querySelectorAll('.br-row.open').forEach((x) => { x.classList.remove('open'); x.querySelector('.br-head').setAttribute('aria-expanded', 'false'); });
+          row.classList.toggle('open', open);
+          el.setAttribute('aria-expanded', String(open));
+          return true;
+        }
         case 'pt-tab': u.tab = arg; s._copied = ''; s._page = null; K.openPage(flow, 'share'); return true;
         /* Уровень на шкале: суммы меняются на месте. */
         case 'pt-lvl': {

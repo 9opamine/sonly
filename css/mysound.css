@@ -123,3 +123,4 @@
 .js-msres>h3:first-child{margin-top:24px}
 .ms-nm{flex:1;min-width:0;display:grid;gap:1px}
 .ms-nm>b{font-weight:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+a.ms-retry{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}

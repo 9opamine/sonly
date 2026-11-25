@@ -10,8 +10,9 @@
 /* ── Звонок: солнце из логотипа «звенит», от него расходятся дуги, снизу — рассвет ── */
 .rg{position:relative;flex:1;display:flex;flex-direction:column;padding:54px 20px 34px;overflow:hidden;color:#fff;background:#050507}
 .rg>*:not(.tk-dawn){position:relative}
-.rg-top{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;height:56px}
-.rg-logo{justify-self:center;display:flex}
+/* Сверху только логотип: звонок нельзя ни заглушить, ни закрыть — он стихает только после задания. */
+.rg-top{display:flex;justify-content:center;align-items:center;height:56px}
+.rg-logo{display:flex}
 .rg-logo .logo{height:28px;width:auto;color:#fff}
 .rg-x{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:none}
 .rg-x.ghost{visibility:hidden}
@@ -35,9 +36,14 @@
 .rg-eq u:nth-child(3){animation-delay:-.5s}
 .rg-eq u:nth-child(4){animation-delay:-.12s}
 @keyframes rg-eq{from{transform:scaleY(.25)}to{transform:scaleY(1)}}
-.rg.mute .rg-eq u{animation:none;transform:scaleY(.25);background:#5A5A63}
-.rg.mute .rg-bell{animation:none}
-.rg.mute .rg-wave{animation:none}
+/* В такт звуку (скрипт ставит .beat, когда звук правда играет): солнце и логотип бьются на ударах, дуги расходятся
+   от каждого удара, полоски показывают басы, середину и верха. До звука — покачивание и дуги по часам. */
+.rg-bell .mark{transform-origin:50% 62%;will-change:transform}
+.rg-logo{transform-origin:50% 50%}
+.rg.beat .rg-bell{animation:none}
+.rg.beat .rg-wave:not(.hit){display:none}
+.rg-wave.hit{animation:rg-wave 1.25s cubic-bezier(.2,.7,.3,1) forwards}
+.rg.beat .rg-eq u{animation:none;transform:scaleY(.18)}
 .rg-card{border-radius:30px;padding:16px 16px 14px;background:rgba(22,22,26,.78);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);display:grid;gap:14px}
 .rg-card>small{display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;color:#FFD86A}
 .rg-task{display:flex;align-items:center;gap:14px}

@@ -28,7 +28,7 @@
   const CATS = [['all', 'Все', 'layout-grid'], ['camera', 'Камера', 'camera'], ['move', 'Движение', 'activity'], ['mind', 'Голова', 'brain'], ['voice', 'Голос', 'mic']];
   /* Звуки — настоящие записи (js/sound.js): группы и значок с цветом у каждой. */
   const SOUNDS = Sonly.sound.groups();
-  const SND_ICON = { 'Мелодии': ['music', '#FF9F0A'], 'Будильники': ['alarm-clock', '#0A84FF'], 'Сирены': ['siren', '#FF3B30'], 'Природа': ['bird', '#34C759'] };
+  const SND_ICON = { 'Мелодии': ['music', '#FF9F0A'], 'Будильники': ['alarm-clock', '#0A84FF'], 'Сирены': ['siren', '#FF3B30'], 'Забавные': ['party-popper', '#AF52DE'], 'Природа': ['bird', '#34C759'] };
   const TABS = [['home', 'Главная', 'house'], ['morning', 'Утро', 'sunrise'], ['stats', 'Статистика', 'chart-no-axes-column'], ['settings', 'Настройки', 'settings']];
   const CHECKS = [[0, 'Выключена', ''], [3, 'Через 3 минуты', ''], [5, 'Через 5 минут', ''], [10, 'Через 10 минут', '']];
   /* Пламя серии: рисунок, а не значок из набора, чтобы у серии было своё лицо. */
@@ -819,7 +819,8 @@
       pill.querySelectorAll('button').forEach((b) => { const hit = b.dataset.act === 'tab:' + id; b.classList.toggle('on', hit); if (hit) on = b; });
       if (flow._tabs) flow._tabs.put(on);
       /* Новое: красные отметки на вкладках; на Главной — праздник за всё, что ещё не объявили (после подъёма, после друзей…). */
-      if (Sonly.news) { Sonly.news.paint(flow); if (id === 'home' && !flow.shot) { clearTimeout(flow._nw); flow._nw = setTimeout(() => Sonly.news.announce(flow), 700); } }
+      /* Ушли с Главной (зазвонил будильник, открыли вкладку) — праздник убирается, недопоказанное объявится в следующий раз. */
+      if (Sonly.news) { Sonly.news.paint(flow); if (id !== 'home') { clearTimeout(flow._nw); Sonly.news.leave(flow); } else if (!flow.shot) { clearTimeout(flow._nw); flow._nw = setTimeout(() => Sonly.news.announce(flow), 700); } }
     },
     /** Будильник, собранный в онбординге, становится первым в списке. */
     adopt(flow, st) { flow.state.alarms = [alarmFrom(st)]; flow.go('home', 0); },

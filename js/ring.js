@@ -178,7 +178,6 @@
     r.hushed = false;
     if (r.direct || flow.shot) return;
     sound.play(r.a.sound, { loop: true });
-    if (r.mute) sound.mute(true);
   }
   /** iPhone даёт датчики движения только после разрешения, и спросить можно лишь по нажатию — оно здесь и есть. */
   function askMotion(k) {
@@ -318,6 +317,11 @@
     if (!r.fresh || r.from === 'editor' || r.from === 'picker' || flow.still || REDUCE() || !src || !host) { exit(flow); return; }
     const p = host.getBoundingClientRect(), k = p.width / host.offsetWidth || 1, a = src.getBoundingClientRect();
     const box = { x: (a.left - p.left) / k, y: (a.top - p.top) / k, w: a.width / k, h: a.height / k }, svg = src.cloneNode(true);
+    /* Пока огонь летит и число в значке меняется, праздник новых значков и открыток ждёт — его позовёт приземление. */
+    const ms = 820, settle = ms + 1100;
+    flow._fly = Date.now() + settle + 400;
+    const after = () => { flow._fly = 0; if (Sonly.news) Sonly.news.announce(flow); };
+    setTimeout(after, settle);
     exit(flow);
     const chip = flow.cur && flow.cur.querySelector('.ap-top .ap-chip'), num = chip && chip.querySelector('.ap-chip-n');
     if (!chip) return;
@@ -332,7 +336,7 @@
     fly.appendChild(inner);
     host.appendChild(fly);
     /* Дуга: по горизонтали — быстро в начале, по вертикали — разгоняется; огонь уменьшается до значка. */
-    const dx = tx - (box.x + box.w / 2), dy = ty - (box.y + box.h * 0.6), sc = 17 / box.w, ms = 820;
+    const dx = tx - (box.x + box.w / 2), dy = ty - (box.y + box.h * 0.6), sc = 17 / box.w;
     fly.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${dx.toFixed(1)}px)` }], { duration: ms, easing: 'cubic-bezier(.3,.1,.25,1)', fill: 'forwards' });
     inner.animate([{ transform: 'translateY(0) scale(1)' }, { transform: `translateY(${(dy * 0.18).toFixed(1)}px) scale(${Math.max(sc * 2.2, 0.3).toFixed(3)})`, offset: 0.35 }, { transform: `translateY(${dy.toFixed(1)}px) scale(${sc.toFixed(4)})` }], { duration: ms, easing: 'cubic-bezier(.55,0,.35,1)', fill: 'forwards' });
     flow.at(ms, () => {
@@ -348,6 +352,65 @@
     });
     /* Если ушли с главной до конца полёта — огонь не должен остаться висеть. */
     setTimeout(() => fly.remove(), ms + 200);
+  }
+  /*
+   * Солнце звонка бьётся в такт звуку. Удары ищем по слушателю звука: резкий рост спектра — так слышен и удар барабана в песне,
+   * и каждый «дзинь» звонка. На ударе солнце из логотипа подпрыгивает, свет вспыхивает и расходится дуга; между ударами солнце
+   * дышит по громкости, полоски у названия звука показывают настоящие басы, середину и верха.
+   * Пока звука нет (браузер ещё не дал играть, файл грузится) — обычное покачивание из CSS.
+   */
+  function beat(c) {
+    const rg = c.q('.rg'), bell = c.q('.rg-bell'), mark = bell && bell.querySelector('.mark'), halo = c.q('.rg-halo'), logo = c.q('.rg-logo');
+    const bars = [...c.el.querySelectorAll('.rg-eq u')];
+    if (!rg || !mark || c.shot || c.flow.still || REDUCE()) return;
+    const BANDS = [[60, 250], [250, 1000], [1000, 4000], [4000, 10000]];
+    let freq = null, wave = null, prev = null, hist = [], last = 0, kick = 0, lvl = 0, peak = 0.02, t0 = 0, waves = 0;
+    const hit = () => {
+      if (waves >= 3) return;
+      const w = document.createElement('i');
+      w.className = 'rg-wave hit';
+      waves++;
+      w.addEventListener('animationend', () => { w.remove(); waves--; }, { once: true });
+      bell.insertBefore(w, mark);
+    };
+    const frame = (t) => {
+      if (!rg.isConnected) return;
+      requestAnimationFrame(frame);
+      const m = Sonly.sound.meter();
+      if (!m) return;
+      const dt = t0 ? Math.min(64, t - t0) : 16.7;
+      t0 = t;
+      if (!freq) { freq = new Uint8Array(m.frequencyBinCount); wave = new Uint8Array(m.fftSize); prev = new Uint8Array(m.frequencyBinCount); }
+      m.getByteFrequencyData(freq);
+      m.getByteTimeDomainData(wave);
+      let e = 0;
+      for (let i = 0; i < wave.length; i += 2) { const v = (wave[i] - 128) / 128; e += v * v; }
+      e = Math.sqrt(e / (wave.length / 2));
+      const hz = m.context.sampleRate / 2 / freq.length, top = Math.min(freq.length, Math.round(10000 / hz));
+      let flux = 0;
+      for (let i = 2; i < top; i++) { const d = freq[i] - prev[i]; if (d > 0) flux += d; }
+      prev.set(freq);
+      flux /= top;
+      hist.push(flux);
+      if (hist.length > 45) hist.shift();
+      const mean = hist.reduce((a, x) => a + x, 0) / hist.length;
+      peak = Math.max(e, peak * Math.pow(0.996, dt / 16.7));
+      if (e > 0.004 && !rg.classList.contains('beat')) rg.classList.add('beat');
+      if (e > 0.006 && hist.length > 8 && flux > mean * 1.55 + 1.1 && t - last > 170) { last = t; kick = 1; hit(); }
+      const to = Math.min(1, e / peak);
+      lvl += (to - lvl) * (to > lvl ? 0.45 : 0.1);
+      kick *= Math.pow(0.86, dt / 16.7);
+      mark.style.transform = `scale(${(1 + kick * 0.12 + lvl * 0.04).toFixed(4)})`;
+      if (halo) { halo.style.opacity = (0.5 + kick * 0.5 + lvl * 0.15).toFixed(3); halo.style.transform = `scale(${(0.92 + kick * 0.2 + lvl * 0.08).toFixed(4)})`; }
+      if (logo) logo.style.transform = `scale(${(1 + kick * 0.07).toFixed(4)})`;
+      bars.forEach((b, i) => {
+        const [lo, hi] = BANDS[i] || BANDS[0];
+        let sum = 0, n = 0;
+        for (let j = Math.max(1, Math.floor(lo / hz)); j <= Math.min(freq.length - 1, Math.ceil(hi / hz)); j++) { sum += freq[j]; n++; }
+        b.style.transform = `scaleY(${Math.max(0.18, Math.min(1, (n ? sum / n / 255 : 0) * 1.5)).toFixed(3)})`;
+      });
+    };
+    requestAnimationFrame(frame);
   }
   const step = (flow, k) => { k.i++; if (k.i >= k.n) finish(flow); else flow.rerender(); };
   /** Засчитанный повтор: число и солнце обновляются на месте, без перерисовки — солнце растёт плавно. На последнем — восход. */
@@ -822,10 +885,8 @@
       render: (c) => {
         const r = ensure(c.s), a = r.a, t = K.taskOf(a), now = new Date();
         const sum = TO.has(t.id) ? TO.summary(t.id, TO.get(a, t.id)) : t.desc;
-        return `<div class="rg${r.mute ? ' mute' : ''}"><i class="tk-dawn" style="--p:.45"></i>
-          <header class="rg-top">${r.test ? `<button class="rg-x lg" data-act="ring-exit" aria-label="Закрыть проверку">${ic('x', 20, 2.3)}</button>` : '<span class="rg-x ghost"></span>'}
-            <div class="rg-logo">${Sonly.logo()}</div>
-            <button class="rg-x lg" data-act="ring-mute" aria-label="${r.mute ? 'Включить звук' : 'Заглушить'}">${ic(r.mute ? 'volume-x' : 'volume-2', 20, 2.1)}</button></header>
+        return `<div class="rg"><i class="tk-dawn" style="--p:.45"></i>
+          <header class="rg-top"><div class="rg-logo">${Sonly.logo()}</div></header>
           <div class="rg-mid"><div class="rg-bell"><i class="rg-wave"></i><i class="rg-wave w2"></i><i class="rg-halo"></i>${Sonly.mark()}</div>
             <div class="rg-time js-now">${nowHM()}</div>
             <small>${now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^./, (x) => x.toUpperCase())}</small>
@@ -841,11 +902,12 @@
         const tick = () => { node.textContent = nowHM(); c.wait(5000, tick); };
         if (!c.shot) c.wait(5000, tick);
         const r = c.s._ring;
-        if (!c.shot && r && r.a.vibro !== false && !r.mute) buzz(true);
+        if (!c.shot && r && r.a.vibro !== false) buzz(true);
         c.flow.leave = (next) => { if (next !== 'ring') buzz(false); };
         /* Строка «будильник · звук» в одну строку и целиком: не влезает — без названия будильника, звук важнее (после перевода). */
         const pill = c.q('.rg-snd'), fitPill = () => { if (!pill) return; pill.classList.remove('short', 'xs'); if (pill.scrollWidth > pill.clientWidth + 1) pill.classList.add('short'); if (pill.scrollWidth > pill.clientWidth + 1) pill.classList.add('xs'); };
         requestAnimationFrame(() => setTimeout(fitPill, 30));
+        beat(c);
         /* Пока звенит будильник, ИИ для задания уже грузится — к нажатию «Начать задание» он готов. */
       },
     },
@@ -1100,6 +1162,8 @@
     busy,
     /** Утро засчитано (для панели «+1 день»): восход, «Доброе утро», экран серии — как после настоящего задания. */
     finish,
+    /** Снять звонок без задания — только для проверок и панели прототипа: у человека такой кнопки нет. */
+    stop: exit,
     /** Готовит экран для снимка: «ring:math», «task:memory», «task:hunt.spin», «woke», «streak», «check». */
     preview(flow, what) {
       const [scr, spec] = what.split(':'), [task, phase] = (spec || '').split('.'), s = flow.state;
@@ -1125,21 +1189,8 @@
       switch (act) {
         case 'ring-go': if (!r.k) begin(r); askMotion(r.k); sound.unlock(); r.t1 = r.t1 || Date.now(); flow.go('task', 1); return true;
         case 'task-back': if (r.direct) exit(flow); else { unhush(flow, r); flow.go('ring', -1); } return true;
-        case 'ring-mute': {
-          r.mute = !r.mute;
-          sound.mute(r.mute);
-          buzz(!r.mute && r.a.vibro !== false && !flow.shot);
-          /* Экран не перерисовывается: меняется только значок, солнце не дёргается. */
-          const rg = flow.cur && flow.cur.querySelector('.rg'), b = rg && rg.querySelector('[data-act="ring-mute"]');
-          if (!b || flow.still) { flow.rerender(); return true; }
-          rg.classList.toggle('mute', r.mute);
-          b.innerHTML = ic(r.mute ? 'volume-x' : 'volume-2', 20, 2.1);
-          b.setAttribute('aria-label', r.mute ? 'Включить звук' : 'Заглушить');
-          return true;
-        }
         case 'ring-streak': flow.go('streak', 2); return true;
         case 'ring-done': if (flow.id === 'streak') streakHome(flow); else exit(flow); return true;
-        case 'ring-exit': exit(flow); return true;
         case 'key':
           if (k.solved) return true;
           if (arg === 'ok') {

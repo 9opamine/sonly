@@ -273,6 +273,10 @@
     try { tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || '').split('/').pop(); } catch (e) { /* нет часового пояса */ }
     return TZ[tz] || LANG[(Sonly.i18n && Sonly.i18n.lang !== 'ru' ? Sonly.i18n.lang : navigator.language || 'en').slice(0, 2)] || 'US';
   }
+  /* Внутри Claude (страница во фрейме claude.ai) браузеру не дают ходить на чужие сайты — каталог Apple там не открыть.
+     Так и говорим, со ссылкой на сайт, где поиск работает, а не «проверь интернет». */
+  const SITE = 'https://9opamine.github.io/sonly/';
+  const inFrame = () => { try { return window.self !== window.top; } catch (e) { return true; } };
   const askStore = async (q, c) => {
     const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=50&country=${c}`);
     if (!r.ok) throw Object.assign(new Error(String(r.status)), { slow: r.status === 403 || r.status === 429 });
@@ -300,7 +304,7 @@
     }));
     const fail = got.every((g) => g.status === 'rejected');
     /* Apple отвечает «подожди», если искали слишком часто (около 20 поисков в минуту). */
-    found = fail ? { q, list: [], st: got.some((g) => g.reason && g.reason.slow) ? 'slow' : 'err' } : { q, st: 'ok', list: list.slice(0, 60) };
+    found = fail ? { q, list: [], st: got.some((g) => g.reason && g.reason.slow) ? 'slow' : inFrame() ? 'frame' : 'err' } : { q, st: 'ok', list: list.slice(0, 60) };
     paintRes(flow);
   }
   function paintRes(flow) {
@@ -311,8 +315,11 @@
     const q = ((s._my && s._my.q) || '').trim();
     /* Честно о 30 секундах: каталог Apple открыто даёт только отрывок. Вся песня — файлом с телефона. */
     const whole = `<button class="ap-card ap-row tall ms-whole" data-act="ms-file"><i class="ap-row-i c" style="--c:${COLOR.file}">${Sonly.si('folder')}</i><span>Вся песня с телефона<small>Любые 30 секунд из файла</small></span>${K().chev()}</button>`;
+    const src = inFrame() ? `<p class="ap-note ms-src">${ic('info', 14, 2.4)} Внутри Claude каталог Apple закрыт — песни ищутся на сайте sonly. Файл с телефона работает и здесь.</p>`
+      : `<p class="ap-note ms-src">${ic('music', 14, 2.4)} Каталог Apple Music. Apple даёт открыто только 30 секунд каждой песни — из них выбираешь кусок.</p>`;
     if (!q) return `<h3>Для утра</h3><div class="ms-sugg">${SUGG.map((x) => `<button data-act="ms-qset:${esc(x)}">${esc(x)}</button>`).join('')}</div>
-      <p class="ap-note ms-src">${ic('music', 14, 2.4)} Каталог Apple Music. Apple даёт открыто только 30 секунд каждой песни — из них выбираешь кусок.</p>${whole}`;
+      ${src}${whole}`;
+    if (found.st === 'frame' && found.q === q) return `<div class="ms-empty"><i class="ms-big" style="--c:#FA2D48">${ic('lock', 38, 2.2)}</i><b>Внутри Claude поиск закрыт</b><p>Claude не пускает страницу к каталогу Apple. На сайте sonly поиск работает — открой его на телефоне.</p><a class="ms-retry" href="${SITE}" target="_blank" rel="noopener">Открыть сайт</a></div>${whole}`;
     if (found.st === 'slow') return `<div class="ms-empty"><i class="ms-big" style="--c:#FA2D48">${ic('hourglass', 38, 2.2)}</i><b>Apple просит подождать</b><p>Слишком много поисков подряд. Попробуй через минуту.</p><button class="ms-retry" data-act="ms-qset:${esc(q)}">Повторить</button></div>`;
     if (found.q !== q || found.st === 'load') return `<div class="ap-card ap-list ms-songs wait">${Array.from({ length: 6 }, () => '<div class="ap-row ms-song"><i class="ms-cover"></i><span><i class="ms-sk"></i><i class="ms-sk s"></i></span></div>').join('')}</div>`;
     if (found.st === 'err') return `<div class="ms-empty"><i class="ms-big" style="--c:#FA2D48">${ic('wifi-off', 38, 2.2)}</i><b>Поиск не открылся</b><p>Проверь интернет и попробуй ещё раз.</p><button class="ms-retry" data-act="ms-qset:${esc(q)}">Повторить</button></div>`;

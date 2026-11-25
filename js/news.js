@@ -77,6 +77,8 @@
   /** Объявить новое, если на Главной ничего не мешает: звонок, лист, снимок экрана. */
   function announce(flow) {
     if (ov || flow.shot || flow.id !== 'home' || !flow.el.isConnected || flow.el.closest('[hidden]')) return;
+    /* Огонь серии ещё летит в значок на Главной: праздник начнётся, когда он долетит и число сменится (его зовёт сам полёт). */
+    if (flow._fly && Date.now() < flow._fly) return;
     if (flow.sheets.classList.contains('open') || (Sonly.ringer && Sonly.ringer.busy && Sonly.ringer.busy(flow))) return;
     const s = flow.state, d = diff(s, 'told');
     const all = K().badges(s), order = K().TIERS.map((t) => t[0]);
@@ -114,6 +116,7 @@
       <div class="nw-box t-${v.tier}"><small class="nw-k">${v.k}</small>
         <div class="nw-stage nw-${it.kind}"><i class="nw-rays"></i><i class="nw-glow"></i><div class="nw-it">${v.item}</div><i class="nw-burst" aria-hidden="true">${burst()}</i></div>
         ${v.tag}<b class="nw-name">${v.name}</b><p class="nw-note">${v.note}</p></div>
+      ${q.length - i > 1 ? '<button class="nw-skip" data-act="nw-skip">Пропустить</button>' : ''}
       <div class="nw-foot"><button class="ap-btn nw-ok" data-act="nw-ok">${i < q.length - 1 ? 'Дальше' : 'Забрать'}</button>${q.length > 1 ? `<small class="nw-n">${i + 1} из ${q.length}</small>` : ''}</div>`;
     if (!ov) {
       ov = document.createElement('div');
@@ -151,6 +154,65 @@
       { duration: 640, easing: 'cubic-bezier(.45,0,.2,1)', fill: 'forwards' });
     fly.onfinish = done;
   }
+  /*
+   * «Пропустить»: всё, что ещё не показали, сразу пачкой — вещи веером выскакивают на месте праздника и разлетаются
+   * по своим вкладкам (значки — в «Статистику», открытки и пейзажи — в «Утро»), каждая вкладка вспыхивает, когда в неё прилетело.
+   */
+  function skip(flow) {
+    if (!ov || ov.classList.contains('out')) return;
+    const i = +ov.dataset.i, rest = q.slice(i);
+    if (!demo) rest.forEach((it) => mark(flow.state, 'told', it.kind, it.ids));
+    const host = flow.el, stage = ov.querySelector('.nw-stage'), k = host.getBoundingClientRect().width / host.offsetWidth || 1;
+    const hr = host.getBoundingClientRect(), sr = stage ? stage.getBoundingClientRect() : hr;
+    const cx = (sr.left + sr.width / 2 - hr.left) / k, cy = (sr.top + sr.height / 2 - hr.top) / k;
+    const items = rest.map((it) => ({ it, v: body(flow, it) })).filter((x) => x.v);
+    ov.classList.add('out');
+    close(flow);
+    if (!items.length || REDUCE() || !host.animate) { paint(flow); return; }
+    const pack = document.createElement('div');
+    pack.className = 'nw-pack';
+    pack.setAttribute('aria-hidden', 'true');
+    host.appendChild(pack);
+    const n = items.length, span = Math.min(260, 48 * (n - 1)), popped = new Set();
+    let left = n;
+    items.forEach(({ it, v }, j) => {
+      const el = document.createElement('div'), sc = it.kind === 'b' ? 0.46 : 0.34;
+      el.className = `nw-pk nw-pk-${it.kind}`;
+      el.innerHTML = `<div class="nw-pk-in">${v.item}</div>`;
+      el.style.left = `${cx.toFixed(1)}px`;
+      el.style.top = `${cy.toFixed(1)}px`;
+      pack.appendChild(el);
+      /* Веер: по дуге, крайние чуть ниже и повёрнуты наружу. */
+      const u = n > 1 ? j / (n - 1) - 0.5 : 0, fx = u * span, fy = Math.abs(u) * 34 - 6, rot = u * 22;
+      const target = flow.dock && flow.dock.querySelector(`[data-act="tab:${TAB[it.kind]}"]`);
+      const tr = target ? target.getBoundingClientRect() : { left: hr.left + hr.width / 2, top: hr.bottom, width: 0, height: 0 };
+      const tx = (tr.left + tr.width / 2 - hr.left) / k - cx, ty = (tr.top + tr.height / 2 - hr.top) / k - cy;
+      const wait = 340 + j * 70;
+      const a = el.animate([
+        { transform: 'translate(0,0) scale(.2) rotate(0deg)', opacity: 0 },
+        { transform: `translate(${fx.toFixed(1)}px,${fy.toFixed(1)}px) scale(${(sc * 1.12).toFixed(3)}) rotate(${rot.toFixed(1)}deg)`, opacity: 1, offset: 0.16 },
+        { transform: `translate(${fx.toFixed(1)}px,${fy.toFixed(1)}px) scale(${sc}) rotate(${rot.toFixed(1)}deg)`, opacity: 1, offset: 0.3 },
+        { transform: `translate(${(fx + (tx - fx) * 0.55).toFixed(1)}px,${(fy + (ty - fy) * 0.3 - 46).toFixed(1)}px) scale(${(sc * 0.6).toFixed(3)}) rotate(${(rot * 0.4).toFixed(1)}deg)`, opacity: 1, offset: 0.62 },
+        { transform: `translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) scale(.08) rotate(0deg)`, opacity: 0.2 },
+      ], { duration: 1100 + wait - 340, delay: j * 40, easing: 'cubic-bezier(.45,0,.25,1)', fill: 'forwards' });
+      a.onfinish = () => {
+        el.remove();
+        if (target && !popped.has(target)) { popped.add(target); paint(flow); }
+        if (target) { target.classList.remove('nw-pop'); void target.offsetWidth; target.classList.add('nw-pop'); }
+        if (--left === 0) { pack.remove(); paint(flow); }
+      };
+    });
+    try { if (navigator.vibrate) navigator.vibrate([16, 40, 16, 40, 24]); } catch (e) { /* нет вибрации */ }
+  }
+  /** Ушли с Главной: праздник и летящая пачка убираются сразу. Что не успели показать, не помечено объявленным — покажется потом. */
+  function leave(flow) {
+    if (flow && flow.el) flow.el.querySelectorAll('.nw-pack').forEach((x) => x.remove());
+    if (!ov) return;
+    ov.remove();
+    ov = null;
+    q = [];
+    demo = false;
+  }
   function close(flow) {
     q = [];
     demo = false;
@@ -185,10 +247,11 @@
     show(flow, 0);
   }
   function on(flow, act) {
+    if (act === 'nw-skip') { skip(flow); return true; }
     if (act !== 'nw-ok') return false;
     next(flow);
     return true;
   }
 
-  Sonly.news = { init, reset, diff, open, showing, count, paint, tag, announce, preview, on, mark };
+  Sonly.news = { init, reset, diff, open, showing, count, paint, tag, announce, preview, on, mark, leave };
 })();
