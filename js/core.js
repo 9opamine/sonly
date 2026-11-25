@@ -225,6 +225,8 @@ window.Sonly = (() => {
   const concepts = {};
   const register = (c) => { concepts[c.id] = c; };
 
+  /** Имя листа для памяти прокрутки — по исходной (ещё не переведённой) разметке: стопка людей (data-pp) или заголовок. */
+  const sheetKey = (el) => { const pp = el && el.querySelector('[data-pp]'); if (pp) return 'pp:' + pp.dataset.pp; const h = el && el.querySelector('.ap-sh-head b, .pay-head b'); return h ? 'h:' + h.textContent.trim() : ''; };
   class Flow {
     constructor(host, concept, opts = {}) {
       this.c = concept;
@@ -234,6 +236,9 @@ window.Sonly = (() => {
       this.shot = !!opts.still;
       this.state = Object.assign(base(), concept.defaults ? concept.defaults() : {}, opts.state || {});
       this.history = [];
+      /* Где были прокручены экраны (вкладки) и листы — чтобы «Назад» и возврат на вкладку вели туда же, а не в начало. */
+      this._scr = new Map();
+      this._sy = new Map();
       this.timers = new Set();
       this.frames = new Set();
       host.innerHTML = `<div class="phone ${concept.cls}${this.still ? ' instant' : ''}" data-concept="${concept.id}">
@@ -313,7 +318,8 @@ window.Sonly = (() => {
       if (this.leave) { const f = this.leave; this.leave = null; f(id); }
       this.stop();
       if (!keepSheet) this.closeSheet(true);
-      const prev = this.cur;
+      const prev = this.cur, was = this.id;
+      if (this.c.keepScroll && prev && was !== id) { const sc = $('.scroll', prev); if (sc) this._scr.set(was, sc.scrollTop); }
       this.id = id;
       this.scr = scr;
       const el = document.createElement('section');
@@ -332,6 +338,8 @@ window.Sonly = (() => {
       this.el.dataset.sb = scr.sb || 'dark';
       this.view.appendChild(el);
       this.cur = el;
+      /* Вернулись на вкладку — она прокручена туда же, где её оставили (повторное нажатие на вкладку — наверх, это в приложении). */
+      if (this.c.keepScroll && was !== id && this._scr.has(id)) { const sc = $('.scroll', el); if (sc) sc.scrollTop = this._scr.get(id); }
       this.refresh();
       if (prev) {
         if (this.still || dir === 0) prev.remove();
@@ -370,12 +378,31 @@ window.Sonly = (() => {
     }
 
     sheet(html, cls = '') {
+      /*
+       * Прокрутка листов: уходя с листа на следующий (значок из профиля, открытка из альбома), запоминаем, где был список;
+       * вернувшись назад (класс back — и кнопкой в шапке, и системной «Назад») или перерисовав тот же лист — ставим туда же.
+       * Лист, открытый заново с экрана, начинается сверху: память чистится, когда листы закрыты.
+       */
+      const was = this.sheets.querySelector('.sheet');
+      if (was && was.dataset.sk) { const sc = $('.scroll', was); if (sc) this._sy.set(was.dataset.sk, sc.scrollTop); }
       this.sheets.innerHTML = `<div class="sheet-bg" data-act="sheet-close"></div><div class="sheet ${cls}">${html}</div>`;
+      const now = this.sheets.querySelector('.sheet'), k = sheetKey(now);
+      if (k) {
+        now.dataset.sk = k;
+        const sc = $('.scroll', now);
+        if (sc && this._sy.has(k) && (/(^|\s)back(\s|$)/.test(cls) || (was && was.dataset.sk === k))) {
+          /* Ещё раз — когда лист дорисован: барабан или картинки сверху иначе сдвинули бы место (браузер «держит» видимое). */
+          const y = this._sy.get(k);
+          sc.scrollTop = y;
+          requestAnimationFrame(() => { if (sc.isConnected) sc.scrollTop = y; });
+        }
+      }
       if (this.still) this.sheets.classList.add('open');
       else requestAnimationFrame(() => requestAnimationFrame(() => this.sheets.classList.add('open')));
     }
     closeSheet(now) {
       if (!this.sheets.classList.contains('open') && !this.sheets.firstChild) return;
+      this._sy.clear();
       this.sheets.classList.remove('open');
       if (now || this.still) this.sheets.innerHTML = '';
       else setTimeout(() => { if (!this.sheets.classList.contains('open')) this.sheets.innerHTML = ''; }, 380);

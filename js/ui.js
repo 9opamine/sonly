@@ -403,7 +403,8 @@
 
   const blank = (s) => ({ id: null, h: 7, m: 0, days: [0, 1, 2, 3, 4], once: false, task: 'hunt', sound: s.sndDef || DEF_SND, name: `Будильник №${s.alarms.length + 1}`, on: true, rise: s.riseDef !== false, vibro: true, check: 5, skip: false, opts: {} });
   const keepTop = (flow, enter) => { const b = flow.sheets.querySelector('.ap-sh-body'); return !enter && b ? b.scrollTop : 0; };
-  const setTop = (flow, y) => { flow.sheets.querySelector('.ap-sh-body').scrollTop = y; };
+  /* При возврате «назад» место в списке уже поставил сам лист (память прокрутки в core.js) — ноль его не перебивает. */
+  const setTop = (flow, y) => { const b = flow.sheets.querySelector('.ap-sh-body'); if (b && (y || !b.closest('.sheet.back'))) b.scrollTop = y; };
   const back = (title) => `<div class="ap-sh-head"><button class="ap-x lg" data-act="ed-back" aria-label="Назад">${ic('chevron-left', 22, 2.3)}</button><b>${title}</b><span class="ap-x ghost"></span></div>`;
 
   function editor(flow, enter = '') {
@@ -741,7 +742,7 @@
   Sonly.appKit = { taskOf, tic, hm, fmtMin, stats, pl, day0, copy, blank, editor, taskPicker, poolOf, nextRing, dayWord, chev, row, FLAME, keepTop, setTop, shareText, code4, refOf, openPage, soundPicker, badges, hex, bdName, pctStr, TIERS, badgeList, badgeOne };
 
   Sonly.register({
-    id: 'app', name: 'Приложение', cls: 'ap',
+    id: 'app', name: 'Приложение', cls: 'ap', keepScroll: true,
     about: 'Приложение sonly по присланному примеру: будильники, утро, статистика со значками, настройки с виджетами. «Зазвонить сейчас» под телефоном запускает настоящий звонок со звуком.',
     order: ['home', 'morning', 'stats', 'settings'], extra: [],
     titles: { home: 'Главная', morning: 'Утро', stats: 'Статистика', settings: 'Настройки' },
