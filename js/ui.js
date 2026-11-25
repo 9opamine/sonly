@@ -741,6 +741,51 @@
         ${b.on ? `<span class="bd-got">${ic('check', 15, 3)}Получен</span>` : b.need > 1 ? `<div class="bd-prog"><i style="--p:${(b.cur / b.need).toFixed(3)}"></i></div><small class="bd-pn">${b.cur} из ${b.need}</small>` : ''}
         <small class="bd-pct">Есть у ${pctStr(b.pct)} пользователей</small>${foot}</div>`;
   }
+  /* ── Панель прототипа: проверка анимаций ─────────────────── */
+
+  /** Какая кнопка «Данные» нажата. */
+  const dataOn = (s, v) => (s.mode ? s.mode === v : v === 'new' ? s.data === 'new' : s.data === 'demo' && (s.span || '2w') === v);
+  /**
+   * «Проснуться +1 день»: как будто прошли сутки и человек встал по будильнику. Подъёмы (и отметки «новое») сдвигаются на день
+   * назад вместе с днями будильников — так серия растёт на 1, а сегодняшнее утро свободно; дальше всё по-настоящему: восход,
+   * «Доброе утро», огонёк серии, а на Главной — праздник за новую открытку, пейзаж и значки.
+   */
+  function wakeDay(flow) {
+    const s = flow.state;
+    if (Sonly.ringer.busy(flow)) return;
+    if (s.data === 'demo') { s.log = history(s).map((x) => ({ t: day0(x.d).getTime(), wake: x.wake, secs: x.secs, task: x.task })); s.data = 'new'; s.span = ''; s.mode = ''; }
+    if (!s.alarms.length) { s.alarms = [{ ...blank(s), id: 'a' + Date.now(), name: 'Утренний', days: [0, 1, 2, 3, 4, 5, 6], task: 'math' }]; }
+    const back = (t) => { const d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1).getTime(); };
+    s.log = (s.log || []).map((x) => ({ ...x, t: back(x.t) }));
+    s.alarms.forEach((a) => { a.days = a.days.map((d) => (d + 6) % 7).sort((x, y) => x - y); });
+    if (s.news) ['told', 'seen'].forEach((w) => { if (s.news[w] && s.news[w].c) s.news[w].c = s.news[w].c.map(back); });
+    const a = copy(s.alarms.find((x) => x.on) || s.alarms[0]);
+    a.check = 0;
+    if (a.task === 'random') a.task = 'math';
+    const secs = 25 + Math.floor(Math.random() * 30);
+    s._ring = { a, test: false, random: false, direct: false, t0: Date.now() - (secs + 8) * 1000, t1: Date.now() - secs * 1000, mute: false, from: ['ring', 'task', 'woke', 'streak', 'check'].includes(flow.id) ? 'home' : flow.id };
+    s._check = null;
+    flow.closeSheet(true);
+    Sonly.ringer.finish(flow);
+    /* Время подъёма — около будильника (а не «сейчас» среди дня), как в настоящем утре. */
+    const today = day0(new Date()).getTime(), e = (s.log || []).find((x) => x.t === today);
+    if (e) e.wake = a.h * 60 + a.m + Math.floor(Math.random() * 9);
+  }
+  /** «Показать»: анимация без изменения данных — огонёк серии или праздник открытки, значка, пейзажа на Главной. */
+  function showOff(flow, what) {
+    const s = flow.state;
+    if (Sonly.ringer.busy(flow)) return;
+    flow.closeSheet(true);
+    if (what === 'streak') {
+      const a = copy(s.alarms.find((x) => x.on) || s.alarms[0] || blank(s));
+      s._ring = { a, test: false, fresh: true, t0: Date.now(), from: 'home', show: true };
+      flow.go('streak', 2);
+      return;
+    }
+    if (flow.id !== 'home') flow.go('home', 0);
+    setTimeout(() => Sonly.news && Sonly.news.preview(flow, what), 350);
+  }
+
   Sonly.appKit = { taskOf, tic, hm, fmtMin, stats, pl, day0, copy, blank, editor, taskPicker, poolOf, nextRing, dayWord, chev, row, FLAME, keepTop, setTop, shareText, code4, refOf, openPage, soundPicker, badges, hex, bdName, pctStr, TIERS, badgeList, badgeOne };
 
   Sonly.register({
@@ -795,15 +840,27 @@
     /* Переключатели под телефоном в оболочке просмотра. */
     shell: {
       html: (s) => `<span class="shell-ctl">Тема ${[['system', 'как в системе'], ['dark', 'тёмная'], ['light', 'светлая']].map(([v, n]) => `<button data-shell="theme:${v}"${s.theme === v ? ' aria-pressed="true"' : ''}>${n}</button>`).join('')}</span>
-        <span class="shell-ctl">Данные ${[['new', 'новый аккаунт'], ['2w', 'две недели'], ['3m', '3 месяца'], ['1y', 'год']].map(([v, n]) => `<button data-shell="data:${v}"${(v === 'new' ? s.data === 'new' : s.data === 'demo' && (s.span || '2w') === v) ? ' aria-pressed="true"' : ''}>${n}</button>`).join('')}</span>
-        <span class="shell-ctl">Сейчас <button data-shell="ring:now">зазвонить</button><button data-shell="check:now">проверка подъёма</button></span>`,
+        <span class="shell-ctl">Данные ${[['empty', 'пустой'], ['new', 'новый аккаунт'], ['2w', 'две недели'], ['3m', '3 месяца'], ['1y', 'год']].map(([v, n]) => `<button data-shell="data:${v}"${dataOn(s, v) ? ' aria-pressed="true"' : ''}>${n}</button>`).join('')}</span>
+        <span class="shell-ctl">Сейчас <button data-shell="ring:now">зазвонить</button><button data-shell="check:now">проверка подъёма</button><button data-shell="wake:day">проснуться +1 день</button></span>
+        <span class="shell-ctl">Показать ${[['streak', 'огонёк'], ['c', 'открытка'], ['b', 'значок'], ['l', 'пейзаж']].map(([v, n]) => `<button data-shell="show:${v}">${n}</button>`).join('')}</span>`,
       set(flow, key, val) {
         const s = flow.state, a = s.alarms.find((x) => x.on) || s.alarms[0];
         /* «Зазвонить» — как будто подошло время будильника: такой подъём идёт в серию. */
         if (key === 'ring') { if (a && !Sonly.ringer.busy(flow)) Sonly.ringer.start(flow, a, false); return; }
         if (key === 'check') { if (a && !Sonly.ringer.busy(flow)) Sonly.ringer.check(flow, a); return; }
         /* Данные: новый аккаунт или пример истории нужной длины. Друзья-пример заводятся заново. */
-        if (key === 'data') { s.data = val === 'new' ? 'new' : 'demo'; s.span = val === 'new' ? '' : val; s.pp = undefined; s._ppNav = undefined; s._ppQ = ''; s._ppDraft = null; if (Sonly.news) Sonly.news.reset(s); paint(flow); if (!s._ring && !s._check) flow.rerender(); return; }
+        if (key === 'data') {
+          /* Пустой — совсем с нуля: ни будильников, ни подъёмов, ни профиля, ни друзей. Каждое первое действие даёт свой значок. */
+          if (val === 'empty') { s.data = 'new'; s.span = ''; s.log = []; s.alarms = []; s.me = undefined; s.mode = 'empty'; }
+          else { s.data = val === 'new' ? 'new' : 'demo'; s.span = val === 'new' ? '' : val; s.mode = val; }
+          s.pp = undefined; s._ppNav = undefined; s._ppQ = ''; s._ppDraft = null;
+          if (Sonly.news) Sonly.news.reset(s);
+          paint(flow);
+          if (!s._ring && !s._check) flow.rerender();
+          return;
+        }
+        if (key === 'wake') { wakeDay(flow); return; }
+        if (key === 'show') { showOff(flow, val); return; }
         s[key] = val;
         paint(flow);
         if (!s._ring && !s._check) flow.rerender();

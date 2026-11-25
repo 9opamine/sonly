@@ -1098,6 +1098,8 @@
     check: checkNow,
     checkOk,
     busy,
+    /** Утро засчитано (для панели «+1 день»): восход, «Доброе утро», экран серии — как после настоящего задания. */
+    finish,
     /** Готовит экран для снимка: «ring:math», «task:memory», «task:hunt.spin», «woke», «streak», «check». */
     preview(flow, what) {
       const [scr, spec] = what.split(':'), [task, phase] = (spec || '').split('.'), s = flow.state;

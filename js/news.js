@@ -73,7 +73,7 @@
 
   /* ── Праздник на Главной ─────────────────────────────────── */
 
-  let q = [], ov = null;
+  let q = [], ov = null, demo = false;
   /** Объявить новое, если на Главной ничего не мешает: звонок, лист, снимок экрана. */
   function announce(flow) {
     if (ov || flow.shot || flow.id !== 'home' || !flow.el.isConnected || flow.el.closest('[hidden]')) return;
@@ -99,8 +99,9 @@
       const sc = (Sonly.morning.scenes || []).find((x) => x[0] === it.id) || [it.id, it.id];
       return { k: 'Новый пейзаж', tier: 'legend', item: `<div class="nw-card">${Sonly.morning.sample(it.id)}</div>`, tag: '', name: `«${sc[1]}»`, note: 'Теперь он может выпасть на открытке' };
     }
-    const c = Sonly.morning.cardInfo(s, it.id);
-    if (!c) return null;
+    const c = it.id ? Sonly.morning.cardInfo(s, it.id) : null;
+    /* Подъёмов ещё нет (пустой аккаунт, «Показать»): образец открытки — тот же рисунок на рассветном небе. */
+    if (!c) return it.id && !demo ? null : { k: 'Новая открытка', tier: 'rare', item: `<div class="nw-card">${Sonly.morning.sample('sea')}</div>`, tag: '', name: 'Открытка утра', note: 'Первая — после подъёма' };
     const when = c.x.d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
     return { k: 'Новая открытка', tier: c.find ? (c.find.lvl === 2 ? 'myth' : 'epic') : 'rare', item: `<div class="nw-card">${c.html}</div>`, tag: c.find ? `<span class="bd-tag t-${c.find.lvl === 2 ? 'myth' : 'epic'}">${c.find.lvl === 2 ? 'Очень редкая находка' : 'Редкая находка'}</span>` : '', name: c.find ? c.find.name : 'Открытка утра', note: `${when} · подъём ${K().fmtMin(c.x.wake)}` };
   }
@@ -108,7 +109,7 @@
     const it = q[i];
     if (!it) { close(flow); return; }
     const v = body(flow, it);
-    if (!v) { mark(flow.state, 'told', it.kind, it.ids); show(flow, i + 1); return; }
+    if (!v) { if (!demo) mark(flow.state, 'told', it.kind, it.ids); show(flow, i + 1); return; }
     const html = `<div class="nw-bg"></div>
       <div class="nw-box t-${v.tier}"><small class="nw-k">${v.k}</small>
         <div class="nw-stage nw-${it.kind}"><i class="nw-rays"></i><i class="nw-glow"></i><div class="nw-it">${v.item}</div><i class="nw-burst" aria-hidden="true">${burst()}</i></div>
@@ -135,7 +136,7 @@
     if (!ov || ov.classList.contains('out')) return;
     const i = +ov.dataset.i, it = q[i];
     if (!it) { close(flow); return; }
-    mark(flow.state, 'told', it.kind, it.ids);
+    if (!demo) mark(flow.state, 'told', it.kind, it.ids);
     const thing = ov.querySelector('.nw-it'), target = flow.dock.querySelector(`[data-act="tab:${TAB[it.kind]}"]`);
     ov.classList.add('out');
     const done = () => {
@@ -152,6 +153,7 @@
   }
   function close(flow) {
     q = [];
+    demo = false;
     if (!ov) return;
     const o = ov;
     ov = null;
@@ -159,11 +161,34 @@
     setTimeout(() => o.remove(), 260);
     paint(flow);
   }
+  /**
+   * Панель прототипа «Показать»: праздник без изменения данных. Значок — самый редкий из полученных (нет — легендарный «Месяц»
+   * для примера), открытка — последняя (нет — образец), пейзаж — последний открытый (нет — «Море»). Учёт «нового» не трогается.
+   */
+  function preview(flow, kind) {
+    if (ov || !flow.el.isConnected) return;
+    const s = flow.state, order = K().TIERS.map((t) => t[0]);
+    let it = null;
+    if (kind === 'b') {
+      const all = K().badges(s), got = all.filter((b) => b.on).sort((a, b) => order.indexOf(b.tier) - order.indexOf(a.tier));
+      const b = got[0] || { ...(all.find((x) => x.id === 's30') || all[0]), on: true };
+      it = { kind: 'b', id: b.id, ids: [b.id], b };
+    } else if (kind === 'c') {
+      const h = K().stats(s).h;
+      it = { kind: 'c', id: h.length ? h[h.length - 1].d.getTime() : 0, ids: [] };
+    } else {
+      const open = Sonly.morning.rewards(s).filter((r) => r.open);
+      it = { kind: 'l', id: open.length ? open[open.length - 1].id : 'sea', ids: [] };
+    }
+    demo = true;
+    q = [it];
+    show(flow, 0);
+  }
   function on(flow, act) {
     if (act !== 'nw-ok') return false;
     next(flow);
     return true;
   }
 
-  Sonly.news = { init, reset, diff, open, showing, count, paint, tag, announce, on, mark };
+  Sonly.news = { init, reset, diff, open, showing, count, paint, tag, announce, preview, on, mark };
 })();

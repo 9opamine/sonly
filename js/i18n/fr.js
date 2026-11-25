@@ -1036,5 +1036,12 @@ Object.assign(Sonly.I18N.fr, {
   "Очень редкая находка": "Trouvaille très rare",
   "Новое": "Nouveau",
   "подъём {0}": "réveil {0}",
+  "пустой": "vide",
+  "Показать": "Montrer",
+  "огонёк": "flamme",
+  "открытка": "carte",
+  "значок": "badge",
+  "пейзаж": "paysage",
+  "проснуться +{0} дней": "réveil +{0} {0:jour|jours}",
 });
 /* ── конец дополнения 2 ── */

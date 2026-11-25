@@ -1036,5 +1036,12 @@ Object.assign(Sonly.I18N.de, {
   "Очень редкая находка": "Sehr seltener Fund",
   "Новое": "Neu",
   "подъём {0}": "Aufstehen {0}",
+  "пустой": "leer",
+  "Показать": "Zeigen",
+  "огонёк": "Flamme",
+  "открытка": "Postkarte",
+  "значок": "Abzeichen",
+  "пейзаж": "Landschaft",
+  "проснуться +{0} дней": "aufwachen +{0} {0:Tag|Tage}",
 });
 /* ── конец дополнения 2 ── */
