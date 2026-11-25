@@ -10,7 +10,7 @@
   },
   /* ── Accueil ── */
   'Встать': 'Se lever', 'с первого': 'dès le premier', 'будильника': 'réveil', 'Будильник, который нельзя отложить.': 'Le réveil qu’on ne peut pas repousser.',
-  'Начать': 'Commencer', 'У меня уже есть подписка': 'J’ai déjà un abonnement', 'Продолжая, ты принимаешь': 'En continuant, tu acceptes les', 'Условия': 'Conditions', 'и': 'et', 'Политику конфиденциальности': 'Politique de confidentialité', 'Условия использования': 'Conditions d’utilisation', 'Конфиденциальность': 'Confidentialité',
+  'Начать': 'Commencer', 'У меня уже есть подписка': 'J’ai déjà un abonnement', 'Продолжая, ты принимаешь': 'En continuant, tu acceptes les', 'Условия': 'Conditions', 'и': 'et', 'Политику конфиденциальности': 'la Politique de confidentialité', 'Условия использования': 'Conditions d’utilisation', 'Конфиденциальность': 'Confidentialité',
   'Язык': 'Langue', 'Язык меняется сразу. Звонок и задания — тоже на нём.': 'La langue change tout de suite, le réveil et les défis aussi.',
   'Откуда ты узнал про sonly?': 'Comment as-tu connu sonly ?', 'Друзья или семья': 'Amis ou famille', 'Другое': 'Autre', 'Радио': 'Radio',
   'Сколько будильников ты ставишь на утро?': 'Combien de réveils mets-tu le matin ?', 'Один': 'Un seul', 'Два-три': 'Deux ou trois', 'Четыре-пять': 'Quatre ou cinq', 'Шесть и больше': 'Six ou plus',
@@ -1025,5 +1025,16 @@ Object.assign(Sonly.I18N.fr, {
   "Автосигнализация": "Alarme auto",
   "Петух": "Coq",
   "Дрозд в саду": "Merle au jardin",
+  "Новый значок": "Nouveau badge",
+  "Новая открытка": "Nouvelle carte",
+  "Новый пейзаж": "Nouveau paysage",
+  "Забрать": "Récupérer",
+  "Дальше": "Suivant",
+  "Открытка утра": "Carte du matin",
+  "Теперь он может выпасть на открытке": "Il peut maintenant apparaître sur tes cartes",
+  "Редкая находка": "Trouvaille rare",
+  "Очень редкая находка": "Trouvaille très rare",
+  "Новое": "Nouveau",
+  "подъём {0}": "réveil {0}",
 });
 /* ── конец дополнения 2 ── */

@@ -470,7 +470,7 @@
     const land = o.land || landOf(x, o.best == null ? 0 : o.best), t = tone(x, land), tag = o.tag || 'button', f = findOf(x, land, t), [ca, cb, ink] = PHASE[phaseOf(x.wake, land)];
     const early = o.rec && x.wake === o.rec.early, fast = o.rec && x.secs === o.rec.fast;
     const act = tag === 'button' ? ` data-act="mo-card:${x.d.getTime()}" aria-label="Открытка за ${x.d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, подъём ${K.fmtMin(x.wake)}"` : '';
-    return `<${tag} class="mo-card${early || fast ? ' gold' : ''}"${act} style="--a:${ca};--b:${cb};--t:${ink};--sun:${t.k.sun.toFixed(2)};--sx:${t.sx}%">
+    return `<${tag} class="mo-card${early || fast ? ' gold' : ''}${o.nw ? ' is-new' : ''}"${act} style="--a:${ca};--b:${cb};--t:${ink};--sun:${t.k.sun.toFixed(2)};--sx:${t.sx}%">
       <i class="mo-card-sun"></i>${landSvg(x, land, t, f)}${artImg(land, x.wake, o.sizes || '120px')}${stickImg(f, x)}<small>${dShort(x.d)}</small><b>${K.fmtMin(x.wake)}</b>${f && f.lvl ? `<i class="mo-find-tag${f.lvl === 2 ? ' top' : ''}" title="${f.name}">${ic('sparkles', 11, 2.6)}</i>` : ''}
       ${early || fast ? `<i class="mo-rec">${early ? `<b title="Самый ранний подъём">${si('rise', 12)}</b>` : ''}${fast ? `<b title="Быстрее всего задание">${ic('zap', 11, 2.6)}</b>` : ''}</i>` : ''}</${tag}>`;
   }
@@ -541,8 +541,8 @@
         <div class="mo-brief" data-in style="--i:1">${BRIEF.map((x) => `<button class="mo-dot${seen[x[0]] ? ' seen' : ''}" data-act="mo-story:${x[0]}" style="${grad(x)}"><i>${si(x[2], 28)}</i><span>${x[1]}</span></button>`).join('')}
           <button class="mo-dot edit" data-act="mo-brief"><i>${si('sliders', 26)}</i><span>Настроить</span></button></div>
         <div class="ap-duo mo-duo" data-in style="--i:2">
-          <button class="ap-card mo-tile" data-act="mo-gifts">${ring(nx ? Math.min(1, st.streak / nx.n) : 1, `<i class="mo-gift">${si('gift', 30)}</i>`)}<b>${nx ? 'Новый пейзаж' : 'Все пейзажи твои'}</b><small>${nx ? `ещё ${left} ${utr(left)} подряд` : 'Они уже на открытках'}</small></button>
-          <button class="ap-card mo-tile" data-act="mo-album"><span class="mo-stack${mini.length ? '' : ' empty'}">${mini.length ? mini.map((x) => cardOf(x, { tag: 'div', best: bestAt.get(x.d.getTime()) })).join('') : ghostStack()}</span><b>Открытки утра</b><small>${st.h.length ? `${st.h.length} в коллекции` : 'Первая — после подъёма'}</small></button>
+          <button class="ap-card mo-tile" data-act="mo-gifts">${Sonly.news ? Sonly.news.tag(s, 'l') : ''}${ring(nx ? Math.min(1, st.streak / nx.n) : 1, `<i class="mo-gift">${si('gift', 30)}</i>`)}<b>${nx ? 'Новый пейзаж' : 'Все пейзажи твои'}</b><small>${nx ? `ещё ${left} ${utr(left)} подряд` : 'Они уже на открытках'}</small></button>
+          <button class="ap-card mo-tile" data-act="mo-album">${Sonly.news ? Sonly.news.tag(s, 'c') : ''}<span class="mo-stack${mini.length ? '' : ' empty'}">${mini.length ? mini.map((x) => cardOf(x, { tag: 'div', best: bestAt.get(x.d.getTime()) })).join('') : ghostStack()}</span><b>Открытки утра</b><small>${st.h.length ? `${st.h.length} в коллекции` : 'Первая — после подъёма'}</small></button>
         </div>
         ${Sonly.people ? Sonly.people.card(s) : ''}
         <div class="ap-sec mo-sec" data-in style="--i:4"><h2>После подъёма</h2><button class="mo-link" data-act="mo-brief">Изменить</button></div>
@@ -579,7 +579,7 @@
       <div class="ap-card gf-hero">${hero}</div>
       <div class="gf-path" aria-hidden="true"><i class="gf-line"><u style="width:${((cur / max) * 100).toFixed(1)}%"></u></i>${rw.map((r) => `<span class="${r.open ? 'on' : ''}${nx && r.n === nx.n ? ' next' : ''}" style="left:${((r.n / max) * 100).toFixed(1)}%"><i>${r.open ? si('check', 13) : ''}</i><b>${r.n}</b></span>`).join('')}</div>
       <h3>Пейзажи для открыток</h3>
-      <div class="gf-grid">${SCENES.map((sc, i) => { const open = sc[2] <= st.best; return `<div class="gf-scene${open ? ' open' : ''}">${sample(sc[0], i)}${open ? '' : `<i class="gf-lock">${si('lock', 14)}</i>`}<b>${short(sc)}</b><small>${!sc[2] ? 'есть сразу' : open ? `открыт · ${sc[2]} ${utr(sc[2])}` : `${sc[2]} ${utr(sc[2])} подряд`}</small></div>`; }).join('')}</div>
+      <div class="gf-grid">${SCENES.map((sc, i) => { const open = sc[2] <= st.best; return `<div class="gf-scene${open ? ' open' : ''}${Sonly.news && Sonly.news.showing('l', sc[0]) ? ' is-new' : ''}">${sample(sc[0], i)}${open ? '' : `<i class="gf-lock">${si('lock', 14)}</i>`}<b>${short(sc)}</b><small>${!sc[2] ? 'есть сразу' : open ? `открыт · ${sc[2]} ${utr(sc[2])}` : `${sc[2]} ${utr(sc[2])} подряд`}</small></div>`; }).join('')}</div>
       <p class="mo-fine">${nb('Каждое утро открытка берёт один из открытых пейзажей, а в день, когда серия открыла новый, — его. Подарок остаётся навсегда, даже если серия прервётся.')}</p></div>`, 'ap-sheet');
     K.setTop(flow, top);
   }
@@ -600,7 +600,7 @@
       const med = wakes[Math.floor(wakes.length / 2)], at = (m) => Math.max(0, Math.min(100, ((m - 240) / 360) * 100)).toFixed(1);
       const bar = SKY.map(([m, a, b]) => `${rgb(mixc(a, b, 0.4))} ${at(m)}%`).join(',');
       body = `<div class="ap-card mo-sum"><span><b>${h.length}</b><small>${K.pl(h.length, 'открытка', 'открытки', 'открыток')}</small></span><span><b>${K.fmtMin(wakes[0])}</b><small>самое раннее</small></span><span><b>${K.fmtMin(wakes[Math.floor(wakes.length / 2)])}</b><small>обычно</small></span></div>
-        ${groups.map(([name, list]) => `<h3 class="mo-month">${name}<span>${list.length}</span></h3><div class="mo-album">${list.map((x) => cardOf(x, { best: best.get(x.d.getTime()), rec })).join('')}</div>`).join('')}
+        ${groups.map(([name, list]) => `<h3 class="mo-month">${name}<span>${list.length}</span></h3><div class="mo-album">${list.map((x) => cardOf(x, { best: best.get(x.d.getTime()), rec, nw: !!(Sonly.news && Sonly.news.showing('c', x.d.getTime())) })).join('')}</div>`).join('')}
         <div class="ap-card mo-when"><header><b>Во сколько ты встаёшь</b><small>небо открыток — по этим часам</small></header>
           <div class="mo-bar" style="background:linear-gradient(90deg,${bar})">${h.map((x) => `<u style="--x:${at(x.wake)}%"></u>`).join('')}<em style="--x:${at(med)}%"></em><b class="mo-med${at(med) < 14 ? ' l' : at(med) > 86 ? ' r' : ''}" style="--x:${at(med)}%">обычно ${K.fmtMin(med)}</b></div>
           <span class="mo-ticks"><small>04:00</small><small>06:00</small><small>08:00</small><small>10:00</small></span></div>
@@ -803,6 +803,17 @@
 
   Sonly.morning = {
     rewards,
+    /** Открытка утра (день — время полуночи этого дня) для объявления «Новая открытка»: картинка, находка в небе и её редкость. */
+    cardInfo(s, day) {
+      const h = K.stats(s).h, x = h.find((y) => y.d.getTime() === day);
+      if (!x) return null;
+      const best = bestByDay(s, h).get(day) || 0, land = landOf(x, best), f = findOf(x, land, tone(x, land));
+      return { x, html: cardOf(x, { tag: 'div', best, sizes: '200px' }), find: f && f.lvl ? { name: f.name, lvl: f.lvl } : null };
+    },
+    /** Образец пейзажа (для объявления «Новый пейзаж»). */
+    sample: (land) => sample(land, 1),
+    /** Отметка «новое» на открытке в альбоме и на пейзаже в подарках. */
+    isNew: (kind, id) => !!(Sonly.news && Sonly.news.showing(kind, id)),
     /** Экран «Доброе утро» (раскладка «Бенто»): приветствие и логотип, карточка мозга с новостью, плитки подъёма и погоды. */
     hero,
     /** Экран серии после «Доброе утро»: огонь, число со вчерашнего на сегодняшнее, неделя. */
@@ -850,8 +861,8 @@
           briefSheet(flow);
           return true;
         }
-        case 'mo-gifts': giftsSheet(flow); return true;
-        case 'mo-album': s._albumFrom = ''; albumSheet(flow, flow.sheets.querySelector('[data-pp="profile"]') ? 'push' : ''); return true;
+        case 'mo-gifts': if (Sonly.news) Sonly.news.open(flow, 'l'); giftsSheet(flow); return true;
+        case 'mo-album': s._albumFrom = ''; if (Sonly.news) Sonly.news.open(flow, 'c'); albumSheet(flow, flow.sheets.querySelector('[data-pp="profile"]') ? 'push' : ''); return true;
         case 'mo-album-pp': s._albumFrom = ''; return Sonly.people ? (Sonly.people.on(flow, 'pp-profile', 'back'), true) : false;
         case 'mo-album-back': s._copied = ''; albumSheet(flow, 'back'); return true;
         case 'mo-card': { const [t, dir] = arg.split(':'); s._copied = ''; cardSheet(flow, t, dir === 'prev' ? 'back' : 'push'); return true; }

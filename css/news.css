@@ -1,0 +1,75 @@
+/* Новое: праздник на Главной (значок выскакивает со вспышкой, открытка переворачивается, всё улетает в свою вкладку)
+   и красные отметки — на вкладках, плитках и в списках, пока новое не посмотрели. */
+
+/* ── Праздник ── */
+.nw{position:absolute;inset:0;z-index:80;display:grid;grid-template-rows:1fr auto;justify-items:center;padding:calc(var(--top,54px) + 10px) 24px calc(var(--bot,34px) + 18px);color:#fff;text-align:center;pointer-events:auto}
+.nw-bg{position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 38%,rgba(32,30,44,.82),rgba(8,8,12,.94));-webkit-backdrop-filter:blur(16px) saturate(1.2);backdrop-filter:blur(16px) saturate(1.2);opacity:0;transition:opacity .35s ease}
+.nw.in .nw-bg{opacity:1}
+.nw.gone .nw-bg{opacity:0}
+.nw-box{position:relative;align-self:center;display:grid;justify-items:center;gap:8px;max-width:320px}
+.nw-k{font-size:13px;font-weight:750;letter-spacing:.6px;text-transform:uppercase;color:var(--tc,#FFC700);opacity:0}
+.nw-stage{position:relative;width:240px;height:240px;display:grid;place-items:center;margin:6px 0 4px}
+.nw-rays{position:absolute;inset:-30px;border-radius:50%;background:repeating-conic-gradient(from 0deg,color-mix(in oklab,var(--tc,#FFC700) 34%,transparent) 0 9deg,transparent 9deg 24deg);-webkit-mask:radial-gradient(closest-side,#000 30%,transparent 72%);mask:radial-gradient(closest-side,#000 30%,transparent 72%);opacity:0;animation:nw-spin 22s linear infinite}
+.nw-glow{position:absolute;width:190px;height:190px;border-radius:50%;background:radial-gradient(closest-side,color-mix(in oklab,var(--tc,#FFC700) 55%,transparent),transparent);opacity:0}
+.nw-it{position:relative;z-index:2;opacity:0}
+.nw-card{width:150px;height:200px}
+.nw-card .mo-card{width:150px;height:200px;border-radius:20px;box-shadow:0 24px 40px -18px rgba(0,0,0,.7)}
+.nw-burst{position:absolute;left:50%;top:50%;width:0;height:0;z-index:1}
+.nw-burst u{position:absolute;left:calc(var(--w) / -2);top:calc(var(--w) / -2);width:var(--w);height:var(--w);border-radius:2px;background:var(--t1,#FFE680);opacity:0}
+.nw-burst u:nth-child(3n){background:#fff;border-radius:50%}
+.nw-burst u:nth-child(3n+1){background:var(--t2,#F59E00);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)}
+.nw-box .bd-tag{opacity:0}
+.nw-name{font-family:var(--disp);font-stretch:116%;font-variation-settings:'wdth' 116;font-weight:840;font-size:30px;letter-spacing:-.6px;line-height:1.08;text-wrap:balance;opacity:0}
+.nw-note{margin:0;max-width:280px;font-size:15.5px;line-height:1.4;color:rgba(255,255,255,.72);text-wrap:balance;opacity:0}
+.nw-foot{position:relative;display:grid;justify-items:center;gap:10px;width:100%;max-width:340px;opacity:0}
+.nw-foot .ap-btn{width:100%;background:#fff;color:#0D0D0F;box-shadow:0 10px 30px -10px color-mix(in oklab,var(--tc,#FFC700) 60%,transparent)}
+.nw-n{font-size:13px;font-weight:650;color:rgba(255,255,255,.55);font-variant-numeric:tabular-nums}
+
+/* Появление: фон, лучи, вещь выскакивает с перелётом и покачиванием, вспышка частиц, затем подписи по очереди. */
+.nw.in .nw-k{animation:nw-up .45s .15s cubic-bezier(.2,.8,.2,1) both}
+.nw.in .nw-rays{animation:nw-fade .6s .25s ease-out both,nw-spin 22s linear infinite}
+.nw.in .nw-glow{animation:nw-glow 1.1s .2s ease-out both}
+.nw.in .nw-b .nw-it{animation:nw-pop .85s .2s cubic-bezier(.2,1.5,.35,1) both}
+.nw.in .nw-c .nw-it,.nw.in .nw-l .nw-it{animation:nw-flip .9s .2s cubic-bezier(.2,1.25,.3,1) both}
+.nw.in .nw-burst u{animation:nw-burst 1s .38s cubic-bezier(.15,.7,.3,1) both}
+.nw.in .nw-burst u:nth-child(2n){animation-delay:.45s;animation-duration:1.15s}
+.nw.in .nw-box .bd-tag{animation:nw-up .45s .62s cubic-bezier(.2,.8,.2,1) both}
+.nw.in .nw-name{animation:nw-up .5s .7s cubic-bezier(.2,.8,.2,1) both}
+.nw.in .nw-note{animation:nw-up .5s .8s cubic-bezier(.2,.8,.2,1) both}
+.nw.in .nw-foot{animation:nw-up .5s .95s cubic-bezier(.2,.8,.2,1) both}
+/* Открытка: блик пробегает, когда она легла лицом. */
+.nw-card{position:relative;perspective:700px;border-radius:20px;overflow:hidden}
+.nw.in .nw-c .nw-card::after,.nw.in .nw-l .nw-card::after{content:'';position:absolute;inset:0;border-radius:20px;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-120%);animation:nw-glint 1s 1s ease-in-out both;pointer-events:none}
+/* Уход: подписи и фон гаснут, вещь улетает в вкладку (это делает скрипт). */
+.nw.out .nw-k,.nw.out .nw-name,.nw.out .nw-note,.nw.out .nw-box .bd-tag,.nw.out .nw-foot,.nw.out .nw-rays,.nw.out .nw-glow,.nw.out .nw-burst{animation:none;opacity:0;transition:opacity .22s ease}
+.nw.out .nw-it{animation:none;opacity:1}
+
+@keyframes nw-spin{to{transform:rotate(360deg)}}
+@keyframes nw-fade{from{opacity:0}to{opacity:1}}
+@keyframes nw-up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes nw-glow{0%{opacity:0;transform:scale(.4)}35%{opacity:1;transform:scale(1.25)}100%{opacity:.75;transform:scale(1)}}
+@keyframes nw-pop{0%{opacity:0;transform:scale(.3) rotate(-28deg)}55%{opacity:1;transform:scale(1.12) rotate(6deg)}78%{transform:scale(.97) rotate(-2deg)}100%{opacity:1;transform:none}}
+@keyframes nw-flip{0%{opacity:0;transform:rotateY(100deg) scale(.7)}45%{opacity:1}100%{opacity:1;transform:none}}
+@keyframes nw-burst{0%{opacity:0;transform:rotate(var(--a)) translateY(0) scale(.4)}15%{opacity:1}100%{opacity:0;transform:rotate(var(--a)) translateY(calc(var(--d) * -1)) scale(1) rotate(160deg)}}
+@keyframes nw-glint{to{transform:translateX(120%)}}
+@media (prefers-reduced-motion:reduce){
+  .nw.in .nw-it,.nw.in .nw-k,.nw.in .nw-name,.nw.in .nw-note,.nw.in .nw-foot,.nw.in .nw-box .bd-tag,.nw.in .nw-glow,.nw.in .nw-rays{animation:nw-fade .3s ease-out both}
+  .nw-burst,.nw-card::after{display:none}
+}
+
+/* ── Красные отметки ── */
+/* Вкладка: точка у значка; когда в неё прилетело новое — точка вспыхивает. */
+.ap-tabs button{position:relative}
+.ap-tabs button.nw-dot::after{content:'';position:absolute;top:7px;left:calc(50% + 7px);width:9px;height:9px;border-radius:50%;background:#FF3B30;box-shadow:0 0 0 2px rgba(255,255,255,.9);z-index:2}
+.ap[data-theme="dark"] .ap-tabs button.nw-dot::after{box-shadow:0 0 0 2px #1C1C20}
+.ap-tabs button.nw-pop::after{animation:nw-dot .55s cubic-bezier(.2,1.6,.4,1)}
+@keyframes nw-dot{0%{transform:scale(0)}60%{transform:scale(1.6)}100%{transform:scale(1)}}
+/* Плитка: красная цифра в углу (сколько нового). */
+.ap-big,.mo-tile{position:relative}
+.nw-count{position:absolute;top:10px;right:10px;z-index:2;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#FF3B30;color:#fff;font-style:normal;font-size:12.5px;font-weight:800;line-height:22px;text-align:center;font-variant-numeric:tabular-nums;box-shadow:0 3px 8px -2px rgba(255,59,48,.55);animation:nw-dot .5s cubic-bezier(.2,1.6,.4,1)}
+.nw-count[hidden]{display:none}
+/* В списке: новый значок, открытка, пейзаж — точка в углу и мягкая красная обводка. */
+.bd.is-new::after,.pp-bd.is-new::after,.mo-card.is-new::after,.gf-scene.is-new::after{content:'';position:absolute;top:8px;right:8px;width:10px;height:10px;border-radius:50%;background:#FF3B30;box-shadow:0 0 0 2px var(--card,#fff);z-index:3;animation:nw-dot .5s cubic-bezier(.2,1.6,.4,1)}
+.bd.is-new,.gf-scene.is-new{box-shadow:var(--elev),inset 0 0 0 1.5px rgba(255,59,48,.55)}
+.pp-bd{position:relative}
+@media (prefers-reduced-motion:reduce){.ap-tabs button.nw-pop::after,.nw-count,.bd.is-new::after,.pp-bd.is-new::after,.mo-card.is-new::after,.gf-scene.is-new::after{animation:none}}

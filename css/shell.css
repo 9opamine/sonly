@@ -230,3 +230,6 @@ img.a-flag{object-fit:contain}
 .a-langs .a-flag{width:30px;height:30px;font-size:30px}
 .ap-flag{background:none!important}
 .ap-flag .emj,.ap-flag .i18n-ru{width:26px;height:26px;font-size:26px}
+
+/* На любом языке многострочный текст переносится без одинокого последнего слова (свои правила balance — главнее). */
+.phone :where(p, b, small, em, span, h1, h2, h3, li, label, strong):not(.vh){text-wrap:pretty}

@@ -1025,5 +1025,16 @@ Object.assign(Sonly.I18N.pl, {
   "Автосигнализация": "Alarm samochodowy",
   "Петух": "Kogut",
   "Дрозд в саду": "Kos w ogrodzie",
+  "Новый значок": "Nowa odznaka",
+  "Новая открытка": "Nowa pocztówka",
+  "Новый пейзаж": "Nowy krajobraz",
+  "Забрать": "Odbierz",
+  "Дальше": "Dalej",
+  "Открытка утра": "Pocztówka poranka",
+  "Теперь он может выпасть на открытке": "Teraz może trafić na pocztówkę",
+  "Редкая находка": "Rzadkie znalezisko",
+  "Очень редкая находка": "Bardzo rzadkie znalezisko",
+  "Новое": "Nowe",
+  "подъём {0}": "pobudka {0}",
 });
 /* ── конец дополнения 2 ── */

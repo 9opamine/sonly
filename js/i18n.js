@@ -32,8 +32,10 @@
   };
   const qs = new URLSearchParams(location.search);
   const saved = () => { try { return localStorage.getItem('sonly-lang'); } catch (e) { return null; } };
-  let lang = qs.get('lang') || saved() || 'ru';
-  if (!LANGS.some((x) => x[0] === lang)) lang = 'ru';
+  /* Основной язык — английский: его выбирают по умолчанию, и на него переходит строка, которой нет в словаре другого языка. */
+  /* Проверки (автоматический браузер, tools/*.cjs) написаны по русскому тексту — им по умолчанию русский, людям английский. */
+  let lang = qs.get('lang') || saved() || (navigator.webdriver ? 'ru' : 'en');
+  if (!LANGS.some((x) => x[0] === lang)) lang = 'en';
   const collect = qs.get('i18n') === 'collect';
   const miss = new Map();
   window.__i18nMiss = miss;
@@ -176,9 +178,17 @@
     if (t == null) t = byWords(core);
     if (t == null) t = parts(core);
     if (t != null) return lead + t + trail;
+    /* Нет в словаре этого языка — английский перевод лучше русского оригинала. */
+    if (lang !== 'en' && lang !== 'ru' && !viaEn) {
+      const keep = lang;
+      lang = 'en'; viaEn = true;
+      try { t = tr(str, true); } finally { lang = keep; viaEn = false; }
+      if (t != null) return t;
+    }
     if (collect && !quiet) { const k = keyOf(core).key; if (!miss.has(k)) miss.set(k, core); }
     return null;
   }
+  let viaEn = false;
   const ATTRS = ['placeholder', 'aria-label', 'title'];
   /* Уже переведённое не трогаем повторно (украинский перевод тоже кириллица). */
   let done = new WeakMap();
@@ -190,7 +200,23 @@
   const mix = new WeakMap();
   /* Буква на аватаре: на латинице — латинская. */
   const TRL = { А: 'A', Б: 'B', В: 'V', Г: 'G', Д: 'D', Е: 'E', Ё: 'E', Ж: 'Z', З: 'Z', И: 'I', Й: 'Y', К: 'K', Л: 'L', М: 'M', Н: 'N', О: 'O', П: 'P', Р: 'R', С: 'S', Т: 'T', У: 'U', Ф: 'F', Х: 'H', Ц: 'C', Ч: 'C', Ш: 'S', Щ: 'S', Э: 'E', Ю: 'Y', Я: 'Y' };
-  const put = (x, v, t) => { orig.set(x, v); x.nodeValue = t; done.set(x, t); };
+  /*
+   * Без одинокого последнего слова на любом языке: в переводе два последних слова склеиваются неразрывным пробелом
+   * (если вместе они не слишком длинные), а короткое слово перед ссылкой или выделением («and» перед «Privacy Policy») —
+   * со следующим словом. Как правило русской вёрстки, только для всех языков сразу.
+   */
+  const INL = /^(A|B|STRONG|EM|I|U|SPAN|SMALL|MARK)$/;
+  function glue(x, t) {
+    if (!t || lang === 'ru') return t;
+    let out = t.replace(/(\S+) (\S+)(\s*)$/, (m, a, b, tail) => (a.length + b.length <= 22 ? `${a}\u00a0${b}${tail}` : m));
+    const nx = x.nextSibling;
+    if (nx && nx.nodeType === 1 && INL.test(nx.tagName) && /\S {1}$/.test(out)) out = out.replace(/ $/, '\u00a0');
+    /* \u041a\u043e\u0440\u043e\u0442\u043a\u043e\u0435 \u0441\u043b\u043e\u0432\u043e \u043c\u0435\u0436\u0434\u0443 \u0434\u0432\u0443\u043c\u044f \u0432\u044b\u0434\u0435\u043b\u0435\u043d\u0438\u044f\u043c\u0438 (\u00abTerms and Privacy Policy\u00bb) \u0434\u0435\u0440\u0436\u0438\u0442\u0441\u044f \u0438 \u0437\u0430 \u043f\u0440\u0435\u0434\u044b\u0434\u0443\u0449\u0435\u0435. */
+    const pv = x.previousSibling;
+    if (pv && pv.nodeType === 1 && INL.test(pv.tagName) && /^ \S/.test(out) && out.trim().split(/\s+/).length <= 2) out = out.replace(/^ /, '\u00a0');
+    return out;
+  }
+  const put = (x, v, t) => { orig.set(x, v); t = glue(x, t); x.nodeValue = t; done.set(x, t); };
   /* По-английски цена пишется «€39.99», проценты — «25%»: цены и проценты отдельными строками (без слов) переписываются под язык. */
   const enNum = (v) => v.replace(/^(\s*)(\d+(?:,\d+)?)[\s  ]?€(\s*)$/, (m, a, n, b) => `${a}€${n.replace(',', '.')}${b}`).replace(/^(\s*)([−-]?\d+)[\s  ]%(\s*)$/, '$1$2%$3');
   function text(x) {
@@ -204,7 +230,8 @@
     /* Подпись под числом («день подряд» под «41»): форма слова зависит от числа, а оно в соседнем элементе.
        Переводим вместе с числом («41 день подряд» → «41 days in a row») и оставляем подпись без него. */
     const num = p && p.previousElementSibling && p.previousElementSibling.textContent.trim();
-    if (num && /^\d+$/.test(num) && !/\d/.test(v)) {
+    /* Подпись может и сама содержать число («значка из 26» под «3»): вместе — «3 значка из 26», ключ «{0} значков из {1}». */
+    if (num && /^\d+$/.test(num)) {
       const t = tr(`${num} ${v.trim()}`, true);
       const m = t && t.trim().match(new RegExp(`^${num}[\\s\\u00a0]+(.+)$`));
       if (m) { put(x, v, v.match(/^\s*/)[0] + m[1] + v.match(/\s*$/)[0]); return; }
@@ -324,7 +351,8 @@
      * поэтому коды и ссылки с цифрами не мешают найти строку в словаре.
      */
     t(key, vars = {}) {
-      const d = dict(), s = lang !== 'ru' && d && d[key] != null ? d[key] : key;
+      const d = dict(), en = Sonly.I18N && Sonly.I18N.en;
+      const s = lang === 'ru' ? key : d && d[key] != null ? d[key] : en && en[key] != null ? en[key] : key;
       return s.replace(/\{([a-z]\w*)\}/g, (m, k) => (vars[k] != null ? vars[k] : m));
     },
     /** Флаг языка — картинкой Apple, как все эмодзи прототипа. */

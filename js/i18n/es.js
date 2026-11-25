@@ -10,7 +10,7 @@
   },
   /* ── Bienvenida ── */
   'Встать': 'Levántate', 'с первого': 'a la primera', 'будильника': 'alarma', 'Будильник, который нельзя отложить.': 'La alarma que no se puede posponer.',
-  'Начать': 'Empezar', 'У меня уже есть подписка': 'Ya tengo suscripción', 'Продолжая, ты принимаешь': 'Al continuar, aceptas las', 'Условия': 'Condiciones', 'и': 'y', 'Политику конфиденциальности': 'Política de privacidad', 'Условия использования': 'Condiciones de uso', 'Конфиденциальность': 'Privacidad',
+  'Начать': 'Empezar', 'У меня уже есть подписка': 'Ya tengo suscripción', 'Продолжая, ты принимаешь': 'Al continuar, aceptas las', 'Условия': 'Condiciones', 'и': 'y', 'Политику конфиденциальности': 'la Política de privacidad', 'Условия использования': 'Condiciones de uso', 'Конфиденциальность': 'Privacidad',
   'Язык': 'Idioma', 'Язык меняется сразу. Звонок и задания — тоже на нём.': 'El idioma cambia al instante, también la alarma y las tareas.',
   'Откуда ты узнал про sonly?': '¿Cómo conociste sonly?', 'Друзья или семья': 'Amigos o familia', 'Другое': 'Otro', 'Радио': 'Radio',
   'Сколько будильников ты ставишь на утро?': '¿Cuántas alarmas pones por la mañana?', 'Один': 'Una', 'Два-три': 'Dos o tres', 'Четыре-пять': 'Cuatro o cinco', 'Шесть и больше': 'Seis o más',
@@ -1025,5 +1025,16 @@ Object.assign(Sonly.I18N.es, {
   "Автосигнализация": "Alarma de coche",
   "Петух": "Gallo",
   "Дрозд в саду": "Mirlo en el jardín",
+  "Новый значок": "Nueva insignia",
+  "Новая открытка": "Nueva postal",
+  "Новый пейзаж": "Nuevo paisaje",
+  "Забрать": "Recoger",
+  "Дальше": "Siguiente",
+  "Открытка утра": "Postal de la mañana",
+  "Теперь он может выпасть на открытке": "Ahora puede salir en tus postales",
+  "Редкая находка": "Hallazgo raro",
+  "Очень редкая находка": "Hallazgo muy raro",
+  "Новое": "Nuevo",
+  "подъём {0}": "despertar {0}",
 });
 /* ── конец дополнения 2 ── */

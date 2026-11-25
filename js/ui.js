@@ -33,7 +33,33 @@
   const CHECKS = [[0, 'Выключена', ''], [3, 'Через 3 минуты', ''], [5, 'Через 5 минут', ''], [10, 'Через 10 минут', '']];
   /* Пламя серии: рисунок, а не значок из набора, чтобы у серии было своё лицо. */
   const FLAME = `<svg class="ap-flame" viewBox="0 0 64 80" aria-hidden="true"><path class="f1" d="M33 3c3 13 19 21 19 42a20 20 0 0 1-40 0c0-9 4-15 9-19 1 7 4 10 8 10 0-13-3-21 4-33z"/><path class="f2" d="M32 42c3 6 10 9 10 18a10 10 0 0 1-20 0c0-7 6-10 10-18z"/></svg>`;
-  const HEX = 'M30 3.5 55.5 18v30L30 62.5 4.5 48V18z';
+  /*
+   * Формы значков по редкости (поле 60 × 66): обычный — монета, редкий — щит, эпический — восьмилучевая розетка,
+   * легендарный — печать с лучами, мифический — гранёный кристалл. DECO — внутренний ободок или грани светлой линией.
+   */
+  const star = (n, R, r, cx = 30, cy = 34) => Array.from({ length: n * 2 }, (_, i) => { const a = ((-90 + (i * 180) / n) * Math.PI) / 180, k = i % 2 ? r : R; return `${i ? 'L' : 'M'}${(cx + k * Math.cos(a)).toFixed(2)} ${(cy + k * Math.sin(a)).toFixed(2)}`; }).join('') + 'Z';
+  const SHAPE = {
+    common: 'M30 6.5a27.5 27.5 0 1 1 0 55a27.5 27.5 0 1 1 0-55Z',
+    rare: 'M30 3.5 53.5 11.5C54 33 48 51 30 62.5 12 51 6 33 6.5 11.5Z',
+    epic: star(8, 29.5, 22.5),
+    legend: star(16, 29.5, 25.8),
+    myth: 'M17 7H43L57 24 30 62 3 24Z',
+  };
+  const DECO = {
+    common: '<circle cx="30" cy="34" r="21.5"/>',
+    rare: '<path d="M30 10.5 47.5 16.5C47.8 32.5 43.3 46 30 55 16.7 46 12.2 32.5 12.5 16.5Z"/>',
+    epic: '<circle cx="30" cy="34" r="16.5"/>',
+    legend: '<circle cx="30" cy="34" r="20"/><circle cx="30" cy="34" r="17"/>',
+    myth: '<path d="M3 24H57M17 7 23 24 30 62M43 7 37 24 30 62M23 24 30 7 37 24"/>',
+  };
+  /* Маска формы для каждой редкости — один раз, правилами CSS (закруглённые углы — обводкой той же формы). */
+  (() => {
+    const url = (d) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 66'><path d='${d}' stroke='#000' stroke-width='4' stroke-linejoin='round'/></svg>`)}")`;
+    const st = document.createElement('style');
+    st.textContent = Object.entries(SHAPE).map(([t, d]) => `.bd-hex.t-${t}{--shape:${url(d)}}`).join('');
+    document.head.appendChild(st);
+  })();
+  const HEX = SHAPE.legend;
   const NBSP = ' ';
 
   /* ── Время до звонка ─────────────────────────────────────── */
@@ -153,8 +179,8 @@
   }
   const tierOf = (t) => TIERS.find((x) => x[0] === t) || TIERS[0];
   const pctStr = (p) => (p < 1 ? String(p).replace('.', ',') : p < 10 ? String(p).replace('.', ',') : Math.round(p)) + NBSP + '%';
-  /** Значок-шестиугольник цвета своей редкости; не полученный — серый с замком (секретный — со знаком вопроса). */
-  const hex = (b, size = 62) => `<i class="bd-hex t-${b.tier}${b.on ? ' on' : ''}" style="--s:${size}px"><svg viewBox="0 0 60 66" aria-hidden="true"><path d="${HEX}"/></svg>${b.on ? ic(b.icon, Math.round(size * 0.38), 2.2) : b.secret ? `<b class="bd-q">?</b>` : ic('lock', Math.round(size * 0.29), 2.2)}</i>`;
+  /** Значок своей формы и цвета по редкости; не полученный — серый контур той же формы с замком (секретный — со знаком вопроса). */
+  const hex = (b, size = 62) => `<i class="bd-hex t-${b.tier}${b.on ? ' on' : ''}" style="--s:${size}px"><svg class="bd-ol" viewBox="0 0 60 66" aria-hidden="true"><path d="${SHAPE[b.tier] || SHAPE.common}"/></svg>${b.on ? `<i class="bd-f"><svg viewBox="0 0 60 66" aria-hidden="true">${DECO[b.tier] || ''}</svg></i>` : ''}${b.on ? ic(b.icon, Math.round(size * 0.38), 2.2) : b.secret ? `<b class="bd-q">?</b>` : ic('lock', Math.round(size * 0.29), 2.2)}${b.on && b.tier === 'myth' ? '<i class="bd-sp" aria-hidden="true"><u></u><u></u><u></u><u></u></i>' : ''}</i>`;
   const bdName = (b) => (b.secret && !b.on ? 'Секретный' : b.name);
 
   /* ── График статистики ───────────────────────────────────── */
@@ -523,7 +549,7 @@
         return `<div class="ap-scroll scroll"><h1 class="ap-h1" data-in>Статистика</h1>
           <div class="ap-duo" data-in style="--i:1">
             <div class="ap-card ap-big${st.streak ? '' : ' cold'}">${FLAME}<b>${st.streak}</b><small>${pl(st.streak, 'день', 'дня', 'дней')} подряд</small>${st.best > st.streak ? `<em>рекорд ${st.best}</em>` : ''}</div>
-            <button class="ap-card ap-big" data-act="st-badges"><span class="bd-count${got ? '' : ' none'}"><svg viewBox="0 0 60 66" aria-hidden="true"><path d="${HEX}"/></svg><b>${got}</b></span><small>${pl(got, 'значок', 'значка', 'значков')} из ${bd.length}</small></button></div>
+            <button class="ap-card ap-big" data-act="st-badges">${Sonly.news ? Sonly.news.tag(s, 'b') : ''}<span class="bd-count${got ? '' : ' none'}"><svg viewBox="0 0 60 66" aria-hidden="true"><path d="${HEX}"/></svg><b>${got}</b></span><small>${pl(got, 'значок', 'значка', 'значков')} из ${bd.length}</small></button></div>
           <div class="ap-duo" data-in style="--i:2">
             <div class="ap-card ap-stat"><i>${ic('sunrise', 20, 2.1)}</i><b>${st.h.length}</b><small>${pl(st.h.length, 'подъём', 'подъёма', 'подъёмов')} всего</small></div>
             <div class="ap-card ap-stat"><i>${ic('timer', 20, 2.1)}</i><b>${st.h.length ? Math.round(st.h.reduce((a, x) => a + x.secs, 0) / st.h.length) : '—'}<u data-k="секунд·коротко">${st.h.length ? 'с' : ''}</u></b><small>в среднем на\u00a0задание</small></div></div>
@@ -702,7 +728,7 @@
     return `<div class="ap-card bd-sum"><b>${got}<u> из ${bd.length}</u></b><small>Чем реже значок, тем он ярче</small>
         <div class="bd-tiers">${tiers.map((x) => `<span class="t-${x.id}"><small>${x.many}</small><i style="--p:${(x.list.filter((b) => b.on).length / x.list.length).toFixed(3)}"></i><b>${x.list.filter((b) => b.on).length}/${x.list.length}</b></span>`).join('')}</div></div>
       ${tiers.map((x) => `<h3 class="bd-h t-${x.id}">${x.many}<span>${x.list.filter((b) => b.on).length} из ${x.list.length}</span></h3>
-        <div class="bd-grid">${x.list.map((b) => `<button class="bd t-${b.tier}${b.on ? ' on' : ''}" data-act="${act}:${b.id}" aria-label="${bdName(b)}${b.on ? '' : ' — ещё не получен'}">${hex(b, 58)}<b>${bdName(b)}</b><small>${!b.on && b.need > 1 ? `${b.cur} из ${b.need}` : `есть у ${pctStr(b.pct)}`}</small></button>`).join('')}</div>`).join('')}`;
+        <div class="bd-grid">${x.list.map((b) => `<button class="bd t-${b.tier}${b.on ? ' on' : ''}${Sonly.news && Sonly.news.showing('b', b.id) ? ' is-new' : ''}" data-act="${act}:${b.id}" aria-label="${bdName(b)}${b.on ? '' : ' — ещё не получен'}">${hex(b, 58)}<b>${bdName(b)}</b><small>${!b.on && b.need > 1 ? `${b.cur} из ${b.need}` : `есть у ${pctStr(b.pct)}`}</small></button>`).join('')}</div>`).join('')}`;
   }
   /** Один значок крупно: редкость, условие, прогресс и у скольких он есть. foot — кнопка под ним (на отдельном листе). */
   function badgeOne(b, foot = '') {
@@ -735,6 +761,7 @@
       /* Звуки включённых будильников скачиваются заранее: утром без интернета они уже в кэше сайта. */
       if (!flow.shot) setTimeout(() => Sonly.sound.preload([flow.state.sndDef, ...flow.state.alarms.filter((a) => a.on).map((a) => a.sound)]), 2000);
       if (!flow._mq) { flow._mq = matchMedia('(prefers-color-scheme: dark)'); flow._mq.addEventListener('change', () => paint(flow)); }
+      if (Sonly.news) { Sonly.news.init(flow.state); Sonly.news.paint(flow); }
     },
     /* Выбранная вкладка: кнопки не перерисовываются — меняется класс, у значка плавно проявляется второй тон, подложка переезжает. */
     onScreen(flow, id) {
@@ -743,6 +770,8 @@
       let on = null;
       pill.querySelectorAll('button').forEach((b) => { const hit = b.dataset.act === 'tab:' + id; b.classList.toggle('on', hit); if (hit) on = b; });
       if (flow._tabs) flow._tabs.put(on);
+      /* Новое: красные отметки на вкладках; на Главной — праздник за всё, что ещё не объявили (после подъёма, после друзей…). */
+      if (Sonly.news) { Sonly.news.paint(flow); if (id === 'home' && !flow.shot) { clearTimeout(flow._nw); flow._nw = setTimeout(() => Sonly.news.announce(flow), 700); } }
     },
     /** Будильник, собранный в онбординге, становится первым в списке. */
     adopt(flow, st) { flow.state.alarms = [alarmFrom(st)]; flow.go('home', 0); },
@@ -771,7 +800,7 @@
         if (key === 'ring') { if (a && !Sonly.ringer.busy(flow)) Sonly.ringer.start(flow, a, false); return; }
         if (key === 'check') { if (a && !Sonly.ringer.busy(flow)) Sonly.ringer.check(flow, a); return; }
         /* Данные: новый аккаунт или пример истории нужной длины. Друзья-пример заводятся заново. */
-        if (key === 'data') { s.data = val === 'new' ? 'new' : 'demo'; s.span = val === 'new' ? '' : val; s.pp = undefined; s._ppNav = undefined; s._ppQ = ''; s._ppDraft = null; paint(flow); if (!s._ring && !s._check) flow.rerender(); return; }
+        if (key === 'data') { s.data = val === 'new' ? 'new' : 'demo'; s.span = val === 'new' ? '' : val; s.pp = undefined; s._ppNav = undefined; s._ppQ = ''; s._ppDraft = null; if (Sonly.news) Sonly.news.reset(s); paint(flow); if (!s._ring && !s._check) flow.rerender(); return; }
         s[key] = val;
         paint(flow);
         if (!s._ring && !s._check) flow.rerender();
@@ -779,6 +808,7 @@
     },
     on(flow, act, arg, el) {
       const s = flow.state, e = s._ed, find = (id) => s.alarms.find((a) => a.id === id);
+      if (Sonly.news && Sonly.news.on(flow, act, arg)) return true;
       switch (act) {
         case 'tab': if (flow.id !== arg) flow.go(arg, 0); else { const sc = flow.cur.querySelector('.scroll'); if (sc) sc.scrollTo({ top: 0, behavior: 'smooth' }); } return true;
         case 'new': s._ed = blank(s); editor(flow); return true;
@@ -840,6 +870,7 @@
         case 'st-badges': {
           /* Значки по редкости: сверху сколько собрано и полоска каждой редкости, ниже — сетки от обычных к мифическим. */
           const y = arg === 'back' ? s._bdY || 0 : 0;
+          if (arg !== 'back' && Sonly.news) Sonly.news.open(flow, 'b');
           flow.sheet(`<div class="ap-sh-head"><button class="ap-x lg" data-act="sheet-close" aria-label="Закрыть">${ic('x', 20, 2.3)}</button><b>Значки</b><span class="ap-x ghost"></span></div>
             <div class="ap-sh-body scroll">${badgeList(s, 'st-badge')}</div>`, `ap-sheet bd-sheet${arg === 'back' ? ' back' : ''}`);
           const sc = flow.sheets.querySelector('.scroll');

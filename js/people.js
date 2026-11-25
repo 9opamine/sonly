@@ -524,7 +524,7 @@
     /* «С какого времени в sonly» — не позже первого подъёма в истории (в демо история начинается раньше первого открытия профиля). */
     const sd = new Date(Math.min(m.since, h.length ? h[0].d.getTime() : m.since)), since = `${MONTHS[sd.getMonth()]} ${sd.getFullYear()}`;
     const friendsRow = `<div class="pp-frow"><button class="pp-fc add" data-act="pp-tfriends"><i class="pp-av ghost" style="--s:58px">${ic('user-plus', 22, 2.3)}</i><small>${ask ? `Заявки: ${ask}` : 'Добавить'}</small></button>${fr.map((f) => `<button class="pp-fc" data-act="pp-friend:${f.id}" aria-label="Профиль: ${esc(f.n)}">${avatar(flat(f), 58, dotOf(statusOf(f).k))}<small>${esc(f.n)}</small></button>`).join('')}</div>`;
-    const badgeRow = `<div class="pp-brow">${(got.length ? got : bd.slice(0, 5)).slice(0, 8).map((b) => `<button class="pp-bd${b.on ? ' on' : ''}" data-act="pp-badge:${b.id}" aria-label="${K.bdName(b)}${b.on ? '' : ' — ещё не получен'}">${K.hex(b, 50)}<small>${K.bdName(b)}</small></button>`).join('')}<button class="pp-bd more" data-act="pp-badges" aria-label="Все значки"><i class="pp-more">${ic('chevron-right', 20, 2.6)}</i><small>Все</small></button></div>`;
+    const badgeRow = `<div class="pp-brow">${(got.length ? got : bd.slice(0, 5)).slice(0, 8).map((b) => `<button class="pp-bd${b.on ? ' on' : ''}${Sonly.news && Sonly.news.count(s, 'b') && Sonly.news.diff(s, 'seen').b.includes(b.id) ? ' is-new' : ''}" data-act="pp-badge:${b.id}" aria-label="${K.bdName(b)}${b.on ? '' : ' — ещё не получен'}">${K.hex(b, 50)}<small>${K.bdName(b)}</small></button>`).join('')}<button class="pp-bd more" data-act="pp-badges" aria-label="Все значки"><i class="pp-more">${ic('chevron-right', 20, 2.6)}</i><small>Все</small></button></div>`;
     flow.sheet(`${head(flow, 'Профиль', '<button class="pp-ed" data-act="pp-edit">Изменить</button>')}
       <div class="ap-sh-body scroll" data-pp="profile">
         <button class="pp-cover" data-act="pp-edit" aria-label="Изменить оформление">${banner(m.ban)}</button>
@@ -839,7 +839,7 @@
         }
         case 'pp-gcopy': { const g = groupOf(s, arg); if (g) K.shareText(g.code, false, (msg) => say(msg ? msg.replace('Текст с кодом скопирован', 'Код группы скопирован') : '')); return true; }
         case 'pp-gshare': { const g = groupOf(s, arg); if (g) K.shareText(T('Вставай с нами в sonly: группа «{name}», код {code}. https://9opamine.github.io/sonly/', { name: Sonly.i18n ? Sonly.i18n.word(g.name) : g.name, code: g.code }), true, (msg) => say(msg ? msg.replace('Текст с кодом', 'Приглашение') : '')); return true; }
-        case 'pp-badges': open(flow, 'badges', 'push'); return true;
+        case 'pp-badges': if (Sonly.news) Sonly.news.open(flow, 'b'); open(flow, 'badges', 'push'); return true;
         case 'pp-badge': open(flow, 'badge:' + arg, 'push'); return true;
         default: return false;
       }

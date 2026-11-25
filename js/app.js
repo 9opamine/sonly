@@ -54,6 +54,8 @@
 
   const strip = $('#strip');
   const flows = {};
+  /* Для проверок: открытые разделы (онбординг и приложение). */
+  window.__sonly = { flows };
   /* Язык сменили в одном разделе — другой (уже открытый раньше) перерисовывается, чтобы не остался «RU» и старые подписи. */
   document.addEventListener('sonly-lang', (e) => Object.values(flows).forEach((f) => { if (f !== flows[tab] && f !== (e.detail && e.detail.flow)) f.rerender(true); }));
   /*
