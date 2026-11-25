@@ -219,7 +219,7 @@
     weather: () => `<header><small>${si('weather', 15)}Погода</small><span>сейчас</span></header>
       <div class="bf-wx"><b>${deg(W.now)}</b><span><i>${W.text}</i>днём до ${deg(W.hi)}</span><em class="bf-sun i-${W.icon}">${si(W.icon, 46)}</em></div>
       <div class="bf-hours">${W.hours.slice(0, 4).map(([h, g, t]) => `<span><small>${h}:00</small>${si(g, 18)}<b>${deg(t)}</b></span>`).join('')}</div>`,
-    word: () => { const w = wordOf(); return `<header><small>${si('book', 15)}Слово дня</small><span>${w[1]}</span></header><b class="bf-w">${w[0]}</b><p>${nb(w[2])}</p>`; },
+    word: () => { const w = wordOf(); return `<header><small>${si('book', 15)}Слово дня</small><span>${w[1]}</span></header><b class="bf-w${w[0].length > 12 ? ' long' : ''}">${w[0]}</b><p>${nb(w[2])}</p>`; },
     saying: () => { const q = sayingOf(); return `<header><small>${si('quote', 15)}Поговорка</small></header><b class="bf-q">${nb(q[0])}</b><p>${nb(q[1])}</p>`; },
   };
   /** Карточки сводки. На главной «Утра» и на экране «Доброе утро» они одни и те же; нажатие открывает историю. */
@@ -247,7 +247,7 @@
       <div class="sy-hours">${W.hours.map(([h, g, t]) => `<span><small>${h}:00</small>${si(g, 24)}<b>${deg(t)}</b></span>`).join('')}</div>
       <div class="sy-grid">${[['temp', 'Ощущается', deg(W.feel)], ['wind', 'Ветер', `${W.wind} м/с`], ['rise', 'Восход', W.rise], ['set', 'Закат', W.set]].map(([g, n, v]) => `<span>${si(g, 18)}<small>${n}</small><b>${v}</b></span>`).join('')}</div>
       ${W.real ? '<p class="sy-fine">Данные: Open-Meteo.com</p>' : `<button class="sy-geo" data-act="mo-geo">${si('weather', 17)}Погода для моего места</button><p class="sy-fine">${s && s._wxMsg ? s._wxMsg : 'Сейчас пример. Место нужно только для прогноза и хранится на телефоне.'}</p>`}`,
-    word: () => { const w = wordOf(); return `<b class="sy-word">${w[0]}</b><em class="sy-pos">${w[1]}</em><p class="sy-lead">${nb(w[2])}</p>
+    word: () => { const w = wordOf(); return `<b class="sy-word${w[0].length > 12 ? ' long' : ''}">${w[0]}</b><em class="sy-pos">${w[1]}</em><p class="sy-lead">${nb(w[2])}</p>
       <div class="sy-glass"><small>Пример</small><p>${nb(`«${w[3]}»`)}</p></div>`; },
     saying: () => { const q = sayingOf(); return `<i class="sy-qm">${si('quote', 54)}</i><b class="sy-say">${nb(q[0])}</b>
       <div class="sy-glass"><small>Смысл</small><p>${nb(q[1])}</p></div>`; },

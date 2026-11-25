@@ -207,6 +207,8 @@ body.fs .stage{padding:0}
 body.fs .phone-box{position:fixed;inset:0;z-index:40;width:auto;height:auto;padding:0}
 body.fs .fs-exit{position:fixed;z-index:60;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;display:flex;align-items:center;gap:5px;height:32px;padding:0 13px 0 10px;border-radius:16px;background:rgba(20,20,24,.62);color:#fff;font:700 13px/1 'Inter',system-ui,sans-serif;-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.22),0 6px 16px -6px rgba(0,0,0,.5)}
 body.fs .fs-exit:active{transform:scale(.95)}
+/* Установленное приложение: выйти «из полноэкранного» некуда — кнопки нет. */
+body.pwa .fs-exit{display:none}
 
 /* Языки: русский флаг — триколор того же размера, что флаги Apple; выбор на стартовом экране и в настройках. */
 .i18n-ru{display:inline-block;flex:none;width:1.3em;height:1.3em;border-radius:22%;background:linear-gradient(#FFFFFF 0 37%,#1F5AC9 0 63%,#E2251B 0) center/100% 70% no-repeat;-webkit-mask:linear-gradient(#000 0 0) center/100% 70% no-repeat;mask:linear-gradient(#000 0 0) center/100% 70% no-repeat;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}

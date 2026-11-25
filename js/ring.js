@@ -134,6 +134,36 @@
     else Object.assign(k, { phase: 'aim', target: SHOT[t.id] });
     r.k = k;
   }
+  /*
+   * Вибрация звонка: пока на экране будильник и в нём включена «Вибрация». На Android телефон вибрирует как настоящий
+   * будильник; iPhone из браузера вибрировать не умеет — там это молча пропускается. Во время задания не вибрирует:
+   * камера и счёт повторов дрожали бы вместе с телефоном.
+   */
+  let buzzT = 0;
+  function buzz(on) {
+    clearInterval(buzzT);
+    buzzT = 0;
+    if (!navigator.vibrate) return;
+    try {
+      if (!on) { navigator.vibrate(0); return; }
+      const pulse = () => navigator.vibrate([700, 500]);
+      pulse();
+      buzzT = setInterval(pulse, 1200);
+    } catch (e) { /* вибрация недоступна */ }
+  }
+  /* Экран не гаснет, пока звонит будильник, идёт задание или проверка «Ты не спишь?» (Android, свежий iPhone). */
+  let lock = null, keep = false;
+  async function awake(on) {
+    keep = on;
+    try {
+      if (on && !lock && navigator.wakeLock && document.visibilityState === 'visible') {
+        lock = await navigator.wakeLock.request('screen');
+        lock.addEventListener('release', () => { lock = null; });
+      } else if (!on && lock) { const l = lock; lock = null; await l.release(); }
+    } catch (e) { lock = null; }
+  }
+  /* Свернул и вернулся — экран снова держим, а вибрация на свёрнутой странице не нужна. */
+  if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && keep) awake(true); });
   /* Мелодию слушают, скороговорку говорят: пока идёт такое задание, звонок молчит (и «Заглушить» не глушит удары).
      Вернулся на экран звонка — звонит снова, с той же громкостью и тем же «заглушено». */
   const QUIET = { voice: 1, rhythm: 1 };
@@ -170,6 +200,7 @@
     s._check = null;
     s._ring = { a, test, random, direct: !!o.direct, t0: Date.now(), mute: false, from: from || (['ring', 'task', 'woke', 'streak', 'check'].includes(flow.id) ? 'home' : flow.id) };
     flow.closeSheet(true);
+    if (!flow.shot) awake(true);
     if (o.direct) { begin(s._ring); askMotion(s._ring.k); sound.unlock(); s._ring.t1 = Date.now(); flow.go('task', 1); return; }
     flow.go('ring', 1);
     if (!flow.shot) { sound.setVolume(s.volume); sound.play(alarm.sound, { loop: true, rise: alarm.rise }); }
@@ -178,6 +209,8 @@
   function exit(flow) {
     const s = flow.state, r = s._ring || {}, back = r.from === 'editor' || r.from === 'picker';
     sound.stop();
+    buzz(false);
+    awake(false);
     s._ring = null;
     flow.go(back || !r.from ? 'home' : r.from, 2);
     if (back) { K.editor(flow); if (r.from === 'picker') K.taskPicker(flow, ''); }
@@ -191,6 +224,8 @@
     sound.stop();
     s._ring = null;
     s._check = { a: K.copy(alarm), t0: Date.now() };
+    buzz(false);
+    if (!flow.shot) awake(true);
     flow.closeSheet(true);
     flow.go('check', 1);
     if (!flow.shot) sound.tick(988);
@@ -202,6 +237,8 @@
     r.doneAt = Date.now();
     r.at = nowHM();
     sound.stop();
+    buzz(false);
+    awake(false);
     /* Серия растёт один раз в день — от первого настоящего подъёма. Только тогда после «Доброе утро» будет экран серии. */
     r.fresh = !r.test && !K.stats(s).h.some((y) => y.d.getTime() === K.day0(now).getTime());
     if (!r.test) {
@@ -254,6 +291,7 @@
   function checkOk(flow) {
     const k = flow.state._check, root = flow.cur && flow.cur.querySelector('.ck');
     if (k) k.ok = true;
+    awake(false);
     const go = () => { flow.state._check = null; flow.go('home', 2); };
     if (!root || flow.still || REDUCE()) { go(); return; }
     root.classList.add('ok');
@@ -792,6 +830,9 @@
         const node = c.q('.js-now');
         const tick = () => { node.textContent = nowHM(); c.wait(5000, tick); };
         if (!c.shot) c.wait(5000, tick);
+        const r = c.s._ring;
+        if (!c.shot && r && r.a.vibro !== false && !r.mute) buzz(true);
+        c.flow.leave = (next) => { if (next !== 'ring') buzz(false); };
         /* Пока звенит будильник, ИИ для задания уже грузится — к нажатию «Начать задание» он готов. */
       },
     },
@@ -1072,6 +1113,7 @@
         case 'ring-mute': {
           r.mute = !r.mute;
           sound.mute(r.mute);
+          buzz(!r.mute && r.a.vibro !== false && !flow.shot);
           /* Экран не перерисовывается: меняется только значок, солнце не дёргается. */
           const rg = flow.cur && flow.cur.querySelector('.rg'), b = rg && rg.querySelector('[data-act="ring-mute"]');
           if (!b || flow.still) { flow.rerender(); return true; }

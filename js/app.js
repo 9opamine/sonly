@@ -3,6 +3,8 @@
   'use strict';
   const { $, $$, concepts, Flow } = Sonly;
   const IDS = ['m', 'app'];
+  /* Сайт на телефоне работает и без сети (sw.js); во фрейме claude.ai и локально — нет. */
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && window.self === window.top) navigator.serviceWorker.register('sw.js').catch(() => {});
   const app = $('#app');
   const qs = new URLSearchParams(location.search);
 
@@ -52,10 +54,31 @@
 
   const strip = $('#strip');
   const flows = {};
+  /*
+   * Приложение помнит себя между запусками: будильники, история подъёмов, друзья, настройки. Иначе на телефоне после
+   * закрытия вкладки всё начиналось бы заново. Временное (ключи с «_»: открытый лист, звонок, черновики) не сохраняется.
+   * «Сначала» и «Сбросить данные» начинают заново — и сохраняется уже новое.
+   */
+  const SAVE = 'sonly-app-v1';
+  let saved = '';
+  const loadApp = () => { try { const v = JSON.parse(localStorage.getItem(SAVE) || 'null'); return v && typeof v === 'object' ? v : null; } catch (e) { return null; } };
+  const saveApp = () => {
+    const f = flows.app;
+    if (!f) return;
+    try {
+      const out = {};
+      for (const [k, v] of Object.entries(f.state)) if (k[0] !== '_') out[k] = v;
+      const j = JSON.stringify(out);
+      if (j !== saved) { localStorage.setItem(SAVE, j); saved = j; }
+    } catch (e) { /* хранилище недоступно или переполнено — работаем без сохранения */ }
+  };
+  setInterval(saveApp, 3000);
+  addEventListener('pagehide', saveApp);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveApp(); });
   let tab = null;
   /* Будильник, собранный в онбординге: кнопка «Открыть sonly» переносит его в приложение. */
   let seed = null;
-  const openApp = (st) => { seed = st; location.hash = 'app'; };
+  const openApp = (st) => { seed = st; try { localStorage.setItem('sonly-onboarded', '1'); } catch (e) { /* без хранилища */ } location.hash = 'app'; };
   /** Переключатели под телефоном (тема, данные) — только у тех разделов, где они есть. */
   function drawShell(flow) {
     const row = $(`[data-stage="${flow.c.id}"] .shell-row`);
@@ -83,13 +106,20 @@
     $$('[data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
     $$('[data-stage]').forEach((s) => { s.hidden = s.dataset.stage !== tab; });
     fit();
-    if (!flows[tab]) flows[tab] = new Flow($(`[data-stage="${tab}"] .phone-host`), concepts[tab], { onChange: drawStrip, onOpenApp: openApp, onState: drawShell });
+    if (!flows[tab]) flows[tab] = new Flow($(`[data-stage="${tab}"] .phone-host`), concepts[tab], { onChange: drawStrip, onOpenApp: openApp, onState: drawShell, state: tab === 'app' ? loadApp() || undefined : undefined });
     if (tab === 'app' && seed) { concepts.app.adopt(flows.app, seed); seed = null; }
     drawShell(flows[tab]);
     drawStrip(flows[tab]);
   }
 
-  const fromHash = () => { const h = location.hash.slice(1); return IDS.includes(h) ? h : IDS[0]; };
+  /*
+   * Установлено на главный экран (Android: «Установить приложение»): без панели прототипа, на весь экран, как настоящее
+   * приложение. Кто уже прошёл онбординг, сразу попадает в приложение.
+   */
+  const PWA = matchMedia('(display-mode: standalone)').matches || qs.get('pwa') === '1';
+  const onboarded = () => { try { return localStorage.getItem('sonly-onboarded') === '1'; } catch (e) { return false; } };
+  if (PWA) document.body.classList.add('fs', 'full', 'pwa');
+  const fromHash = () => { const h = location.hash.slice(1); return IDS.includes(h) ? h : PWA && onboarded() ? 'app' : IDS[0]; };
   $('.seg').addEventListener('click', (e) => {
     const b = e.target.closest('[data-tab]');
     if (!b) return;
@@ -112,7 +142,7 @@
   /* На телефоне — просмотр на весь экран: без рамки, панели прототипа и нарисованной строки состояния, как настоящее
      приложение. Выйти — кнопка «Выйти» сверху, жест «назад» или Esc. На Android ещё и браузер прячет свою строку. */
   document.body.insertAdjacentHTML('beforeend', `<button class="fs-exit" id="fs-exit" aria-label="Выйти из полноэкранного просмотра">${Sonly.ic('x', 15, 2.6)}Выйти</button>`);
-  const fsOn = () => document.body.classList.contains('fs');
+  const fsOn = () => document.body.classList.contains('fs') && !PWA;
   function fsOpen() {
     if (fsOn()) return;
     document.body.classList.add('fs', 'full');
@@ -135,4 +165,46 @@
   addEventListener('hashchange', () => show(fromHash()));
   addEventListener('resize', fit);
   show(fromHash());
+
+  /*
+   * Кнопка и жест «Назад» на телефоне (Android): сначала закрывают открытый лист или делают шаг назад внутри —
+   * в онбординге на прошлый вопрос, в приложении на главную вкладку, — и только когда возвращаться некуда, уходят
+   * со страницы (из полноэкранного просмотра — выходят из него). Звонок «Назад» не выключает: будильник не отложить.
+   * На компьютере не включается — там «Назад» браузера остаётся как есть.
+   */
+  if (matchMedia('(pointer: coarse)').matches || matchMedia('(display-mode: standalone)').matches) {
+    const open = (f) => f.sheets.classList.contains('open') && !!f.sheets.querySelector('.sheet');
+    const canBack = (f) => !!f && (open(f) || ['ring', 'task', 'check'].includes(f.id) || (f.c.id === 'm' ? f.history.length > 0 && !f.scr.noBack : f.id !== 'home'));
+    const backStep = (f) => {
+      if (open(f)) {
+        /* Лист закрывается так же, как своей кнопкой: стрелкой назад внутри или крестиком (их обработчики всё убирают). */
+        const b = f.sheets.querySelector('.sheet .ap-sh-head [data-act], .sheet .pay-head [data-act]') || f.sheets.querySelector('.sheet-bg');
+        if (b) b.click();
+        return;
+      }
+      if (f.id === 'task') { const b = f.el.querySelector('[data-act="task-back"]'); if (b) b.click(); return; }
+      if (f.id === 'ring' || f.id === 'check') return;
+      if (f.c.id === 'm') { f.back(); return; }
+      const home = f.dock && f.dock.querySelector('[data-act="tab:home"]');
+      if (home) home.click(); else f.go('home', 0);
+    };
+    let guarded = false, dropping = false, t = 0;
+    const guard = () => {
+      const f = flows[tab], need = canBack(f);
+      if (need && !guarded) { try { history.pushState({ sonly: 'back' }, ''); guarded = true; } catch (e) { /* в закрытом фрейме история недоступна — «Назад» работает как обычно */ } }
+      else if (!need && guarded && history.state && history.state.sonly === 'back') { guarded = false; dropping = true; history.back(); }
+    };
+    addEventListener('popstate', () => {
+      if (dropping) { dropping = false; return; }
+      /* Снят не наш шаг (например, полноэкранный просмотр поверх него) — наш ещё в истории, ничего не делаем. */
+      if (!guarded || (history.state && history.state.sonly === 'back')) return;
+      guarded = false;
+      const f = flows[tab];
+      if (canBack(f)) backStep(f);
+      setTimeout(guard, 60);
+    });
+    /* Что можно закрыть, меняется при каждом действии: следим за телефоном и пересчитываем после перерисовки. */
+    new MutationObserver(() => { clearTimeout(t); t = setTimeout(guard, 120); }).observe(app, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+    guard();
+  }
 })();
