@@ -1043,5 +1043,8 @@ Object.assign(Sonly.I18N.pl, {
   "значок": "odznaka",
   "пейзаж": "krajobraz",
   "проснуться +{0} дней": "pobudka +{0} {0:dzień|dni|dni}",
+  "через {0} мин": "za {0} min",
+  "Первый будильник": "Pierwszy budzik",
+  "не стоит": "brak",
 });
 /* ── конец дополнения 2 ── */

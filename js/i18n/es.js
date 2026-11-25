@@ -1043,5 +1043,8 @@ Object.assign(Sonly.I18N.es, {
   "значок": "insignia",
   "пейзаж": "paisaje",
   "проснуться +{0} дней": "despertar +{0} {0:día|días}",
+  "через {0} мин": "en {0} min",
+  "Первый будильник": "Primera alarma",
+  "не стоит": "ninguna",
 });
 /* ── конец дополнения 2 ── */

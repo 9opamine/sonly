@@ -32,6 +32,8 @@
     app.innerHTML = '<div class="phone-host"></div>';
     const state = c.demo();
     ['theme', 'data', 'span'].forEach((k) => { if (qs.get(k)) state[k] = qs.get(k); });
+    /* data=empty — пустой аккаунт, как кнопка «пустой» на панели: ни будильников, ни подъёмов, ни профиля. */
+    if (qs.get('data') === 'empty') Object.assign(state, { data: 'new', span: '', alarms: [], log: [], me: undefined, mode: 'empty' });
     const flow = new Flow($('.phone-host'), c, { still: qs.get('live') !== '1', screen: qs.get('s') || c.order[0], state });
     if (qs.get('sheet') && c.preview) c.preview(flow, qs.get('sheet'));
     if (qs.get('act')) { const b = flow.el.querySelector(`[data-act="${qs.get('act')}"]`); if (b) b.click(); }
