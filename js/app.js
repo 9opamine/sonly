@@ -74,9 +74,34 @@
       if (j !== saved) { localStorage.setItem(SAVE, j); saved = j; }
     } catch (e) { /* хранилище недоступно или переполнено — работаем без сохранения */ }
   };
-  setInterval(saveApp, 3000);
-  addEventListener('pagehide', saveApp);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveApp(); });
+  /*
+   * Где человек был: раздел, экран, открытая страница. Android выгружает свёрнутую страницу из памяти, и после возвращения
+   * она загружается заново — без этого каждый раз открывалась бы Главная или первый экран онбординга. Возвращаем туда же,
+   * если с ухода прошло меньше двух часов. Звонок, задание и проверку не возвращаем — они живут только в моменте.
+   */
+  const VIEW = 'sonly-view-v1', FRESH = 2 * 3600e3;
+  const plain = (st) => { const o = {}; for (const [k, v] of Object.entries(st)) if (k[0] !== '_') o[k] = v; return o; };
+  const loadView = () => { try { const v = JSON.parse(localStorage.getItem(VIEW) || 'null'); return v && Date.now() - v.t < FRESH ? v : null; } catch (e) { return null; } };
+  const saveView = () => {
+    const f = flows[tab];
+    if (!f) return;
+    try {
+      const v = { t: Date.now(), tab };
+      if (tab === 'm') v.m = { id: f.id, history: f.history.slice(), state: plain(f.state) };
+      else {
+        const s = f.state, sh = f.sheets.classList.contains('open') && f.sheets.querySelector('.sheet');
+        v.app = { id: ['ring', 'task', 'woke', 'streak', 'check'].includes(f.id) ? 'home' : f.id };
+        if (sh && sh.classList.contains('pp-sheet') && s._ppNav && s._ppNav.length) v.app.pp = s._ppNav.slice();
+        else if (sh && s._page) v.app.page = s._page;
+      }
+      localStorage.setItem(VIEW, JSON.stringify(v));
+    } catch (e) { /* без хранилища — начнём с начала */ }
+  };
+  const saveAll = () => { saveApp(); saveView(); };
+  setInterval(saveAll, 3000);
+  addEventListener('pagehide', saveAll);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveAll(); });
+  let view = loadView();
   let tab = null;
   /* Будильник, собранный в онбординге: кнопка «Открыть sonly» переносит его в приложение. */
   let seed = null;
@@ -108,7 +133,22 @@
     $$('[data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
     $$('[data-stage]').forEach((s) => { s.hidden = s.dataset.stage !== tab; });
     fit();
-    if (!flows[tab]) flows[tab] = new Flow($(`[data-stage="${tab}"] .phone-host`), concepts[tab], { onChange: drawStrip, onOpenApp: openApp, onState: drawShell, state: tab === 'app' ? loadApp() || undefined : undefined });
+    if (!flows[tab]) {
+      /* Возвращение после выгрузки страницы: тот же экран (и шаг онбординга с ответами), затем та же открытая страница. */
+      const back = view && view.tab === tab ? view : null;
+      view = null;
+      const opts = { onChange: drawStrip, onOpenApp: openApp, onState: drawShell, state: tab === 'app' ? loadApp() || undefined : back && back.m ? back.m.state : undefined };
+      if (back && back.m && concepts.m.screens[back.m.id]) opts.screen = back.m.id;
+      if (back && back.app && concepts.app.screens[back.app.id]) opts.screen = back.app.id;
+      const f = flows[tab] = new Flow($(`[data-stage="${tab}"] .phone-host`), concepts[tab], opts);
+      if (back && back.m && opts.screen) f.history = (back.m.history || []).filter((id) => concepts.m.screens[id]);
+      if (back && back.app) {
+        try {
+          if (back.app.pp && Sonly.people && Sonly.people.restore) Sonly.people.restore(f, back.app.pp);
+          else if (back.app.page) concepts.app.preview(f, `page-${back.app.page[0]}${back.app.page[1] ? '.' + back.app.page[1] : ''}`);
+        } catch (e) { /* страница не открылась — остаёмся на экране */ }
+      }
+    }
     if (tab === 'app' && seed) { concepts.app.adopt(flows.app, seed); seed = null; }
     drawShell(flows[tab]);
     drawStrip(flows[tab]);
@@ -121,7 +161,8 @@
   const PWA = matchMedia('(display-mode: standalone)').matches || qs.get('pwa') === '1';
   const onboarded = () => { try { return localStorage.getItem('sonly-onboarded') === '1'; } catch (e) { return false; } };
   if (PWA) document.body.classList.add('fs', 'full', 'pwa');
-  const fromHash = () => { const h = location.hash.slice(1); return IDS.includes(h) ? h : PWA && onboarded() ? 'app' : IDS[0]; };
+  /* Без раздела в адресе (значок на главном экране телефона) — тот раздел, где человек был последним, если недавно. */
+  const fromHash = () => { const h = location.hash.slice(1); return IDS.includes(h) ? h : view && IDS.includes(view.tab) ? view.tab : PWA && onboarded() ? 'app' : IDS[0]; };
   $('.seg').addEventListener('click', (e) => {
     const b = e.target.closest('[data-tab]');
     if (!b) return;
@@ -190,7 +231,8 @@
       const home = f.dock && f.dock.querySelector('[data-act="tab:home"]');
       if (home) home.click(); else f.go('home', 0);
     };
-    let guarded = false, dropping = false, t = 0;
+    /* После перезагрузки (Android выгрузил страницу) наш шаг уже лежит в истории сверху — он и есть защита, второй не нужен. */
+    let guarded = !!(history.state && history.state.sonly === 'back'), dropping = false, t = 0;
     const guard = () => {
       const f = flows[tab], need = canBack(f);
       if (need && !guarded) { try { history.pushState({ sonly: 'back' }, ''); guarded = true; } catch (e) { /* в закрытом фрейме история недоступна — «Назад» работает как обычно */ } }

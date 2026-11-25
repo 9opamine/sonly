@@ -637,6 +637,13 @@
     card,
     profile: (flow) => open(flow, 'profile'),
     together: (flow) => open(flow, 'together'),
+    /** Возвращение после выгрузки страницы: та же стопка листов (профиль → значок, друзья → карточка друга…), стрелка «назад» работает. */
+    restore(flow, views) {
+      const st = nav(flow.state);
+      st.length = 0;
+      st.push(...views.filter((v) => typeof v === 'string'));
+      if (st.length) draw(flow, st[st.length - 1], '');
+    },
     /** Маленький аватар для шапки главной и карточки в настройках. */
     avatar: (s, size) => { const p = meP(s); return avatar(p, p.frame && p.frame !== 'none' ? size - 10 : size); },
     name: (s) => me(s).name,

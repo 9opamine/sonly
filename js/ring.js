@@ -223,7 +223,8 @@
     if (busy(flow)) { clearTimeout(flow._chk); flow._chk = setTimeout(() => checkNow(flow, alarm), 3000); return; }
     sound.stop();
     s._ring = null;
-    s._check = { a: K.copy(alarm), t0: Date.now() };
+    /* Откуда пришла проверка: после «Я не сплю» человек возвращается туда же, а не на главную. */
+    s._check = { a: K.copy(alarm), t0: Date.now(), from: ['ring', 'task', 'woke', 'streak', 'check'].includes(flow.id) ? 'home' : flow.id };
     buzz(false);
     if (!flow.shot) awake(true);
     flow.closeSheet(true);
@@ -292,7 +293,7 @@
     const k = flow.state._check, root = flow.cur && flow.cur.querySelector('.ck');
     if (k) k.ok = true;
     awake(false);
-    const go = () => { flow.state._check = null; flow.go('home', 2); };
+    const go = () => { flow.state._check = null; flow.go((k && k.from) || 'home', 2); };
     if (!root || flow.still || REDUCE()) { go(); return; }
     root.classList.add('ok');
     flow.at(700, go);
