@@ -7,7 +7,9 @@
 
   const cap = (s) => s.replace(/^./, (x) => x.toUpperCase());
   /** Имя звука для экрана: у своих звуков (my:…) — то, что задал человек. */
-  const sndName = (n) => (Sonly.mysnd ? Sonly.mysnd.label(n) : n);
+  /* Название звука в будильнике: старые звуки (из тонов) показываются под новым именем — тем, что правда зазвонит. */
+  const sndName = (n) => { const r = Sonly.sound.resolve(n); return Sonly.mysnd ? Sonly.mysnd.label(r) : r; };
+  const DEF_SND = Sonly.sound.def;
   const pl = (n, one, few, many) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many; };
   const hm = (a) => pad(a.h) + ':' + pad(a.m);
   const fmtMin = (v) => pad(Math.floor(v / 60)) + ':' + pad(v % 60);
@@ -24,7 +26,9 @@
   const refOf = (s) => s.ref || (s.ref = 'SUN' + code4());
   const WD = ['в понедельник', 'во вторник', 'в среду', 'в четверг', 'в пятницу', 'в субботу', 'в воскресенье'];
   const CATS = [['all', 'Все', 'layout-grid'], ['camera', 'Камера', 'camera'], ['move', 'Движение', 'activity'], ['mind', 'Голова', 'brain'], ['voice', 'Голос', 'mic']];
-  const SOUNDS = [['Спокойные', ['Рассвет', 'Капель', 'Птицы за окном']], ['Мелодии', ['Солнечный зайчик', 'Утренний бриз', 'Жаворонок', 'Звонкий ручей', 'Золотой рассвет']], ['Классика', ['Будильник', 'Колокол', 'Радио']], ['Громкие', ['Сирена', 'Гудок']]];
+  /* Звуки — настоящие записи (js/sound.js): группы и значок с цветом у каждой. */
+  const SOUNDS = Sonly.sound.groups();
+  const SND_ICON = { 'Мелодии': ['music', '#FF9F0A'], 'Будильники': ['alarm-clock', '#0A84FF'], 'Сирены': ['siren', '#FF3B30'], 'Природа': ['bird', '#34C759'] };
   const TABS = [['home', 'Главная', 'house'], ['morning', 'Утро', 'sunrise'], ['stats', 'Статистика', 'chart-no-axes-column'], ['settings', 'Настройки', 'settings']];
   const CHECKS = [[0, 'Выключена', ''], [3, 'Через 3 минуты', ''], [5, 'Через 5 минут', ''], [10, 'Через 10 минут', '']];
   /* Пламя серии: рисунок, а не значок из набора, чтобы у серии было своё лицо. */
@@ -371,7 +375,7 @@
 
   /* ── Листы: редактор, задания, набор, проверка, звуки ────── */
 
-  const blank = (s) => ({ id: null, h: 7, m: 0, days: [0, 1, 2, 3, 4], once: false, task: 'hunt', sound: s.sndDef || 'Рассвет', name: `Будильник №${s.alarms.length + 1}`, on: true, rise: s.riseDef !== false, vibro: true, check: 5, skip: false, opts: {} });
+  const blank = (s) => ({ id: null, h: 7, m: 0, days: [0, 1, 2, 3, 4], once: false, task: 'hunt', sound: s.sndDef || DEF_SND, name: `Будильник №${s.alarms.length + 1}`, on: true, rise: s.riseDef !== false, vibro: true, check: 5, skip: false, opts: {} });
   const keepTop = (flow, enter) => { const b = flow.sheets.querySelector('.ap-sh-body'); return !enter && b ? b.scrollTop : 0; };
   const setTop = (flow, y) => { flow.sheets.querySelector('.ap-sh-body').scrollTop = y; };
   const back = (title) => `<div class="ap-sh-head"><button class="ap-x lg" data-act="ed-back" aria-label="Назад">${ic('chevron-left', 22, 2.3)}</button><b>${title}</b><span class="ap-x ghost"></span></div>`;
@@ -461,9 +465,10 @@
   /** Звуки по группам. Все доступны сразу: подарки за серию — пейзажи открыток, а не звуки. */
   function soundRows(s, cur, act) {
     const groups = SOUNDS.map(([g, list]) => [g, list.map((n) => ({ name: n, open: true }))]);
+    cur = Sonly.sound.resolve(cur);
     /* Свои звуки (запись и файлы) — первыми: это то, что человек сделал сам. */
     return (Sonly.mysnd ? Sonly.mysnd.rows(cur, act) : '') + groups.map(([g, list]) => `<h3>${g}</h3><div class="ap-card ap-list">${list.map((x) => (x.open
-      ? `<button class="ap-row ap-snd${cur === x.name ? ' on' : ''}" data-act="${act}:${x.name}"><i class="ap-row-i">${Sonly.si('wave')}</i><span>${x.name}</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></button>`
+      ? `<button class="ap-row ap-snd${cur === x.name ? ' on' : ''}" data-act="${act}:${x.name}"><i class="ap-row-i c" style="--c:${(SND_ICON[g] || SND_ICON['Мелодии'])[1]}">${ic((SND_ICON[g] || SND_ICON['Мелодии'])[0], 17, 2.3)}</i><span>${x.name}</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></button>`
       : `<div class="ap-row ap-snd locked"><i class="ap-row-i">${Sonly.si('lock')}</i><span>${x.name}</span><em>серия ${x.n}</em></div>`)).join('')}</div>`).join('');
   }
   function soundPicker(flow, enter = 'push') {
@@ -684,7 +689,7 @@
 
   const sysDark = () => { const r = document.documentElement.dataset.theme; return r ? r === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; };
   const paint = (flow) => { const t = flow.state.theme; flow.el.dataset.theme = t === 'system' ? (sysDark() ? 'dark' : 'light') : t; };
-  const alarmFrom = (st) => ({ id: 'a1', h: st.time.h, m: st.time.m, days: [...st.days], once: false, task: st.task || 'hunt', sound: 'Рассвет', name: 'Утренний', on: true, rise: true, vibro: true, check: 5, skip: false, opts: JSON.parse(JSON.stringify(st.opts || {})) });
+  const alarmFrom = (st) => ({ id: 'a1', h: st.time.h, m: st.time.m, days: [...st.days], once: false, task: st.task || 'hunt', sound: DEF_SND, name: 'Утренний', on: true, rise: true, vibro: true, check: 5, skip: false, opts: JSON.parse(JSON.stringify(st.opts || {})) });
 
   /** Главная приложения с будильником из онбординга — тот самый экран, который человек увидит после оплаты. */
   Sonly.appPreview = (st) => `<div class="ap" data-theme="${sysDark() ? 'dark' : 'light'}"><div class="statusbar"><span>9:41</span><i class="sb-island"></i><span class="sb-right">${SB_ICONS}</span></div>
@@ -715,9 +720,9 @@
     order: ['home', 'morning', 'stats', 'settings'], extra: [],
     titles: { home: 'Главная', morning: 'Утро', stats: 'Статистика', settings: 'Настройки' },
     defaults: () => ({
-      theme: 'system', data: 'new', metric: 'wake', range: '30', log: [], volume: 80, riseDef: true, sndDef: 'Рассвет', nEve: true, nWeek: true,
+      theme: 'system', data: 'new', metric: 'wake', range: '30', log: [], volume: 80, riseDef: true, sndDef: DEF_SND, nEve: true, nWeek: true,
       brief: { weather: true, word: true, saying: true },
-      alarms: [{ id: 'a1', h: 7, m: 30, days: [0, 1, 2, 3, 4], once: false, task: 'hunt', sound: 'Рассвет', name: 'Утренний', on: true, rise: true, vibro: true, check: 5, skip: false, opts: {} }],
+      alarms: [{ id: 'a1', h: 7, m: 30, days: [0, 1, 2, 3, 4], once: false, task: 'hunt', sound: DEF_SND, name: 'Утренний', on: true, rise: true, vibro: true, check: 5, skip: false, opts: {} }],
     }),
     demo: () => ({}),
     init(flow) {
@@ -727,6 +732,8 @@
       Sonly.sound.stop();
       /* Расписание идёт и при «Уменьшении движения» (там flow.still тоже включён); выключено только для снимков экрана. */
       if (!flow._tick && !flow.shot) { flow._since = Date.now() - (Date.now() % 60000); flow._tick = setInterval(() => autoRing(flow), 5000); }
+      /* Звуки включённых будильников скачиваются заранее: утром без интернета они уже в кэше сайта. */
+      if (!flow.shot) setTimeout(() => Sonly.sound.preload([flow.state.sndDef, ...flow.state.alarms.filter((a) => a.on).map((a) => a.sound)]), 2000);
       if (!flow._mq) { flow._mq = matchMedia('(prefers-color-scheme: dark)'); flow._mq.addEventListener('change', () => paint(flow)); }
     },
     /* Выбранная вкладка: кнопки не перерисовываются — меняется класс, у значка плавно проявляется второй тон, подложка переезжает. */

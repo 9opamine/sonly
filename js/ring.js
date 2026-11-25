@@ -819,7 +819,7 @@
           <div class="rg-mid"><div class="rg-bell"><i class="rg-wave"></i><i class="rg-wave w2"></i><i class="rg-halo"></i>${Sonly.mark()}</div>
             <div class="rg-time js-now">${nowHM()}</div>
             <small>${now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^./, (x) => x.toUpperCase())}</small>
-            <span class="rg-snd"><i class="rg-eq"><u></u><u></u><u></u><u></u></i>${r.test ? 'Проверка' : esc(a.name)} · ${esc(Sonly.mysnd ? Sonly.mysnd.label(a.sound) : a.sound)}</span></div>
+            <span class="rg-snd"><i class="rg-eq"><u></u><u></u><u></u><u></u></i><b class="rg-an"><span>${r.test ? 'Проверка' : esc(a.name)}</span> ·</b><span>${esc(Sonly.mysnd ? Sonly.mysnd.label(Sonly.sound.resolve(a.sound)) : Sonly.sound.resolve(a.sound))}</span></span></div>
           <div class="rg-card">${r.random ? `<small>${ic('dices', 13, 2.4)}Случайное задание</small>` : ''}
             <div class="rg-task"><i class="tb cat-${t.cat}">${K.tic(t, 28)}</i><span><b>${t.name}</b><em>${sum}</em></span></div>
             <button class="ap-btn" data-act="ring-go">${r.k && r.k.i ? 'Продолжить' : 'Начать задание'}</button>
@@ -833,6 +833,9 @@
         const r = c.s._ring;
         if (!c.shot && r && r.a.vibro !== false && !r.mute) buzz(true);
         c.flow.leave = (next) => { if (next !== 'ring') buzz(false); };
+        /* Строка «будильник · звук» в одну строку и целиком: не влезает — без названия будильника, звук важнее (после перевода). */
+        const pill = c.q('.rg-snd'), fitPill = () => { if (!pill) return; pill.classList.remove('short', 'xs'); if (pill.scrollWidth > pill.clientWidth + 1) pill.classList.add('short'); if (pill.scrollWidth > pill.clientWidth + 1) pill.classList.add('xs'); };
+        requestAnimationFrame(() => setTimeout(fitPill, 30));
         /* Пока звенит будильник, ИИ для задания уже грузится — к нажатию «Начать задание» он готов. */
       },
     },

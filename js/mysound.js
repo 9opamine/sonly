@@ -4,19 +4,21 @@
 (() => {
   'use strict';
   const { ic, esc, pad } = Sonly;
-  const RATE = 22050, REC_MAX = 30, CLIP_MAX = 60, BARS = 56, DB = 'sonly-sounds', STORE = 'sounds';
+  /* Звук хранится в исходном качестве: частота как у телефона или файла (44,1–48 кГц), стерео остаётся стерео.
+     Кусок до 30 секунд — около 5 МБ на телефоне, это немного. */
+  const RATE = 44100, REC_MAX = 30, CLIP_MAX = 30, BARS = 56, DB = 'sonly-sounds', STORE = 'sounds';
   const COLOR = { mic: '#FF3B30', file: '#0A84FF', song: '#FA2D48' };
 
-  let list = [];       // [{ id, name, kind: 'mic'|'file', rate, pcm: Int16Array, at }]
+  let list = [];       // [{ id, name, kind: 'mic'|'file'|'song', rate, ch: 1|2, pcm: Int16Array (каналы через один), at }]
   let loaded = false;
-  let draft = null;    // то, что сейчас на странице: { data: Float32Array, rate, a, b, name, loud, kind, id, at }
+  let draft = null;    // то, что сейчас на странице: { chs: [Float32Array…], data: chs[0] (для волны), rate, a, b, name, loud, kind, id, at }
   let rec = null;      // идёт запись
   let prev = null;     // идёт прослушивание выбранного куска
 
   const K = () => Sonly.appKit;
   const key = (x) => 'my:' + x.id;
   const byKey = (k) => list.find((x) => key(x) === k);
-  const dur = (x) => x.pcm.length / x.rate;
+  const dur = (x) => x.pcm.length / (x.ch || 1) / x.rate;
   const fmt = (sec) => { const v = Math.max(0, Math.round(sec)); return Math.floor(v / 60) + ':' + pad(v % 60); };
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
@@ -55,17 +57,32 @@
     const x = byKey(k);
     if (!x) return loaded ? null : ready.then(() => (byKey(k) ? buffer(k, ctx) : null));
     if (x._buf && x._ctx === ctx) return x._buf;
-    const b = ctx.createBuffer(1, x.pcm.length, x.rate), ch = b.getChannelData(0);
-    for (let i = 0; i < x.pcm.length; i++) ch[i] = x.pcm[i] / 32768;
+    const chs = split(x), b = ctx.createBuffer(chs.length, chs[0].length, x.rate);
+    chs.forEach((c, i) => b.getChannelData(i).set(c));
     x._buf = b; x._ctx = ctx;
     return b;
+  }
+  /** Сохранённый звук → каналы Float32 (старые звуки — один канал). */
+  function split(x) {
+    const n = x.ch || 1, len = Math.floor(x.pcm.length / n), out = Array.from({ length: n }, () => new Float32Array(len));
+    for (let i = 0, k = 0; i < len; i++) for (let c = 0; c < n; c++, k++) out[c][i] = x.pcm[k] / 32768;
+    return out;
+  }
+  /** Каналы разобранного звука без копирования (больше двух не берём). */
+  const chansOf = (ab) => Array.from({ length: Math.min(2, ab.numberOfChannels) }, (_, i) => ab.getChannelData(i));
+  /** Разбор файла в исходном качестве: через звуковой контекст телефона (его частота, хороший пересчёт), иначе 44,1 кГц. */
+  async function decodeHQ(raw) {
+    const ctx = Sonly.sound.ctx();
+    if (ctx) { try { return await decode(ctx, raw.slice(0)); } catch (e) { /* попробуем без контекста */ } }
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    return decode(new OAC(2, 1, RATE), raw.slice(0));
   }
   const label = (k) => { if (!/^my:/.test(k || '')) return k; const x = byKey(k); return x ? x.name : 'Свой звук'; };
 
   /** Наибольшая громкость куска и множитель, который доводит её почти до предела (не больше ×8 — шум не раздуваем). */
-  function gainOf(data, from = 0, to = data.length) {
+  function gainOf(chs, from = 0, to = chs[0].length) {
     let m = 0;
-    for (let i = from; i < to; i += 2) { const v = Math.abs(data[i]); if (v > m) m = v; }
+    chs.forEach((data) => { for (let i = from; i < to; i += 2) { const v = Math.abs(data[i]); if (v > m) m = v; } });
     return m > 0.001 ? Math.min(8, 0.95 / m) : 1;
   }
   /** Пики для волны: n столбиков от from до to (в отсчётах), 0…1 относительно самого громкого места всего звука. */
@@ -79,17 +96,6 @@
     }
     const top = Math.max(0.02, ...out);
     return out.map((v) => Math.pow(v / top, 0.7));
-  }
-  function resample(data, from, to) {
-    if (from === to) return Float32Array.from(data);
-    const n = Math.floor(data.length * to / from), out = new Float32Array(n), r = from / to;
-    for (let i = 0; i < n; i++) { const x = i * r, j = Math.floor(x), f = x - j; out[i] = (data[j] || 0) * (1 - f) + (data[j + 1] || 0) * f; }
-    return out;
-  }
-  function mono(ab) {
-    const n = ab.length, out = new Float32Array(n), chs = ab.numberOfChannels;
-    for (let c = 0; c < chs; c++) { const d = ab.getChannelData(c); for (let i = 0; i < n; i++) out[i] += d[i] / chs; }
-    return out;
   }
   const decode = (ctx, buf) => new Promise((ok, no) => { const p = ctx.decodeAudioData(buf, ok, no); if (p && p.then) p.then(ok, no); });
 
@@ -168,7 +174,7 @@
     const pad0 = 0.12 * rate;
     let a = Math.max(0, s0 - pad0) / data.length, b = Math.min(data.length, s1 + pad0) / data.length;
     if ((b - a) * total < 1) { a = 0; b = 1; }
-    draft = { data, rate, a, b, name: nextName('Мой звук'), loud: true, kind: 'mic' };
+    draft = { chs: [data], data, rate, a, b, name: nextName('Мой звук'), loud: true, kind: 'mic' };
     setMode(flow, 'edit');
   }
   function nextName(base) {
@@ -195,16 +201,16 @@
     setMode(flow, 'load');
     let ab = null;
     try {
-      const raw = await file.arrayBuffer();
-      /* Сразу в 22 кГц: длинная песня в 48 кГц стерео заняла бы на телефоне сотню мегабайт. */
-      const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-      try { ab = await decode(new OAC(1, 1, RATE), raw.slice(0)); } catch (e) { ab = await decode(Sonly.sound.ctx(), raw.slice(0)); }
+      /* Целая песня в исходном качестве: из неё выбирают любые 30 секунд. В памяти она лежит, только пока открыта страница. */
+      ab = await decodeHQ(await file.arrayBuffer());
     } catch (e) { ab = null; }
     if (!s._my || s._my.mode !== 'load') return; // пока открывали файл, человек ушёл со страницы
     if (!ab || ab.length < ab.sampleRate * 0.5) { setMode(flow, 'bad'); return; }
-    const data = mono(ab), total = data.length / ab.sampleRate;
+    const chs = chansOf(ab), total = ab.length / ab.sampleRate;
     const name = (file.name || '').replace(/\.[^.]+$/, '').replace(/[_]+/g, ' ').trim().slice(0, 24) || nextName('Мой звук');
-    draft = { data, rate: ab.sampleRate, a: 0, b: Math.min(1, 30 / total), name, loud: true, kind: 'file' };
+    /* Длинный файл — это песня: рамку сразу ставим на самое громкое место (обычно припев), как в поиске. */
+    const len = Math.min(total > 45 ? 15 : CLIP_MAX, total), a = total > 45 ? loudest(chs[0], ab.sampleRate, len) : 0;
+    draft = { chs, data: chs[0], rate: ab.sampleRate, a, b: a + len / total, name, loud: total <= 45, kind: 'file' };
     setMode(flow, 'edit');
   }
 
@@ -225,13 +231,13 @@
     const d = draft, ctx = Sonly.sound.ctx();
     if (!d || !ctx) return;
     if (!d._buf || d._ctx !== ctx) {
-      d._buf = ctx.createBuffer(1, d.data.length, d.rate);
-      d._buf.getChannelData(0).set(d.data);
+      d._buf = ctx.createBuffer(d.chs.length, d.data.length, d.rate);
+      d.chs.forEach((c, i) => d._buf.getChannelData(i).set(c));
       d._ctx = ctx;
     }
     const total = d.data.length / d.rate, s0 = Math.floor(d.a * d.data.length), s1 = Math.floor(d.b * d.data.length);
     Sonly.sound.setVolume(flow.state.volume);
-    const node = Sonly.sound.buffer(d._buf, { offset: d.a * total, dur: (d.b - d.a) * total, gain: d.loud ? gainOf(d.data, s0, s1) : 1, onend: () => { if (prev && prev.node === node) stopPrev(); } });
+    const node = Sonly.sound.buffer(d._buf, { offset: d.a * total, dur: (d.b - d.a) * total, gain: d.loud ? gainOf(d.chs, s0, s1) : 1, onend: () => { if (prev && prev.node === node) stopPrev(); } });
     if (!node) return;
     prev = { flow, node, t0: performance.now(), a: d.a, b: d.b, len: (d.b - d.a) * total };
     const w = flow.sheets.querySelector('.js-wave'), btn = flow.sheets.querySelector('.ms-play');
@@ -258,8 +264,20 @@
   let found = { q: '', list: [], st: 'idle' };
   let qTimer = 0;
   let pv = null;       // { i, audio } — играет отрывок в результатах поиска
-  /** Магазин поиска по языку телефона: украинский — UA, польский — PL, немецкий — DE, остальные — US (там больше всего песен). */
-  const store = () => ({ uk: 'UA', pl: 'PL', de: 'DE', fr: 'FR', es: 'ES', it: 'IT' }[(Sonly.i18n && Sonly.i18n.lang !== 'ru' ? Sonly.i18n.lang : navigator.language || 'en').slice(0, 2)] || 'US');
+  /* Магазин Apple своей страны: в каждом свой набор песен (в американском нет многих украинских и русских). Страну
+     узнаём по часовому поясу телефона, иначе по языку. Ищем сразу в своём и в американском и складываем без повторов. */
+  const TZ = { Kiev: 'UA', Kyiv: 'UA', Uzhgorod: 'UA', Zaporozhye: 'UA', Simferopol: 'UA', Minsk: 'BY', Warsaw: 'PL', Berlin: 'DE', Vienna: 'AT', Zurich: 'CH', Paris: 'FR', Brussels: 'BE', Madrid: 'ES', Rome: 'IT', Lisbon: 'PT', London: 'GB', Dublin: 'IE', Prague: 'CZ', Bratislava: 'SK', Budapest: 'HU', Bucharest: 'RO', Sofia: 'BG', Chisinau: 'MD', Riga: 'LV', Vilnius: 'LT', Tallinn: 'EE', Helsinki: 'FI', Stockholm: 'SE', Oslo: 'NO', Copenhagen: 'DK', Amsterdam: 'NL', Istanbul: 'TR', Moscow: 'RU', Kaliningrad: 'RU', Samara: 'RU', Volgograd: 'RU', Yekaterinburg: 'RU', Omsk: 'RU', Novosibirsk: 'RU', Krasnoyarsk: 'RU', Irkutsk: 'RU', Vladivostok: 'RU', Almaty: 'KZ', Astana: 'KZ', Tashkent: 'UZ', Tbilisi: 'GE', Yerevan: 'AM', Baku: 'AZ', Bishkek: 'KG' };
+  const LANG = { uk: 'UA', ru: 'RU', be: 'BY', kk: 'KZ', pl: 'PL', de: 'DE', fr: 'FR', es: 'ES', it: 'IT', pt: 'PT' };
+  function store() {
+    let tz = '';
+    try { tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || '').split('/').pop(); } catch (e) { /* нет часового пояса */ }
+    return TZ[tz] || LANG[(Sonly.i18n && Sonly.i18n.lang !== 'ru' ? Sonly.i18n.lang : navigator.language || 'en').slice(0, 2)] || 'US';
+  }
+  const askStore = async (q, c) => {
+    const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=50&country=${c}`);
+    if (!r.ok) throw Object.assign(new Error(String(r.status)), { slow: r.status === 403 || r.status === 429 });
+    return (await r.json()).results || [];
+  };
   function stopPv(flow) {
     if (!pv) return;
     try { pv.audio.pause(); } catch (e) { /* уже остановлен */ }
@@ -269,15 +287,20 @@
   async function search(flow, q) {
     found = { q, list: [], st: 'load' };
     paintRes(flow);
-    try {
-      const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=song&limit=25&country=${store()}`);
-      if (!r.ok) throw new Error(String(r.status));
-      const j = await r.json();
-      if (found.q !== q) return;
-      found = { q, st: 'ok', list: (j.results || []).filter((x) => x.previewUrl && x.trackName).map((x) => ({ title: x.trackName, artist: x.artistName || '', art: (x.artworkUrl100 || '').replace('100x100bb', '200x200bb'), url: x.previewUrl })) };
-    } catch (e) {
-      if (found.q === q) found = { q, list: [], st: 'err' };
-    }
+    const own = store(), shops = own === 'US' ? ['US'] : [own, 'US'];
+    const got = await Promise.allSettled(shops.map((c) => askStore(q, c)));
+    if (found.q !== q) return;
+    const seen = new Set(), list = [];
+    got.forEach((g) => (g.status === 'fulfilled' ? g.value : []).forEach((x) => {
+      if (!x.previewUrl || !x.trackName) return;
+      const k = `${x.trackName}|${x.artistName}`.toLowerCase().replace(/\s+/g, ' ');
+      if (seen.has(k) || seen.has(x.trackId)) return;
+      seen.add(k); seen.add(x.trackId);
+      list.push({ title: x.trackName, artist: x.artistName || '', art: (x.artworkUrl100 || '').replace('100x100bb', '200x200bb'), url: x.previewUrl });
+    }));
+    const fail = got.every((g) => g.status === 'rejected');
+    /* Apple отвечает «подожди», если искали слишком часто (около 20 поисков в минуту). */
+    found = fail ? { q, list: [], st: got.some((g) => g.reason && g.reason.slow) ? 'slow' : 'err' } : { q, st: 'ok', list: list.slice(0, 60) };
     paintRes(flow);
   }
   function paintRes(flow) {
@@ -286,15 +309,18 @@
   }
   function musicList(s) {
     const q = ((s._my && s._my.q) || '').trim();
+    /* Честно о 30 секундах: каталог Apple открыто даёт только отрывок. Вся песня — файлом с телефона. */
+    const whole = `<button class="ap-card ap-row tall ms-whole" data-act="ms-file"><i class="ap-row-i c" style="--c:${COLOR.file}">${Sonly.si('folder')}</i><span>Вся песня с телефона<small>Любые 30 секунд из файла</small></span>${K().chev()}</button>`;
     if (!q) return `<h3>Для утра</h3><div class="ms-sugg">${SUGG.map((x) => `<button data-act="ms-qset:${esc(x)}">${esc(x)}</button>`).join('')}</div>
-      <p class="ap-note ms-src">${ic('music', 14, 2.4)} Каталог Apple Music — миллионы песен. Ничего не скачивается: берём отрывок в 30 секунд.</p>`;
+      <p class="ap-note ms-src">${ic('music', 14, 2.4)} Каталог Apple Music. Apple даёт открыто только 30 секунд каждой песни — из них выбираешь кусок.</p>${whole}`;
+    if (found.st === 'slow') return `<div class="ms-empty"><i class="ms-big" style="--c:#FA2D48">${ic('hourglass', 38, 2.2)}</i><b>Apple просит подождать</b><p>Слишком много поисков подряд. Попробуй через минуту.</p><button class="ms-retry" data-act="ms-qset:${esc(q)}">Повторить</button></div>`;
     if (found.q !== q || found.st === 'load') return `<div class="ap-card ap-list ms-songs wait">${Array.from({ length: 6 }, () => '<div class="ap-row ms-song"><i class="ms-cover"></i><span><i class="ms-sk"></i><i class="ms-sk s"></i></span></div>').join('')}</div>`;
     if (found.st === 'err') return `<div class="ms-empty"><i class="ms-big" style="--c:#FA2D48">${ic('wifi-off', 38, 2.2)}</i><b>Поиск не открылся</b><p>Проверь интернет и попробуй ещё раз.</p><button class="ms-retry" data-act="ms-qset:${esc(q)}">Повторить</button></div>`;
-    if (!found.list.length) return `<div class="ms-empty"><i class="ms-big" style="--c:#FA2D48">${ic('search-x', 38, 2.2)}</i><b>Ничего не нашли</b><p>Попробуй название песни или исполнителя по-другому.</p></div>`;
+    if (!found.list.length) return `<div class="ms-empty"><i class="ms-big" style="--c:#FA2D48">${ic('search-x', 38, 2.2)}</i><b>Ничего не нашли</b><p>Попробуй название песни или исполнителя по-другому. Если песни нет в Apple Music — выбери её файлом.</p></div>${whole}`;
     return `<div class="ap-card ap-list ms-songs">${found.list.map((x, i) => `<div class="ap-row ms-song"><button class="ms-pick" data-act="ms-song:${i}" aria-label="Выбрать: ${esc(x.title)} — ${esc(x.artist)}"></button>
       <img class="ms-cover" src="${esc(x.art)}" alt="" loading="lazy"><span><b>${esc(x.title)}</b><small>${esc(x.artist)}</small></span>
       <button class="ms-pv${pv && pv.i === i ? ' on' : ''}" data-act="ms-pv:${i}" aria-label="${pv && pv.i === i ? 'Остановить' : `Послушать: ${esc(x.title)}`}">${Sonly.si(pv && pv.i === i ? 'pause' : 'play', 16)}</button></div>`).join('')}</div>
-      <p class="ap-note ms-src">Нажми на песню, чтобы выбрать кусок.</p>`;
+      <p class="ap-note ms-src">Нажми на песню, чтобы выбрать кусок.</p>${whole}`;
   }
   /** Песня выбрана: отрывок с серверов Apple → волна; окно сразу ставим на самое громкое место (обычно припев). */
   async function fromSong(flow, x) {
@@ -303,22 +329,23 @@
     setMode(flow, 'load');
     let ab = null;
     try {
-      const raw = await (await fetch(x.url)).arrayBuffer();
-      const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-      try { ab = await decode(new OAC(1, 1, RATE), raw.slice(0)); } catch (e) { ab = await decode(Sonly.sound.ctx(), raw.slice(0)); }
+      /* Лучшее качество отрывка, какое отдаёт Apple (AAC 256 кбит/с, стерео), и разбор без пересчёта в худшее. */
+      ab = await decodeHQ(await (await fetch(x.url)).arrayBuffer());
     } catch (e) { ab = null; }
     if (!s._my || s._my.mode !== 'load') return;
     if (!ab || ab.length < ab.sampleRate) { setMode(flow, 'bad', 'song'); return; }
-    const data = mono(ab), total = data.length / ab.sampleRate, len = Math.min(15, total);
-    /* Громкость по полусекундам — и окно той длины, где громче всего. */
-    const step = Math.floor(ab.sampleRate / 2), e = [];
+    const chs = chansOf(ab), total = ab.length / ab.sampleRate, len = Math.min(15, total), a = loudest(chs[0], ab.sampleRate, len);
+    draft = { chs, data: chs[0], rate: ab.sampleRate, a, b: a + len / total, name: `${x.title} — ${x.artist}`.slice(0, 40), loud: false, kind: 'song', art: x.art, artist: x.artist, title: x.title };
+    setMode(flow, 'edit');
+  }
+  /** Начало (0…1) окна длиной len секунд там, где громче всего: громкость по полусекундам. */
+  function loudest(data, rate, len) {
+    const total = data.length / rate, step = Math.floor(rate / 2), e = [];
     for (let i = 0; i < data.length; i += step) { let m = 0; for (let j = i; j < Math.min(data.length, i + step); j += 8) m += data[j] * data[j]; e.push(m); }
     const w = Math.max(1, Math.round(len * 2));
     let best = 0, bestAt = 0;
     for (let i = 0; i + w <= e.length; i++) { let sum = 0; for (let j = i; j < i + w; j++) sum += e[j]; if (sum > best) { best = sum; bestAt = i; } }
-    const a = Math.min(bestAt / 2, total - len) / total;
-    draft = { data, rate: ab.sampleRate, a, b: a + len / total, name: `${x.title} — ${x.artist}`.slice(0, 40), loud: false, kind: 'song', art: x.art, artist: x.artist, title: x.title };
-    setMode(flow, 'edit');
+    return Math.max(0, Math.min(bestAt / 2, total - len)) / total;
   }
 
   /* ── Сохранение и удаление ───────────────────────────────── */
@@ -329,26 +356,24 @@
     stopPrev();
     const field = flow.sheets.querySelector('.js-msname');
     const name = ((field && field.value) || d.name || '').trim().slice(0, d.kind === 'song' ? 40 : 24) || nextName('Мой звук');
-    const s0 = Math.floor(d.a * d.data.length), s1 = Math.floor(d.b * d.data.length);
-    const seg = resample(d.data.subarray(s0, s1), d.rate, RATE), g = d.loud ? gainOf(seg) : 1, fade = Math.floor(RATE * 0.02);
-    const pcm = new Int16Array(seg.length);
-    for (let i = 0; i < seg.length; i++) {
-      let v = seg[i] * g;
-      if (i < fade) v *= i / fade;
-      if (i > seg.length - fade) v *= (seg.length - i) / fade;
-      pcm[i] = Math.round(clamp(v, -1, 1) * 32767);
+    /* Кусок сохраняется как есть — без пересчёта частоты и без сведения в моно; по краям 20 мс плавного входа и выхода. */
+    const s0 = Math.floor(d.a * d.data.length), s1 = Math.floor(d.b * d.data.length), n = d.chs.length, len = s1 - s0;
+    const g = d.loud ? gainOf(d.chs, s0, s1) : 1, fade = Math.floor(d.rate * 0.02), pcm = new Int16Array(len * n);
+    for (let i = 0, k = 0; i < len; i++) {
+      const f = i < fade ? i / fade : i > len - fade ? (len - i) / fade : 1;
+      for (let c = 0; c < n; c++, k++) pcm[k] = Math.round(clamp(d.chs[c][s0 + i] * g * f, -1, 1) * 32767);
     }
-    const x = { id: d.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, kind: d.kind, rate: RATE, pcm, at: d.at || Date.now(), ...(d.kind === 'song' ? { art: d.art, artist: d.artist, title: d.title } : {}) };
+    const x = { id: d.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, kind: d.kind, rate: d.rate, ch: n, pcm, at: d.at || Date.now(), ...(d.kind === 'song' ? { art: d.art, artist: d.artist, title: d.title } : {}) };
     const i = list.findIndex((y) => y.id === x.id);
     if (i < 0) list.push(x); else list[i] = x;
     try { await tx('readwrite', (st) => st.put({ ...x, pcm: pcm.buffer.slice(0) })); } catch (e) { /* без хранилища — до закрытия страницы */ }
     done(flow, key(x));
   }
   async function remove(flow, id) {
-    const s = flow.state, k = 'my:' + id, fall = (v) => (v === k ? (s.sndDef !== k ? s.sndDef : 'Рассвет') : v);
+    const s = flow.state, k = 'my:' + id, fall = (v) => (v === k ? (s.sndDef !== k ? s.sndDef : Sonly.sound.def) : v);
     s.alarms.forEach((a) => { a.sound = fall(a.sound); });
     if (s._ed) s._ed.sound = fall(s._ed.sound);
-    if (s.sndDef === k) s.sndDef = 'Рассвет';
+    if (s.sndDef === k) s.sndDef = Sonly.sound.def;
     list = list.filter((x) => x.id !== id);
     try { await tx('readwrite', (st) => st.delete(id)); } catch (e) { /* не было в хранилище */ }
     done(flow, '');
@@ -388,7 +413,7 @@
   function demoDraft() {
     const rate = RATE, n = rate * 8, data = new Float32Array(n);
     for (let i = 0; i < n; i++) { const t = i / rate, env = Math.max(0, Math.sin(t * Math.PI * 1.7)) * (0.25 + 0.6 * Math.abs(Math.sin(t * 0.7))); data[i] = env * Math.sin(2 * Math.PI * (180 + 60 * Math.sin(t * 3)) * t); }
-    return { data, rate, a: 0.12, b: 0.78, name: 'Мой звук 1', loud: true, kind: 'mic' };
+    return { chs: [data], data, rate, a: 0.12, b: 0.78, name: 'Мой звук 1', loud: true, kind: 'mic' };
   }
   function page(s, arg) {
     const m = s._my || {}, back = 'ms-back';
@@ -491,7 +516,7 @@
   const mineRows = (cur, act) => list.map((x) => `<div class="ap-row ap-snd my${cur === key(x) ? ' on' : ''}"><button class="ms-pick" data-act="${act}:${key(x)}" aria-label="${esc(x.name)}"></button>${tile(x.kind, 22, x.art)}<span class="ms-nm"><b>${esc(x.kind === 'song' && x.title ? x.title : x.name)}</b>${x.kind === 'song' && x.artist ? `<small>${esc(x.artist)}</small>` : ''}</span><em>${fmt(dur(x))}</em><b class="ap-radio">${ic('check', 13, 3.4)}</b><button class="ms-more" data-act="ms-edit:${x.id}:${act}" aria-label="Изменить «${esc(x.name)}»">${ic('ellipsis', 18, 2.6)}</button></div>`).join('');
   function rows(cur, act) {
     /* Обёртка без своей коробки: список, открытый раньше, чем звуки прочитались с телефона, дорисуется сам. */
-    return `<h3>Музыка</h3><div class="ap-card ap-list"><button class="ap-row tall" data-act="ms-music:${act}"><i class="ap-row-i c" style="--c:${COLOR.song}">${ic('music', 18, 2.3)}</i><span>Найти песню<small>Миллионы песен — без скачивания</small></span>${K().chev()}</button></div>
+    return `<h3>Музыка</h3><div class="ap-card ap-list"><button class="ap-row tall" data-act="ms-music:${act}"><i class="ap-row-i c" style="--c:${COLOR.song}">${ic('music', 18, 2.3)}</i><span>Найти песню<small>Отрывки до 30 секунд из Apple Music</small></span>${K().chev()}</button></div>
       <h3>Свои</h3><div class="ap-card ap-list"><div class="ms-mine" data-cur="${esc(cur || '')}" data-base="${act}">${mineRows(cur, act)}</div>
       <button class="ap-row" data-act="ms-new:${act}"><i class="ap-row-i">${Sonly.si('mic')}</i><span>Записать звук</span>${K().chev()}</button>
       <button class="ap-row" data-act="ms-file:${act}"><i class="ap-row-i">${Sonly.si('folder')}</i><span>Выбрать файл</span>${K().chev()}</button></div>`;
@@ -523,9 +548,8 @@
       case 'ms-edit': {
         const [id, back] = arg.split(':'), x = list.find((y) => y.id === id);
         if (!x) return true;
-        const data = new Float32Array(x.pcm.length);
-        for (let i = 0; i < data.length; i++) data[i] = x.pcm[i] / 32768;
-        draft = { data, rate: x.rate, a: 0, b: 1, name: x.name, loud: true, kind: x.kind, id: x.id, at: x.at };
+        const chs = split(x);
+        draft = { chs, data: chs[0], rate: x.rate, a: 0, b: 1, name: x.name, loud: x.kind !== 'song', kind: x.kind, id: x.id, at: x.at, ...(x.kind === 'song' ? { art: x.art, artist: x.artist, title: x.title } : {}) };
         s._my = { back: back || 'set-snd', mode: 'edit' };
         Sonly.sound.unlock();
         K().openPage(flow, 'mysnd', 'edit', 'push');

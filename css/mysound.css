@@ -85,9 +85,12 @@
 .ms-sugg{display:flex;flex-wrap:wrap;gap:8px}
 .ms-sugg button{height:38px;padding:0 14px;border-radius:19px;background:var(--card);box-shadow:var(--elev);color:var(--ink);font-size:14.5px;font-weight:600;white-space:nowrap;transition:transform .15s}
 .ms-sugg button:active{transform:scale(.96)}
-.ap .ms-src{display:flex;align-items:flex-start;gap:7px;margin-top:16px}
+.ap .ms-src{display:flex;align-items:flex-start;gap:7px;margin-top:16px;text-wrap:pretty}
 .ms-src .ic{flex:none;margin-top:3px;color:#FA2D48}
 .ms-songs{padding:2px 0}
+/* «Вся песня с телефона» — под результатами и подсказками поиска. */
+.ms-whole{margin-top:16px;width:100%}
+.ms-empty+.ms-whole{margin-top:24px}
 .ms-song{position:relative;gap:12px;min-height:66px;padding-right:10px}
 .ms-song>:not(.ms-pick){position:relative;z-index:1;pointer-events:none}
 .ms-song>.ms-pv{pointer-events:auto;z-index:2}

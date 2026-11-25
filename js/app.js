@@ -31,7 +31,7 @@
     }
     app.innerHTML = '<div class="phone-host"></div>';
     const state = c.demo();
-    ['theme', 'data'].forEach((k) => { if (qs.get(k)) state[k] = qs.get(k); });
+    ['theme', 'data', 'span'].forEach((k) => { if (qs.get(k)) state[k] = qs.get(k); });
     const flow = new Flow($('.phone-host'), c, { still: qs.get('live') !== '1', screen: qs.get('s') || c.order[0], state });
     if (qs.get('sheet') && c.preview) c.preview(flow, qs.get('sheet'));
     if (qs.get('act')) { const b = flow.el.querySelector(`[data-act="${qs.get('act')}"]`); if (b) b.click(); }
@@ -54,6 +54,8 @@
 
   const strip = $('#strip');
   const flows = {};
+  /* Язык сменили в одном разделе — другой (уже открытый раньше) перерисовывается, чтобы не остался «RU» и старые подписи. */
+  document.addEventListener('sonly-lang', (e) => Object.values(flows).forEach((f) => { if (f !== flows[tab] && f !== (e.detail && e.detail.flow)) f.rerender(true); }));
   /*
    * Приложение помнит себя между запусками: будильники, история подъёмов, друзья, настройки. Иначе на телефоне после
    * закрытия вкладки всё начиналось бы заново. Временное (ключи с «_»: открытый лист, звонок, черновики) не сохраняется.

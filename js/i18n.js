@@ -13,7 +13,8 @@
  */
 (() => {
   'use strict';
-  const LANGS = [['ru', 'Русский', '\u{1F1F7}\u{1F1FA}'], ['en', 'English', '\u{1F1EC}\u{1F1E7}'], ['uk', 'Українська', '\u{1F1FA}\u{1F1E6}'], ['pl', 'Polski', '\u{1F1F5}\u{1F1F1}'], ['de', 'Deutsch', '\u{1F1E9}\u{1F1EA}'], ['es', 'Español', '\u{1F1EA}\u{1F1F8}'], ['fr', 'Français', '\u{1F1EB}\u{1F1F7}']];
+  /* Порядок в списке выбора: украинский и русский — в конце. */
+  const LANGS = [['en', 'English', '\u{1F1EC}\u{1F1E7}'], ['pl', 'Polski', '\u{1F1F5}\u{1F1F1}'], ['de', 'Deutsch', '\u{1F1E9}\u{1F1EA}'], ['es', 'Español', '\u{1F1EA}\u{1F1F8}'], ['fr', 'Français', '\u{1F1EB}\u{1F1F7}'], ['uk', 'Українська', '\u{1F1FA}\u{1F1E6}'], ['ru', 'Русский', '\u{1F1F7}\u{1F1FA}']];
   const CYR = /[А-Яа-яЁёІіЇїЄєҐґ]/;
   const NUM = /\d+(?:[:.,]\d+)*/g;
   /* Имена людей из примера: в переводе — свои формы. */
@@ -46,12 +47,36 @@
     const out = core.replace(/[А-Яа-яЁё]+\.?/g, (w) => { const k = w.replace(/\.$/, ''); const v = W[w] ?? W[k] ?? W[k.toLowerCase()]; if (v == null) { ok = false; return w; } return /^[А-ЯЁ]/.test(w) && v ? v[0].toUpperCase() + v.slice(1) : v; });
     return ok ? out : null;
   }
-  /** Подставляет в перевод числа ({0}, {0:форма|формы}), имена ({n0}) и названия в кавычках ({q0}). */
-  function fill(t, nums, names, quotes = []) {
+  /*
+   * Месяцы — как числа: в строке с датой («Открытка за 1 апреля…», «В sonly с августа 2026», «Декабрь 2025 г.») месяц
+   * заменяется на {d0} (после числа, родительный: «апреля») или {M0} (сам по себе: «Декабрь»), и одного ключа хватает
+   * на все двенадцать. Название месяца берётся у самого браузера на нужном языке — в нужной форме («квітня», «kwietnia»).
+   */
+  const MON_G = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+  const MON_N = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
+  const MON_RE = new RegExp(`(^|[^А-Яа-яЁё])(${[...MON_G, ...MON_N].join('|')})(?=$|[^А-Яа-яЁё])`, 'gi');
+  const MLOC = { ru: 'ru-RU', en: 'en-GB', uk: 'uk-UA', pl: 'pl-PL', de: 'de-DE', es: 'es-ES', fr: 'fr-FR' };
+  const mcache = {};
+  function monthName(i, gen) {
+    const loc = MLOC[lang] || 'en-GB', k = `${loc}${i}${gen}`;
+    if (mcache[k]) return mcache[k];
+    const d = new Date(2024, i, 15);
+    let v = MON_N[i];
+    try { v = gen ? new Intl.DateTimeFormat(loc, { day: 'numeric', month: 'long' }).formatToParts(d).find((p) => p.type === 'month').value : new Intl.DateTimeFormat(loc, { month: 'long' }).format(d); } catch (e) { /* старый браузер — оставим как есть */ }
+    return (mcache[k] = v);
+  }
+  /** Подставляет в перевод числа ({0}, {0:форма|формы}), имена ({n0}), названия в кавычках ({q0}) и месяцы ({d0}, {M0}). */
+  function fill(t, nums, names, quotes = [], months = []) {
     const pl = PLURAL[lang] || PLURAL.en;
-    return t.replace(/\{([nq]?)(\d+)(?::([^}]*))?\}/g, (_, kind, i, forms) => {
+    return t.replace(/\{([nqdM]?)(\d+)(?::([^}]*))?\}/g, (_, kind, i, forms) => {
       if (kind === 'n') return nameIn(lang, names[+i] || '');
       if (kind === 'q') return quotes[+i] ?? '';
+      if (kind === 'd' || kind === 'M') {
+        const m = months[+i];
+        if (!m) return '';
+        const v = monthName(m.i, kind === 'd');
+        return m.cap ? v[0].toUpperCase() + v.slice(1) : v;
+      }
       const raw = nums[+i] ?? '';
       if (!forms) return lang === 'en' && /^\d+,\d+$/.test(raw) ? raw.replace(',', '.') : raw;
       const f = forms.split('|'), n = Math.abs(parseInt(raw, 10) || 0);
@@ -59,11 +84,18 @@
     });
   }
   /** Ключ словаря для строки: числа → {0}, {1}…, имена → {n0}… */
-  function keyOf(core) {
-    const nums = [], names = [];
+  function keyOf(core, withMonths) {
+    const nums = [], names = [], months = [];
     let key = core.replace(NUM, (m) => { nums.push(m); return `{${nums.length - 1}}`; });
     key = key.replace(NAME_RE, (m, pre, nm) => { names.push(nm); return `${pre}{n${names.length - 1}}`; });
-    return { key, nums, names };
+    if (withMonths) {
+      key = key.replace(MON_RE, (m, pre, w) => {
+        const lw = w.toLowerCase(), g = MON_G.indexOf(lw);
+        months.push({ i: g >= 0 ? g : MON_N.indexOf(lw), cap: /^[А-ЯЁ]/.test(w) });
+        return `${pre}{${g >= 0 ? 'd' : 'M'}${months.length - 1}}`;
+      });
+    }
+    return { key, nums, names, months };
   }
   /* Форма слова после числа сводится к одной («1 час», «2 часа», «5 часов» → «{0} часов»): одного ключа хватает на любые числа.
      Сначала ищется точный ключ, так что словарные строки с нужной формой по-прежнему главнее. */
@@ -77,15 +109,30 @@
   FORMS.forEach((f) => f.forEach((w) => { CANON[w] = f[f.length - 1]; }));
   const FORM_RE = new RegExp('(\\{\\d+\\} )(' + Object.keys(CANON).sort((a, b) => b.length - a.length).join('|') + ')(?![А-Яа-яЁё])', 'g');
   const norm = (key) => key.replace(FORM_RE, (m, n, w) => n + CANON[w]);
+  /* Ключи словаря, записанные с другой формой слова («ещё {0} утра подряд»), один раз дублируются под общей формой
+     («ещё {0} утр подряд»): иначе строка находилась бы только при числах, которые дают ту же форму. */
+  const normed = new Set();
+  function normDict(d) {
+    if (normed.has(d)) return;
+    normed.add(d);
+    for (const k of Object.keys(d)) { if (k[0] === '_' || typeof d[k] !== 'string') continue; const nk = norm(k); if (nk !== k && d[nk] == null) d[nk] = d[k]; }
+  }
   /** Прямой поиск: строка целиком или её ключ с числами и именами (и с формами слов, сведёнными к одной). */
   function look(core) {
     const d = dict();
     if (!d) return null;
+    normDict(d);
     if (d[core] != null) return d[core];
     const k = keyOf(core);
     if (d[k.key] != null) return fill(d[k.key], k.nums, k.names);
     const nk = norm(k.key);
-    return nk !== k.key && d[nk] != null ? fill(d[nk], k.nums, k.names) : null;
+    if (nk !== k.key && d[nk] != null) return fill(d[nk], k.nums, k.names);
+    /* Строка с месяцем: ключ с {d0}/{M0} вместо названия (точные ключи вроде «… ноября …» выше главнее). */
+    if (!MON_RE.test(core)) return null;
+    MON_RE.lastIndex = 0;
+    const km = keyOf(core, true), nm = norm(km.key);
+    if (d[km.key] != null) return fill(d[km.key], km.nums, km.names, [], km.months);
+    return d[nm] != null ? fill(d[nm], km.nums, km.names, [], km.months) : null;
   }
   /** «Добавляем задание «Заправь кровать»»: в словаре — 'Добавляем задание «{q0}»', название переводится своей строкой. */
   function quoted(core) {
@@ -260,6 +307,8 @@
     try { localStorage.setItem('sonly-lang', l); } catch (e) { /* без хранилища — до перезагрузки */ }
     watch();
     if (flow) { flow.rerender(true); }
+    /* Остальные экраны (онбординг, приложение) перерисовываются тоже: в них язык вписан при отрисовке — флаг, «RU», названия. */
+    try { document.dispatchEvent(new CustomEvent('sonly-lang', { detail: { lang: l, flow } })); } catch (e) { /* старый браузер */ }
   }
   if (document.body) watch(); else document.addEventListener('DOMContentLoaded', watch);
   const LOCALE = { ru: 'ru-RU', en: 'en-GB', uk: 'uk-UA', pl: 'pl-PL', de: 'de-DE', es: 'es-ES', fr: 'fr-FR' };
@@ -280,7 +329,7 @@
     },
     /** Флаг языка — картинкой Apple, как все эмодзи прототипа. */
     flag(l, cls = '') {
-      const x = LANGS.find((y) => y[0] === l) || LANGS[0];
+      const x = LANGS.find((y) => y[0] === l) || LANGS.find((y) => y[0] === 'ru');
       return Sonly.emo(x[2], cls);
     },
     /** Для проверок: что встретилось без перевода. */

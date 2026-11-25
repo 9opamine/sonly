@@ -1,25 +1,61 @@
-/* Звуки будильника. Собраны из простых тонов прямо в браузере, без файлов — поэтому любой звук можно прослушать. */
+/* Звуки будильника — настоящие записи из открытой библиотеки Freesound (все CC0, авторы в snd/CREDITS.txt), файлы в snd/.
+   Файл скачивается при первом прослушивании и дальше берётся из памяти (и из кэша сайта без интернета).
+   Короткие звуки интерфейса и заданий (щелчок, ритм, мелодии «Угадай мелодию») по-прежнему собираются из тонов. */
 (() => {
   'use strict';
   let ctx = null, master = null, timer = null, live = [], volume = 0.8, gen = 0;
 
-  /* Нота: [начало, частота, длительность, форма волны, громкость, частота в конце — для скольжения]. len — длина такта. */
-  const BANK = {
-    'Рассвет': { len: 2.4, notes: [[0, 523, 0.9, 'sine', 0.5], [0.45, 659, 0.9, 'sine', 0.45], [0.9, 784, 0.9, 'sine', 0.45], [1.35, 1047, 1.0, 'sine', 0.4]] },
-    'Капель': { len: 2.0, notes: [[0, 1319, 0.22, 'triangle', 0.5], [0.34, 1568, 0.22, 'triangle', 0.45], [0.92, 1175, 0.22, 'triangle', 0.5], [1.26, 1760, 0.3, 'triangle', 0.4]] },
-    'Птицы за окном': { len: 2.2, notes: [[0, 2400, 0.09, 'sine', 0.4, 3400], [0.14, 2600, 0.09, 'sine', 0.4, 3600], [0.28, 2400, 0.12, 'sine', 0.4, 3200], [1.1, 3000, 0.08, 'sine', 0.35, 2200], [1.22, 3000, 0.08, 'sine', 0.35, 2200]] },
-    'Будильник': { len: 1.0, notes: [[0, 880, 0.08, 'square', 0.28], [0.16, 880, 0.08, 'square', 0.28], [0.32, 880, 0.08, 'square', 0.28], [0.48, 880, 0.08, 'square', 0.28]] },
-    'Колокол': { len: 1.8, notes: [[0, 660, 1.5, 'sine', 0.5], [0, 1320, 1.1, 'sine', 0.25], [0, 1987, 0.7, 'sine', 0.12]] },
-    'Радио': { len: 2.0, notes: [[0, 392, 0.28, 'triangle', 0.5], [0.3, 523, 0.28, 'triangle', 0.5], [0.6, 659, 0.5, 'triangle', 0.5]] },
-    'Сирена': { len: 1.2, notes: [[0, 620, 0.6, 'sawtooth', 0.22, 1180], [0.6, 1180, 0.6, 'sawtooth', 0.22, 620]] },
-    'Гудок': { len: 1.3, notes: [[0, 196, 0.7, 'sawtooth', 0.26], [0, 247, 0.7, 'sawtooth', 0.2]] },
-    /* Награды за серию. */
-    'Солнечный зайчик': { len: 1.7, notes: [[0, 784, 0.2, 'triangle', 0.45], [0.18, 988, 0.2, 'triangle', 0.45], [0.36, 1175, 0.2, 'triangle', 0.45], [0.54, 1568, 0.5, 'triangle', 0.4]] },
-    'Утренний бриз': { len: 2.6, notes: [[0, 440, 1.3, 'sine', 0.32], [0, 554, 1.3, 'sine', 0.26], [0, 659, 1.3, 'sine', 0.24], [1.2, 494, 1.3, 'sine', 0.3], [1.2, 622, 1.3, 'sine', 0.24], [1.2, 740, 1.3, 'sine', 0.22]] },
-    'Жаворонок': { len: 1.9, notes: [[0, 2700, 0.07, 'sine', 0.34, 3500], [0.1, 2900, 0.07, 'sine', 0.34, 3700], [0.2, 2700, 0.07, 'sine', 0.34, 3500], [0.3, 3100, 0.07, 'sine', 0.34, 3900], [0.62, 3300, 0.16, 'sine', 0.3, 2500], [0.84, 3300, 0.16, 'sine', 0.3, 2500]] },
-    'Звонкий ручей': { len: 1.9, notes: [[0, 1047, 0.18, 'triangle', 0.42], [0.12, 1319, 0.18, 'triangle', 0.4], [0.24, 1175, 0.18, 'triangle', 0.4], [0.36, 1568, 0.18, 'triangle', 0.38], [0.5, 1397, 0.22, 'triangle', 0.36], [0.66, 1760, 0.36, 'triangle', 0.34]] },
-    'Золотой рассвет': { len: 2.9, notes: [[0, 392, 1.7, 'sine', 0.32], [0, 494, 1.7, 'sine', 0.26], [0, 587, 1.7, 'sine', 0.24], [0.8, 784, 1.5, 'sine', 0.28], [1.25, 988, 1.3, 'sine', 0.22], [1.7, 1175, 1.1, 'sine', 0.18]] },
-  };
+  /* [группа, название, файл в snd/, множитель громкости — все звуки доведены до одной громкости, сирены не тише]. */
+  const SND = [
+    ['Мелодии', 'Маримба', 'marimba', 1.01],
+    ['Мелодии', 'Калимба', 'kalimba', 1.43],
+    ['Мелодии', 'Шкатулка', 'musicbox', 1.29],
+    ['Мелодии', 'Вибрафон', 'vibraphone', 1.81],
+    ['Мелодии', 'Укулеле', 'ukulele', 1],
+    ['Мелодии', 'Переливы', 'ripple', 0.97],
+    ['Мелодии', 'Арпеджио', 'arpeggio', 5.33],
+    ['Мелодии', 'Марш', 'march', 1.42],
+    ['Мелодии', 'Рингтон', 'ringtone', 1.9],
+    ['Мелодии', 'Мобильный', 'mobile', 1.48],
+    ['Мелодии', 'Фанфары', 'fanfare', 1.17],
+    ['Мелодии', 'Горн', 'bugle', 4.32],
+    ['Будильники', 'Два колокольчика', 'twinbell', 1.09],
+    ['Будильники', 'Механический', 'mechanical', 6],
+    ['Будильники', 'Старинный', 'antique', 1.05],
+    ['Будильники', 'Электронный', 'digital', 3.2],
+    ['Будильники', 'Пищалка', 'beeper', 0.74],
+    ['Будильники', 'Школьный звонок', 'school', 1.56],
+    ['Будильники', 'Старый телефон', 'oldphone', 1.07],
+    ['Будильники', 'Кукушка', 'cuckoo', 1.25],
+    ['Будильники', 'Колокол', 'churchbell', 1.29],
+    ['Будильники', 'Гонг', 'gong', 0.88],
+    ['Будильники', 'Сонар', 'sonar', 1.85],
+    ['Сирены', 'Полиция', 'police', 1.09],
+    ['Сирены', 'Скорая', 'ambulance', 1.59],
+    ['Сирены', 'Пожарные', 'firetruck', 1.08],
+    ['Сирены', 'Воздушная тревога', 'airraid', 1.0],
+    ['Сирены', 'Торнадо', 'tornado', 1.06],
+    ['Сирены', 'Ядерная тревога', 'nuclear', 0.97],
+    ['Сирены', 'Экстренное оповещение', 'eas', 0.97],
+    ['Сирены', 'Штормовое предупреждение', 'storm', 1.16],
+    ['Сирены', 'Тревога', 'alarm', 1.0],
+    ['Сирены', 'Красная тревога', 'redalert', 0.99],
+    ['Сирены', 'Погружение', 'dive', 1.31],
+    ['Сирены', 'Автосигнализация', 'caralarm', 1.0],
+    ['Природа', 'Петух', 'rooster', 0.96],
+    ['Природа', 'Дрозд в саду', 'blackbird', 2.6],
+  ];
+  const DEF = 'Маримба';
+  const BY = {};
+  SND.forEach(([g, name, file, k]) => { BY[name] = { g, file, k }; });
+  /* Прежние звуки (собранные из тонов) у тех, кто уже ставил будильник: какой настоящий звук играет вместо них. */
+  const OLD = { 'Рассвет': 'Маримба', 'Капель': 'Калимба', 'Птицы за окном': 'Дрозд в саду', 'Будильник': 'Механический', 'Радио': 'Рингтон', 'Сирена': 'Тревога', 'Гудок': 'Автосигнализация',
+    'Солнечный зайчик': 'Шкатулка', 'Утренний бриз': 'Вибрафон', 'Жаворонок': 'Переливы', 'Звонкий ручей': 'Переливы', 'Золотой рассвет': 'Арпеджио' };
+  /** Название звука, который правда сыграет: свой (my:…) как есть, старое — его замена, неизвестное — звук по умолчанию. */
+  const resolve = (name) => (/^my:/.test(name || '') ? name : BY[name] ? name : OLD[name] || DEF);
+
+  /* Запасной сигнал — только если файл не скачался (нет сети и ещё не слушали): будильник не должен молчать. */
+  const SPARE = { len: 1.0, notes: [[0, 880, 0.08, 'square', 0.28], [0.16, 880, 0.08, 'square', 0.28], [0.32, 880, 0.08, 'square', 0.28], [0.48, 880, 0.08, 'square', 0.28]] };
 
   /* iPhone глушит звук страницы переключателем «Без звука». Будильнику так нельзя: тип «воспроизведение» звучит и в беззвучном
      режиме (Safari 17+, Telegram на iOS). Перед микрофоном (скороговорка) тип возвращается на «авто». */
@@ -60,20 +96,76 @@
     master.gain.cancelScheduledValues(now);
     master.gain.setValueAtTime(o.rise ? volume * 0.15 : volume, now);
     if (o.rise) master.gain.linearRampToValueAtTime(volume, now + 10);
-    /* Свой звук (my:…) — записанный или из файла. Пока список своих звуков читается с телефона, ждём его; звука нет — «Рассвет». */
+    const g = gen;
+    /* Свой звук (my:…) — записанный, из файла или кусок песни. Пока список своих звуков читается с телефона, ждём его;
+       звука нет — звук по умолчанию. */
     if (/^my:/.test(name || '') && Sonly.mysnd) {
-      const b = Sonly.mysnd.buffer(name, ctx), g = gen;
-      if (b && b.then) { b.then((buf) => { if (g === gen) { if (buf) source(buf, { loop: o.loop }); else tones('Рассвет', o); } }); return; }
-      if (b) { source(b, { loop: o.loop }); return; }
-      name = 'Рассвет';
+      const b = Sonly.mysnd.buffer(name, ctx);
+      if (b && b.then) { b.then((buf) => { if (g === gen) { if (buf) clip(buf, 1, o); else file(DEF, o, g); } }); return; }
+      if (b) { clip(b, 1, o); return; }
     }
-    tones(name, o);
+    file(resolve(name), o, g);
   }
-  function tones(name, o) {
-    const snd = BANK[name] || BANK['Будильник'];
-    const bar = () => { live = live.slice(-40); snd.notes.forEach((n) => note(ctx.currentTime + 0.03, n)); };
+  /* Готовые записи: скачиваем один раз, разбираем и держим в памяти. */
+  const raws = {}, bufs = {};
+  /* Файл скачивается отдельно от разбора: заранее (preload) — только скачать, без звукового контекста до нажатия. */
+  function raw(name) {
+    const x = BY[name];
+    if (!raws[name]) raws[name] = fetch(`snd/${x.file}.mp3`).then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.arrayBuffer(); }).catch(() => { delete raws[name]; return null; });
+    return raws[name];
+  }
+  function load(name) {
+    if (!BY[name] || !ready()) return Promise.resolve(null);
+    if (!bufs[name]) {
+      bufs[name] = raw(name).then((a) => (a ? new Promise((ok, no) => { const p = ctx.decodeAudioData(a.slice(0), ok, no); if (p && p.then) p.then(ok, no); }) : null))
+        .catch(() => null).then((buf) => { if (!buf) delete bufs[name]; return buf; });
+    }
+    return bufs[name];
+  }
+  function file(name, o, g) {
+    if (/^my:/.test(name) || !BY[name]) name = DEF;
+    load(name).then((buf) => {
+      if (g !== gen) return;
+      if (buf) clip(buf, BY[name].k, o); else spare(o);
+    });
+  }
+  /*
+   * Запись по кругу или на пробу. По краям MP3 есть доли секунды тишины от кодировщика — на стыке круга они дали бы
+   * щелчок или паузу, поэтому круг идёт от первого звука до последнего (срезаем не больше 0,12 с: паузы внутри — часть звука,
+   * как между звонками телефона). На пробу (выбор в списке) — до 8 секунд и плавно стихает.
+   */
+  function clip(buf, k, o) {
+    const edge = (from, step) => {
+      const d = buf.getChannelData(0), max = Math.floor(buf.sampleRate * 0.12);
+      let i = 0;
+      while (i < max && Math.abs(d[from + i * step] || 0) < 2e-4) i++;
+      return i / buf.sampleRate;
+    };
+    const ls = edge(0, 1), le = buf.duration - edge(buf.length - 1, -1);
+    const src = ctx.createBufferSource(), amp = ctx.createGain(), t = ctx.currentTime + 0.02;
+    src.buffer = buf;
+    amp.gain.value = k;
+    src.connect(amp);
+    amp.connect(master);
+    if (o.loop) {
+      src.loop = true;
+      src.loopStart = ls;
+      src.loopEnd = le;
+      src.start(t, ls);
+    } else {
+      const len = Math.min(le - ls, 8);
+      amp.gain.setValueAtTime(k, t + Math.max(0, len - 0.5));
+      amp.gain.linearRampToValueAtTime(0.0001, t + len);
+      src.start(t, ls);
+      src.stop(t + len + 0.05);
+    }
+    live.push(src);
+    return src;
+  }
+  function spare(o) {
+    const bar = () => { live = live.slice(-40); SPARE.notes.forEach((n) => note(ctx.currentTime + 0.03, n)); };
     bar();
-    if (o.loop) timer = setInterval(bar, snd.len * 1000);
+    if (o.loop) timer = setInterval(bar, SPARE.len * 1000);
   }
   /** Запись целиком или кусок: offset и dur в секундах, gain — множитель «Сделать громче», onend — когда кусок доиграл. */
   function source(buf, o = {}) {
@@ -220,9 +312,12 @@
     ctx: () => (ready() ? ctx : null),
     /** Тип звуковой сессии iPhone: 'playback' — звучать и в беззвучном режиме, 'auto' — перед записью с микрофона. */
     session,
-    play, stop, tick, drum, names: Object.keys(BANK),
-    /** Длина такта звука в секундах. */
-    len: (name) => (BANK[name] || BANK['Будильник']).len,
+    play, stop, tick, drum, names: SND.map((x) => x[1]),
+    /** Звуки по группам для списка: [['Мелодии', ['Маримба', …]], …]. */
+    groups: () => SND.reduce((out, [g, name]) => { const last = out[out.length - 1]; if (last && last[0] === g) last[1].push(name); else out.push([g, [name]]); return out; }, []),
+    def: DEF, resolve,
+    /** Заранее скачать звуки будильников: утром без интернета они уже будут в памяти и в кэше сайта. */
+    preload(names) { [...new Set((names || []).map(resolve))].forEach((n) => { if (BY[n]) raw(n); }); },
     /** Разрешает звук: браузер включает его только после нажатия. */
     unlock: () => ready(),
     /** Громкость 0–100. mute — заглушить текущий звонок, не трогая настройку. */
