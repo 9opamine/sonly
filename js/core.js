@@ -438,8 +438,19 @@ window.Sonly = (() => {
           const code = (input ? input.value : '').trim().toUpperCase();
           s._code = code;
           if (!code) { nudge(input); break; }
-          if (isPromo(code)) { s.discount = 'code'; s._promoErr = false; } else s._promoErr = true;
-          this.rerender();
+          const good = isPromo(code), tkt = $('.m-tkt', this.cur);
+          const apply = () => {
+            if (good) { s.discount = 'code'; s._promoErr = false; s._promoJust = Date.now(); } else { s._promoErr = true; s._promoShake = Date.now(); }
+            this.rerender();
+          };
+          /* Код «проверяется»: в кнопке крутится кружок, билет на миг притихает — потом срабатывает или поле качает головой. */
+          if (this.shot || REDUCE || !tkt) { apply(); break; }
+          if (tkt.classList.contains('busy')) break;
+          tkt.classList.add('busy');
+          const msg = $('.a-promo-msg', this.cur), box = $('.m-coupon', this.cur);
+          if (msg) msg.classList.remove('err');
+          if (box) box.classList.remove('err', 'shake');
+          setTimeout(() => { if (this.id === 'promo' && tkt.isConnected) apply(); }, good ? 700 : 450);
           break;
         }
         case 'plan': s.plan = arg; this.rerender(); break;
@@ -455,9 +466,13 @@ window.Sonly = (() => {
         case 'restore':
           this.sheet(`<div class="msg"><b>Покупок не найдено</b><p>На этом Apple ID нет активной подписки sonly.</p><button class="msg-ok" data-act="sheet-close">Понятно</button></div>`, 'center');
           break;
-        case 'legal':
-          this.sheet(`<div class="msg"><b>${esc(arg)}</b><p>В прототипе документ не подключён. В приложении здесь откроется полный текст.</p><button class="msg-ok" data-act="sheet-close">Закрыть</button></div>`, 'center');
+        case 'legal': {
+          /* Документ целиком в листе: условия, политика, условия партнёрской программы. */
+          const L = window.Sonly && Sonly.legal, id = L ? L.byName(arg) : '';
+          if (!L) { this.sheet(`<div class="msg"><b>${esc(arg)}</b><button class="msg-ok" data-act="sheet-close">Закрыть</button></div>`, 'center'); break; }
+          this.sheet(`<div class="legal-head"><button class="legal-x" data-act="sheet-close" aria-label="Закрыть">${ic('x', 20, 2.4)}</button><b>${L.short(id)}</b></div><div class="scroll legal-body">${L.html(id)}</div>`, 'legal-sheet');
           break;
+        }
         case 'sheet-close': this.closeSheet(); break;
         case 'restart': this.restart(); break;
         default:

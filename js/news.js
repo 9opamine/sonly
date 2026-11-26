@@ -133,7 +133,13 @@
     void ov.offsetWidth;
     ov.classList.add('in');
     if (!REDUCE()) try { if (navigator.vibrate) navigator.vibrate(it.kind === 'b' && /legend|myth/.test(v.tier) ? [20, 60, 30, 60, 40] : [18, 50, 26]); } catch (e) { /* нет вибрации */ }
+    /* Звук — в момент, когда вещь выскакивает: значок звенит (редкий — кристальной трелью), открытка переворачивается и искрится. */
+    if (snd()) {
+      if (it.kind === 'b') snd().sfx(/epic|legend|myth/.test(v.tier) ? 'rare' : 'badge', 0.22);
+      else if (it.kind === 'c') { snd().sfx('card', 0.2); snd().sfx('twinkle', 0.6, 0.7); } else snd().sfx('scene', 0.15);
+    }
   }
+  const snd = () => (Sonly.sound && Sonly.sound.sfx ? Sonly.sound : null);
   /** «Забрать»: вещь улетает в свою вкладку, вкладка вспыхивает красной точкой, затем следующее или конец. */
   function next(flow) {
     if (!ov || ov.classList.contains('out')) return;
@@ -143,6 +149,7 @@
     const thing = ov.querySelector('.nw-it'), target = flow.dock.querySelector(`[data-act="tab:${TAB[it.kind]}"]`);
     ov.classList.add('out');
     const done = () => {
+      if (snd()) snd().sfx('pop', 0, 0.8);
       paint(flow);
       if (target) { target.classList.remove('nw-pop'); void target.offsetWidth; target.classList.add('nw-pop'); }
       if (i + 1 < q.length) show(flow, i + 1); else close(flow);
@@ -153,6 +160,7 @@
     const fly = thing.animate([{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${dx * 0.55}px,${dy * 0.35 - 40}px) scale(.55)`, opacity: 1, offset: 0.45 }, { transform: `translate(${dx}px,${dy}px) scale(.12)`, opacity: 0.15 }],
       { duration: 640, easing: 'cubic-bezier(.45,0,.2,1)', fill: 'forwards' });
     fly.onfinish = done;
+    if (snd()) snd().sfx('whoosh', 0.05, 0.7);
   }
   /*
    * «Пропустить»: всё, что ещё не показали, сразу пачкой — вещи веером выскакивают на месте праздника и разлетаются
@@ -197,12 +205,14 @@
       ], { duration: 1100 + wait - 340, delay: j * 40, easing: 'cubic-bezier(.45,0,.25,1)', fill: 'forwards' });
       a.onfinish = () => {
         el.remove();
+        if (snd()) snd().sfx('pop', 0, 0.55);
         if (target && !popped.has(target)) { popped.add(target); paint(flow); }
         if (target) { target.classList.remove('nw-pop'); void target.offsetWidth; target.classList.add('nw-pop'); }
         if (--left === 0) { pack.remove(); paint(flow); }
       };
     });
     try { if (navigator.vibrate) navigator.vibrate([16, 40, 16, 40, 24]); } catch (e) { /* нет вибрации */ }
+    if (snd()) snd().sfx('whoosh', 0.3, 0.8);
   }
   /** Ушли с Главной: праздник и летящая пачка убираются сразу. Что не успели показать, не помечено объявленным — покажется потом. */
   function leave(flow) {

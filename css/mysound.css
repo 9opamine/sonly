@@ -124,3 +124,21 @@
 .ms-nm{flex:1;min-width:0;display:grid;gap:1px}
 .ms-nm>b{font-weight:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 a.ms-retry{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+
+/* Звук каталога: вся строка выбирает (кнопка под строкой), сердечко — в избранное. */
+.ap-snd.cat>:not(.ms-pick){position:relative;z-index:1;pointer-events:none}
+.ap-snd.cat>.snd-heart{pointer-events:auto;z-index:2}
+.snd-heart{width:40px;height:40px;margin-right:2px;border-radius:20px;display:grid;place-items:center;color:var(--mut);flex:none;transition:color .2s ease}
+.snd-heart svg{transition:transform .25s cubic-bezier(.2,.8,.2,1),fill .2s ease}
+.snd-heart:active svg{transform:scale(.88)}
+.snd-heart.on{color:#FF375F}
+.snd-heart.on svg{fill:currentColor}
+.snd-seg{margin:2px 0 6px}
+.snd-seg button svg{flex:none}
+.snd-seg em{font-style:normal;font-variant-numeric:tabular-nums;opacity:.7}
+.snd-seg em:empty{display:none}
+.snd-empty{margin-top:28px;display:grid;justify-items:center;gap:6px;text-align:center;padding:0 24px}
+.snd-empty i{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;color:#FF375F;background:color-mix(in srgb,#FF375F 14%,var(--card));margin-bottom:6px}
+.snd-empty b{font-size:17px;font-weight:700}
+.snd-empty p{margin:0;font-size:14.5px;line-height:1.4;color:var(--mut)}
+.snd-favs{margin-top:12px}

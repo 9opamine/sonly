@@ -86,13 +86,15 @@
   })();
   const hole = 'M15.2 12a3.2 3.2 0 1 1-6.4 0 3.2 3.2 0 0 1 6.4 0z';
   const rays = 'M12 3.6v2.2M5.6 6.4l1.6 1.6M18.4 6.4l-1.6 1.6';
-  const bars = [[4.4, 13.4, 6.2], [10.2, 8.6, 11], [16, 4.6, 15]];
+  /* Столбики «Статистики»: [x, y, высота], ширина 5. Шире прежних, чтобы в контурном виде все три были пустыми внутри. */
+  const bars = [[2.7, 13.2, 6.4], [9.5, 8.4, 11.2], [16.3, 4.4, 15.2]];
   const UI = {
     home: () => `<g class="ui-off">${ln(house)}</g><g class="ui-on">${fe(house)}</g>`,
-    morning: () => `<g class="ui-off">${ln('M5.8 17.8a6.2 6.2 0 0 1 12.4 0')}${ln(rays)}</g>`
+    /* Дуга солнца кончается на линии горизонта прямым срезом: круглые концы торчали шишками под линией. */
+    morning: () => `<g class="ui-off"><path d="M5.8 17.8a6.2 6.2 0 0 1 12.4 0" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="butt"/>${ln(rays)}</g>`
       + `<g class="ui-on"><g class="ui-sun">${fe('M5.4 17.8a6.6 6.6 0 0 1 13.2 0z')}</g><g class="ui-rays">${ln(rays, 2.1)}</g></g>${ln('M3.2 17.8h17.6', 1.9)}`,
-    stats: () => `<g class="ui-off">${bars.map(([x, y, h]) => `<rect x="${x + 0.9}" y="${y + 0.9}" width="1.8" height="${h - 1.8}" rx=".9" fill="none" stroke="currentColor" stroke-width="1.8"/>`).join('')}</g>`
-      + `<g class="ui-on">${bars.map(([x, y, h], k) => `<rect class="ui-bar b${k}" x="${x}" y="${y}" width="3.6" height="${h}" rx="1.3" fill="currentColor"/>`).join('')}</g>`,
+    stats: () => `<g class="ui-off">${bars.map(([x, y, h]) => `<rect x="${x + 0.85}" y="${y + 0.85}" width="3.3" height="${h - 1.7}" rx="1.1" fill="none" stroke="currentColor" stroke-width="1.7"/>`).join('')}</g>`
+      + `<g class="ui-on">${bars.map(([x, y, h], k) => `<rect class="ui-bar b${k}" x="${x}" y="${y}" width="5" height="${h}" rx="1.7" fill="currentColor"/>`).join('')}</g>`,
     settings: () => `<g class="ui-off">${ln(gear, 1.7)}${ln(hole, 1.7)}</g><g class="ui-on"><g class="ui-gear">${fe(gear + hole)}</g></g>`,
   };
 

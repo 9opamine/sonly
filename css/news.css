@@ -62,17 +62,21 @@
 .ap-tabs button{position:relative}
 .ap-tabs button.nw-dot::after{content:'';position:absolute;top:7px;left:calc(50% + 7px);width:9px;height:9px;border-radius:50%;background:#FF3B30;box-shadow:0 0 0 2px rgba(255,255,255,.9);z-index:2}
 .ap[data-theme="dark"] .ap-tabs button.nw-dot::after{box-shadow:0 0 0 2px #1C1C20}
-.ap-tabs button.nw-pop::after{animation:nw-dot .55s cubic-bezier(.2,1.6,.4,1)}
-@keyframes nw-dot{0%{transform:scale(0)}60%{transform:scale(1.6)}100%{transform:scale(1)}}
+/* Точка проявляется мягко — из прозрачности и чуть меньшего размера, без раздувания. Когда во вкладку прилетело новое,
+   от точки расходится тонкое кольцо, сама точка размер не меняет. */
+.ap-tabs button.nw-pop::before{content:'';position:absolute;top:7px;left:calc(50% + 7px);width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 2px rgba(255,59,48,.55);z-index:2;pointer-events:none;animation:nw-ring .8s cubic-bezier(.2,.8,.2,1) forwards}
+.ap-tabs button.nw-dot::after{animation:nw-dot .45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes nw-dot{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+@keyframes nw-ring{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(2.6)}}
 /* Плитка: красная цифра в углу (сколько нового). */
 .ap-big,.mo-tile{position:relative}
-.nw-count{position:absolute;top:10px;right:10px;z-index:2;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#FF3B30;color:#fff;font-style:normal;font-size:12.5px;font-weight:800;line-height:22px;text-align:center;font-variant-numeric:tabular-nums;box-shadow:0 3px 8px -2px rgba(255,59,48,.55);animation:nw-dot .5s cubic-bezier(.2,1.6,.4,1)}
+.nw-count{position:absolute;top:10px;right:10px;z-index:2;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#FF3B30;color:#fff;font-style:normal;font-size:12.5px;font-weight:800;line-height:22px;text-align:center;font-variant-numeric:tabular-nums;box-shadow:0 3px 8px -2px rgba(255,59,48,.55);animation:nw-dot .45s cubic-bezier(.2,.8,.2,1) both}
 .nw-count[hidden]{display:none}
 /* В списке: новый значок, открытка, пейзаж — точка в углу и мягкая красная обводка. */
-.bd.is-new::after,.pp-bd.is-new::after,.mo-card.is-new::after,.gf-scene.is-new::after{content:'';position:absolute;top:8px;right:8px;width:10px;height:10px;border-radius:50%;background:#FF3B30;box-shadow:0 0 0 2px var(--card,#fff);z-index:3;animation:nw-dot .5s cubic-bezier(.2,1.6,.4,1)}
+.bd.is-new::after,.pp-bd.is-new::after,.mo-card.is-new::after,.gf-scene.is-new::after{content:'';position:absolute;top:8px;right:8px;width:10px;height:10px;border-radius:50%;background:#FF3B30;box-shadow:0 0 0 2px var(--card,#fff);z-index:3;animation:nw-dot .45s cubic-bezier(.2,.8,.2,1) both}
 .bd.is-new,.gf-scene.is-new{box-shadow:var(--elev),inset 0 0 0 1.5px rgba(255,59,48,.55)}
 .pp-bd{position:relative}
-@media (prefers-reduced-motion:reduce){.ap-tabs button.nw-pop::after,.nw-count,.bd.is-new::after,.pp-bd.is-new::after,.mo-card.is-new::after,.gf-scene.is-new::after{animation:none}}
+@media (prefers-reduced-motion:reduce){.ap-tabs button.nw-pop::before,.ap-tabs button.nw-dot::after,.nw-count,.bd.is-new::after,.pp-bd.is-new::after,.mo-card.is-new::after,.gf-scene.is-new::after{animation:none}}
 
 /* «Пропустить»: всё оставшееся сразу. Кнопка — вверху справа, как в историях. */
 .nw-skip{position:absolute;top:calc(var(--top,54px) + 6px);right:16px;z-index:3;height:34px;padding:0 15px;border-radius:17px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);color:#fff;font-size:14px;font-weight:700;white-space:nowrap;opacity:0}

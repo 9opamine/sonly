@@ -1,17 +1,13 @@
-Звуки будильника sonly — записи с Freesound (freesound.org), все под лицензией CC0 1.0 (общественное достояние).
+Звуки sonly — записи с Freesound (freesound.org), все под лицензией CC0 1.0 (общественное достояние).
 Обрезаны по кадрам MP3 без перекодирования; громкость выровнена в приложении. Указание авторов не обязательно — оставляем из уважения.
 
+Будильник:
 snd/marimba.mp3 — «Маримба»: BirdFish Happy Loop.mp3 — pinkinblue — https://freesound.org/people/pinkinblue/sounds/425971/ — CC0
 snd/vibraphone.mp3 — «Вибрафон»: Short vibraphone melody (loop) — xkeril — https://freesound.org/people/xkeril/sounds/753346/ — CC0
 snd/arpeggio.mp3 — «Арпеджио»: arpeggelings.wav — symphoid — https://freesound.org/people/symphoid/sounds/157338/ — CC0
 snd/march.mp3 — «Марш»: March On Alarm - Loop / Jingle — Foxfire- — https://freesound.org/people/Foxfire-/sounds/844252/ — CC0
 snd/mobile.mp3 — «Мобильный»: Alarm Ringtone — Migfus20 — https://freesound.org/people/Migfus20/sounds/759640/ — CC0
-snd/grieg.mp3 — «Утро Грига»: Morning Transition Music.wav — dominictreis — https://freesound.org/people/dominictreis/sounds/530265/ — CC0
-snd/tale.mp3 — «Сказка»: 3.15.16 - Peaceful Melody.mp3 — DishonoredBlood — https://freesound.org/people/DishonoredBlood/sounds/342650/ — CC0
-snd/tune.mp3 — «Мелодия»: A little melody — doomlordisdead — https://freesound.org/people/doomlordisdead/sounds/730330/ — CC0
-snd/bugle.mp3 — «Побудка»: Trumpet Revellie.wav — trumpetplayer — https://freesound.org/people/trumpetplayer/sounds/651200/ — CC0
 snd/twinbell.mp3 — «Два колокольчика»: Twin Bell Alarm Clock Continuous Ringing — cryptidcat — https://freesound.org/people/cryptidcat/sounds/743963/ — CC0
-snd/mechanical.mp3 — «Механический»: Old alarm clock (ticking and ringing) — PlayPauseAndRewind — https://freesound.org/people/PlayPauseAndRewind/sounds/132340/ — CC0
 snd/antique.mp3 — «Старинный»: Clock.Windup.Bell.Antique.wav — jessepash — https://freesound.org/people/jessepash/sounds/139958/ — CC0
 snd/digital.mp3 — «Электронный»: Digital Alarm Clock Sound Effect — israra — https://freesound.org/people/israra/sounds/434055/ — CC0
 snd/beeper.mp3 — «Пищалка»: Digital Alarm.wav — Tempouser — https://freesound.org/people/Tempouser/sounds/123349/ — CC0
@@ -19,8 +15,6 @@ snd/school.mp3 — «Школьный звонок»: School bell.wav — delete
 snd/oldphone.mp3 — «Старый телефон»: telephone ring.wav — xyzr_kx — https://freesound.org/people/xyzr_kx/sounds/79440/ — CC0
 snd/cuckoo.mp3 — «Кукушка»: Cuckoo Clock.wav — DiArchangeli — https://freesound.org/people/DiArchangeli/sounds/128177/ — CC0
 snd/churchbell.mp3 — «Колокол»: ChurchBellKonstanz.wav — edschaefer — https://freesound.org/people/edschaefer/sounds/341866/ — CC0
-snd/gong.mp3 — «Гонг»: gong.aiff — bevibeldesign — https://freesound.org/people/bevibeldesign/sounds/316642/ — CC0
-snd/police.mp3 — «Полиция»: Whelen Wail.wav — Jefflix — https://freesound.org/people/Jefflix/sounds/157867/ — CC0
 snd/ambulance.mp3 — «Скорая»: Whelen Yelp.wav — Jefflix — https://freesound.org/people/Jefflix/sounds/157866/ — CC0
 snd/firetruck.mp3 — «Пожарные»: LAFireSiren.wav — AdmNaismith — https://freesound.org/people/AdmNaismith/sounds/175914/ — CC0
 snd/tornado.mp3 — «Торнадо»: Scary Siren (Air Raid, Tornado, Nuke).wav — oddbro2020 — https://freesound.org/people/oddbro2020/sounds/544013/ — CC0
@@ -29,18 +23,33 @@ snd/eas.mp3 — «Экстренное оповещение»: EAS Alarm — mpa
 snd/storm.mp3 — «Штормовое предупреждение»: Standard Emergency Warning Signal (SEWS) — mpaol2023 — https://freesound.org/people/mpaol2023/sounds/372251/ — CC0
 snd/alarm.mp3 — «Тревога»: Alarm Siren, Fast Oscillations — Kinoton — https://freesound.org/people/Kinoton/sounds/420661/ — CC0
 snd/redalert.mp3 — «Красная тревога»: Red Alert_Nuclear_Buzzer.mp3 — imagery2 — https://freesound.org/people/imagery2/sounds/458570/ — CC0
-snd/ringtone.mp3 — «Рингтон»: Legacy ringtone — chriswr — https://freesound.org/people/chriswr/sounds/271152/ — CC0
+snd/pipe.mp3 — «Металлическая труба»: jixaw-metal-pipe-falling-sound.mp3 — thenotcheeseman — https://freesound.org/people/thenotcheeseman/sounds/679206/ — CC0
+snd/boom.mp3 — «Бум»: Drama Boom 02 — modusmogulus — https://freesound.org/people/modusmogulus/sounds/802074/ — CC0
+snd/bruh.mp3 — «Брух»: Bruh Sound Effect #1 — Autellaem — https://freesound.org/people/Autellaem/sounds/534387/ — CC0
+snd/bonk.mp3 — «Бонк»: Bonk Sound effect — thecoolcookie17 — https://freesound.org/people/thecoolcookie17/sounds/573047/ — CC0
+snd/dundun.mp3 — «Дун-дун-дуун»: Dun Dun Duuun v.01.mp3 — divenorth — https://freesound.org/people/divenorth/sounds/215558/ — CC0
+snd/sadviolin.mp3 — «Грустная скрипка»: Hearts and Flowers.wav — andyssoundbox — https://freesound.org/people/andyssoundbox/sounds/234311/ — CC0
+snd/drumroll.mp3 — «Барабанная дробь»: Drum Roll Please.wav — Scheffler — https://freesound.org/people/Scheffler/sounds/201211/ — CC0
+snd/rimshot.mp3 — «Ба-дум-тсс»: Baddum Tish - Comedy Rimshots - classic rim shot.wav — OverlookHotelRecords — https://freesound.org/people/OverlookHotelRecords/sounds/271208/ — CC0
+snd/scream.mp3 — «Крик»: Weirdo Scream.wav — GreatNate98 — https://freesound.org/people/GreatNate98/sounds/353086/ — CC0
+snd/geese.mp3 — «Гуси»: Canada Geese Honks — Kinoton — https://freesound.org/people/Kinoton/sounds/423346/ — CC0
+snd/goat.mp3 — «Коза»: Happy Goat — poodaddy69 — https://freesound.org/people/poodaddy69/sounds/495688/ — CC0
+snd/cat.mp3 — «Голодный кот»: Cat Wants Food — Oneirophile — https://freesound.org/people/Oneirophile/sounds/120160/ — CC0
+snd/vuvuzela.mp3 — «Вувузела»: Vuvuzela — nomerodin1 — https://freesound.org/people/nomerodin1/sounds/557277/ — CC0
 snd/fanfare.mp3 — «Фанфары»: Trumpet Fanfare — bevibeldesign — https://freesound.org/people/bevibeldesign/sounds/350428/ — CC0
+snd/bugle.mp3 — «Побудка»: Trumpet Revellie.wav — trumpetplayer — https://freesound.org/people/trumpetplayer/sounds/651200/ — CC0
 snd/dive.mp3 — «Погружение»: Submarine submersion alarm_mono_wave.wav — Guialgarve — https://freesound.org/people/Guialgarve/sounds/480898/ — CC0
 snd/caralarm.mp3 — «Автосигнализация»: caralarm.wav — soundingoffagain — https://freesound.org/people/soundingoffagain/sounds/150981/ — CC0
-snd/clown.mp3 — «Клоунский гудок»: Clown Horn (Many Honks).wav — Gimp_Revival — https://freesound.org/people/Gimp_Revival/sounds/588591/ — CC0
-snd/slide.mp3 — «Свистулька»: Slide Whistle — sheepfilms — https://freesound.org/people/sheepfilms/sounds/202753/ — CC0
-snd/trombone.mp3 — «Грустный тромбон»: wah wah sad trombone.wav — kirbydx — https://freesound.org/people/kirbydx/sounds/175409/ — CC0
-snd/goat.mp3 — «Коза»: Happy Goat — poodaddy69 — https://freesound.org/people/poodaddy69/sounds/495688/ — CC0
-snd/duck.mp3 — «Резиновая уточка»: Rubber-Duck_Squeezes.wav — LamaMakesMusic — https://freesound.org/people/LamaMakesMusic/sounds/403507/ — CC0
-snd/cat.mp3 — «Голодный кот»: Cat Wants Food — Oneirophile — https://freesound.org/people/Oneirophile/sounds/120160/ — CC0
-snd/toon.mp3 — «Мультяшная сирена»: Acme Siren.wav — applauseav — https://freesound.org/people/applauseav/sounds/331610/ — CC0
-snd/party.mp3 — «Дуделка»: Party noise maker _ soundstack.wav new yeears eve, party, horn, party favor — soundstack — https://freesound.org/people/soundstack/sounds/203246/ — CC0
-snd/vuvuzela.mp3 — «Вувузела»: Vuvuzela — nomerodin1 — https://freesound.org/people/nomerodin1/sounds/557277/ — CC0
 snd/blackbird.mp3 — «Дрозд в саду»: Blackbird singing in garden with rustling trees in background — Cinetony — https://freesound.org/people/Cinetony/sounds/565058/ — CC0
 snd/nightingale.mp3 — «Соловей»: Nightingale Song — smand — https://freesound.org/people/smand/sounds/521035/ — CC0
+
+Награды и праздники:
+snd/fx/badge.mp3: Short Success Sound Glockenspiel Treasure Video Game.mp3 — FunWithSound — https://freesound.org/people/FunWithSound/sounds/456965/ — CC0
+snd/fx/rare.mp3: Shine Chime — Qvantor — https://freesound.org/people/Qvantor/sounds/879797/ — CC0
+snd/fx/card.mp3: flipCard.wav — Splashdust — https://freesound.org/people/Splashdust/sounds/84322/ — CC0
+snd/fx/twinkle.mp3: Crystal Twinkle — LaurenPonder — https://freesound.org/people/LaurenPonder/sounds/639429/ — CC0
+snd/fx/scene.mp3: Mysterious Magical Bell Flourish — SkySpeira — https://freesound.org/people/SkySpeira/sounds/848847/ — CC0
+snd/fx/whoosh.mp3: quick woosh — florianreichelt — https://freesound.org/people/florianreichelt/sounds/683101/ — CC0
+snd/fx/pop.mp3: Pop Sound — ConarB13 — https://freesound.org/people/ConarB13/sounds/401542/ — CC0
+snd/fx/fire.mp3: fire-whoosh.wav — hnhnh — https://freesound.org/people/hnhnh/sounds/244926/ — CC0
+snd/fx/win.mp3: 3 - Unlock achievement for games — TheZero — https://freesound.org/people/TheZero/sounds/331362/ — CC0

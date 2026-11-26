@@ -121,7 +121,7 @@
   /** Готовит задание по настройкам будильника. */
   function begin(r) {
     const t = K.taskOf(r.a), o = TO.get(r.a, t.id), k = { kind: KIND[t.id], i: 0, n: 1 };
-    if (k.kind === 'math') Object.assign(k, { n: o.n, list: problems(o.level, o.n), input: '' });
+    if (k.kind === 'math') Object.assign(k, { n: o.n, level: o.level, list: problems(o.level, o.n), input: '', errs: 0 });
     else if (k.kind === 'quiz') Object.assign(k, { n: o.n, list: quizOf(o.topic, o.n), ok: null, bad: [] });
     else if (k.kind === 'memory') { k.size = +o.size; k.n = o.n; pattern(k); }
     else if (k.kind === 'pairs') { const pics = shuffle(TO.objects({ off: [] })).slice(0, o.n); k.n = o.n; k.cards = shuffle([...pics, ...pics]).map((p, id) => ({ id, p, open: false, done: false })); }
@@ -215,11 +215,18 @@
     if (back) { K.editor(flow); if (r.from === 'picker') K.taskPicker(flow, ''); }
   }
   /** Проверка подъёма: «Ты не спишь?». Если не ответить за минуту, будильник зазвонит снова. */
-  function checkNow(flow, alarm) {
+  /* Когда человек последний раз трогал экран. Трогал за последние 2 минуты — он точно не спит, проверка подъёма не нужна:
+     иначе она звонила бы тому, кто давно сидит в телефоне. */
+  let touchedAt = 0;
+  const AWAKE_MS = 2 * 60000;
+  if (typeof document !== 'undefined') ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach((t) => document.addEventListener(t, () => { touchedAt = Date.now(); }, { capture: true, passive: true }));
+  /** Проверка «Ты не спишь?». force — показать в любом случае (панель прототипа, проверки). */
+  function checkNow(flow, alarm, force) {
     const s = flow.state;
+    if (!force && Date.now() - touchedAt < AWAKE_MS) { clearTimeout(flow._chk); return; }
     /* Пока звонит будильник или решается задание — проверка ждёт и приходит, как только они закончатся. С «Доброе утро»
        и экрана серии она открывается поверх них (после первой минуты на них): подъём уже засчитан. */
-    if (busy(flow)) { clearTimeout(flow._chk); flow._chk = setTimeout(() => checkNow(flow, alarm), 3000); return; }
+    if (busy(flow)) { clearTimeout(flow._chk); flow._chk = setTimeout(() => checkNow(flow, alarm, force), 3000); return; }
     sound.stop();
     s._ring = null;
     /* Откуда пришла проверка: после «Я не сплю» человек возвращается туда же, а не на главную. */
@@ -250,7 +257,8 @@
       if (!(s.log || []).some((x) => x.t === day)) s.log = (s.log || []).concat({ t: day, wake: now.getHours() * 60 + now.getMinutes(), secs: r.secs, task: r.a.task });
       const a = s.alarms.find((x) => x.id === r.a.id);
       if (a && a.once) a.on = false;
-      if (r.a.check && !flow.shot) { const again = K.copy(r.a); flow._chk = setTimeout(() => checkNow(flow, again), r.a.check * 60000); }
+      /* Подъём из панели прототипа («проснуться +1 день») — показ анимаций, проверку после него не ставим. */
+      if (r.a.check && !flow.shot && !r.demo) { const again = K.copy(r.a); clearTimeout(flow._chk); flow._chk = setTimeout(() => checkNow(flow, again), r.a.check * 60000); }
     }
     if (!flow.shot) { sound.tick(784); setTimeout(() => sound.tick(1175), 140); }
     sunrise(flow);
@@ -483,7 +491,7 @@
       const q = k.list[Math.min(k.i, k.n - 1)], st = k.solved ? ' ok' : k.bad ? ' bad' : '';
       return `<div class="tk-body tk-math">${prog(k.n, k.i)}
         <div class="tk-q${st}${k.fresh ? ' in' : ''}"><i class="tk-qglow"></i><span>${q.q}</span><b>${k.input ? esc(k.input) : '<i></i>'}</b>${k.solved ? `<u class="tk-okb">${ic('check', 22, 3.4)}</u>` : ''}</div>
-        <p class="tk-say-st${k.bad ? ' bad' : ''}">${k.bad ? 'Не то — попробуй ещё раз' : ' '}</p>
+        <p class="tk-say-st${k.bad ? ' bad' : ''}">${k.bad ? (k.errs === 2 ? 'Не то — ещё ошибка, и дадим другой пример' : 'Не то — попробуй ещё раз') : k.swap ? 'Вот другой пример' : ' '}</p>
         <div class="tk-keys">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button data-act="key:${n}">${n}</button>`).join('')}<button data-act="key:del" aria-label="Стереть">${ic('delete', 24, 2)}</button><button data-act="key:0">0</button><button class="ok" data-act="key:ok" aria-label="Ответить"${k.input && !k.solved ? '' : ' disabled'}>${ic('check', 26, 3)}</button></div></div>`;
     },
     memory: (k) => {
@@ -616,10 +624,27 @@
     k.cur = pool[Math.floor(Math.random() * pool.length)];
     k.used.push(k.cur);
     k.opts = shuffle([k.cur, ...shuffle(all.filter((id) => id !== k.cur)).slice(0, 3)]);
-    Object.assign(k, { phase: 'listen', open: false, pick: null });
+    Object.assign(k, { phase: 'listen', open: false, pick: null, orig: null });
   }
   /** Сколько слушать, прежде чем откроются ответы: всю мелодию, но не дольше 4 с. */
   const OPEN_AFTER = 4000;
+  /* Оригинал мелодии — настоящая запись (отрывок из каталога Apple), скачивается заранее, пока звучит мелодия тонами.
+     Нет сети или внутри Claude (Apple закрыт) — null, и после ответа играет полная аранжировка тонами, как раньше. */
+  const origs = {};
+  function original(id) {
+    const o = Sonly.rhythm.ORIG && Sonly.rhythm.ORIG[id], ctx = sound.ctx();
+    if (!o || !ctx) return Promise.resolve(null);
+    if (!origs[id]) {
+      origs[id] = fetch(`https://itunes.apple.com/lookup?id=${o[0]}&country=${o[1]}`).then((r) => r.json())
+        .then((j) => { const u = j.results && j.results[0] && j.results[0].previewUrl; if (!u) throw new Error('нет отрывка'); return fetch(u); })
+        .then((r) => r.arrayBuffer()).then((ab) => new Promise((ok, no) => { const q = ctx.decodeAudioData(ab, ok, no); if (q && q.then) q.then(ok, no); }))
+        .then((buf) => ({ buf, at: Math.min(o[2], Math.max(0, buf.duration - 4)) }))
+        .catch(() => { delete origs[id]; return null; });
+    }
+    return origs[id];
+  }
+  /* Оригинал звучит не дольше 9 секунд: с темы, мягко входит и плавно стихает. */
+  const ORIG_LEN = 9;
   /**
    * Звук и движение. Эквалайзер прыгает на каждую ноту — выше на высоких, — кольцо вокруг показывает, сколько осталось.
    * Ответы открываются без перерисовки, чтобы не оборвать мелодию; когда она кончилась — экран переходит к выбору.
@@ -640,7 +665,33 @@
       t.notes.forEach(([f, d]) => { if (f) { const when = at; c.wait(when * 1000, () => pulse(f, d * t.q)); } at += d * t.q; });
       return sec;
     };
+    /* Эквалайзер под оригинал — по настоящему звуку (слушатель громкости), а не по нотам. */
+    const meterBars = (sec) => {
+      const m = sound.meter(), f = m && new Uint8Array(m.frequencyBinCount), t0 = performance.now();
+      if (!m || !bars.length) return;
+      const hz = m.context.sampleRate / 2 / f.length, B = [[80, 300], [300, 900], [900, 2500], [2500, 7000]];
+      const loop = () => {
+        if (!c.flow.cur || !bars[0].isConnected || performance.now() - t0 > sec * 1000) { bars.forEach((el) => el.style.setProperty('--h', '14%')); return; }
+        m.getByteFrequencyData(f);
+        bars.forEach((el, i) => { const [lo, hi] = B[i % B.length]; let sum = 0, n = 0; for (let j = Math.floor(lo / hz); j <= Math.ceil(hi / hz); j++) { sum += f[j]; n++; } el.style.setProperty('--h', `${Math.round(14 + 86 * Math.min(1, (sum / n / 255) * 1.6))}%`); });
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+    };
+    /** Играет оригинал, если он уже скачан: возвращает длину в секундах или 0. */
+    const playOrig = (o) => {
+      if (!o || c.shot) return 0;
+      const len = Math.min(ORIG_LEN, o.buf.duration - o.at);
+      if (len < 2) return 0;
+      sound.stop();
+      const node = sound.buffer(o.buf, { offset: o.at, dur: len, fade: true });
+      if (!node) return 0;
+      if (disc) disc.style.setProperty('--len', `${len.toFixed(2)}s`);
+      meterBars(len);
+      return len;
+    };
     if (ph === 'listen' || ph === 'again') {
+      if (!c.shot) { const id = k.cur; original(id).then((o) => { if (k.cur === id) k.orig = o; }); }
       const sec = play(false);
       if (c.shot) return;
       if (!k.open) c.wait(Math.min(sec * 1000, OPEN_AFTER), () => {
@@ -654,7 +705,9 @@
       c.wait(sec * 1000 + 250, () => { if (k.phase === ph) { k.phase = 'pick'; c.flow.rerender(); } });
     }
     if (ph === 'win') {
-      const sec = play(true);
+      /* Угадал — звучит оригинал (настоящая запись); не скачался — полная аранжировка тонами. */
+      const o = origs[k.cur] && k.orig && k.orig.buf ? k.orig : null;
+      const sec = playOrig(o) || play(true);
       if (c.shot) return;
       c.wait(Math.max(1800, sec * 1000 + 500), () => {
         k.i++;
@@ -663,7 +716,11 @@
         c.flow.rerender();
       });
     }
-    if (ph === 'miss' && !c.shot) c.wait(2300, () => { nextTune(k); c.flow.rerender(); });
+    /* Не угадал — правильная подсвечена, и звучит её оригинал: теперь слышно, что это было. Потом — другая мелодия. */
+    if (ph === 'miss' && !c.shot) {
+      const sec = playOrig(k.orig && k.orig.buf ? k.orig : null);
+      c.wait(sec ? Math.max(2300, Math.min(sec, 6.5) * 1000 + 300) : 2300, () => { sound.stop(); nextTune(k); c.flow.rerender(); });
+    }
   }
 
   /** Человек для меню настройки: повторяет упражнение без скриптов (анимация SVG прямо в разметке). */
@@ -1157,7 +1214,7 @@
   Sonly.ringer = {
     start,
     anim,
-    check: checkNow,
+    check: (flow, alarm) => checkNow(flow, alarm, true),
     checkOk,
     busy,
     /** Утро засчитано (для панели «+1 день»): восход, «Доброе утро», экран серии — как после настоящего задания. */
@@ -1195,12 +1252,24 @@
           if (k.solved) return true;
           if (arg === 'ok') {
             /* Верно — карточка зеленеет, и через полсекунды выезжает следующий пример. */
-            if (+k.input === k.list[k.i].a) { k.solved = true; k.bad = false; sound.tick(1175); flow.rerender(); return true; }
+            if (+k.input === k.list[k.i].a) { k.solved = true; k.bad = false; k.errs = 0; k.swap = false; sound.tick(1175); flow.rerender(); return true; }
             k.bad = true;
             k.input = '';
+            k.errs = (k.errs || 0) + 1;
             sound.tick(247);
+            /* Три ошибки подряд — пример меняется на новый того же уровня: застрять на одном нельзя, решать всё равно надо. */
+            if (k.errs >= 3) {
+              const used = new Set(k.list.map((x) => x.q));
+              let p = problem(k.level || 'mid');
+              for (let t = 0; t < 40 && used.has(p.q); t++) p = problem(k.level || 'mid');
+              k.list[k.i] = p;
+              k.errs = 0;
+              k.bad = false;
+              k.swap = true;
+              k.fresh = true;
+            }
           } else if (arg === 'del') k.input = k.input.slice(0, -1);
-          else if (k.input.length < 4) { k.input += arg; k.bad = false; sound.tick(880); }
+          else if (k.input.length < 4) { k.input += arg; k.bad = false; k.swap = false; sound.tick(880); }
           flow.rerender();
           return true;
         case 'ans': {

@@ -290,11 +290,14 @@
     attrs(x);
     mixed(x);
   }
+  /* data-i18n="off" — блок уже на нужном языке (юридические документы): движок его не трогает. */
+  const OFF = '[data-i18n="off"]';
+  const skipOff = { acceptNode: (x) => (x.nodeType === 1 && x.matches(OFF) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) };
   function node(n) {
-    if (n.nodeType === 3) { if (n.parentElement && !n.parentElement.closest('script, style')) text(n); return; }
-    if (n.nodeType !== 1 || n.closest('script, style')) return;
+    if (n.nodeType === 3) { if (n.parentElement && !n.parentElement.closest('script, style, ' + OFF)) text(n); return; }
+    if (n.nodeType !== 1 || n.closest('script, style, ' + OFF)) return;
     one(n);
-    const w = document.createTreeWalker(n, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+    const w = document.createTreeWalker(n, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, skipOff);
     for (let x = w.nextNode(); x; x = w.nextNode()) { if (x.nodeType === 3) text(x); else if (!/^(SCRIPT|STYLE)$/.test(x.tagName)) one(x); }
   }
   let mo = null;

@@ -342,7 +342,8 @@
 .vm .m-clocks .main .bl{fill:var(--y-deep)}
 .vm .m-clocks .dim{opacity:.45}
 .vm .m-card.on .m-clocks span{color:#fff;animation:m-clk .42s ease-in-out var(--d) 2}
-/* Выбранная карточка чёрная — часики на ней остаются белыми, со стрелками цвета текста: не сливаются с фоном. */
+/* Выбранная карточка тёмная: циферблат белый, стрелки тёмные, а оправа (обод, ножки, звоночки) серая — видна на чёрном. */
+.vm .m-card.on .m-clocks span{color:#9A9AA3}
 .vm .m-card.on .m-clocks .bd{fill:#fff}
 .vm .m-card.on .m-clocks .hd{stroke:var(--ink)}
 @keyframes m-clk{25%{transform:translateX(-50%) rotate(calc(var(--r) - 9deg))}75%{transform:translateX(-50%) rotate(calc(var(--r) + 9deg))}}
@@ -618,15 +619,52 @@
 /* ── Промокод: билет ── */
 .vm .m-promo{padding-bottom:20px}
 .vm .m-tkt{position:relative;border-radius:30px;background:#F6F6F8;filter:drop-shadow(0 22px 22px rgba(13,13,15,.1))}
-.vm .tkt-top{position:relative;overflow:hidden;display:grid;justify-items:center;gap:2px;padding:26px 18px 22px;border-radius:30px 30px 0 0;background:linear-gradient(160deg,#FFF3C7,#FFDB63);text-align:center;transition:background .4s}
+.vm .tkt-top{position:relative;overflow:hidden;display:grid;justify-items:center;align-content:center;gap:2px;min-height:234px;padding:26px 18px 22px;border-radius:30px 30px 0 0;background:linear-gradient(160deg,#FFF3C7,#FFDB63);text-align:center;transition:background .4s}
 .vm .tkt-sun{width:58px;margin-bottom:8px}
 .vm .tkt-sun .mark{display:block;width:100%;height:auto}
 .vm .tkt-sun path{fill:#0D0D0F}
 .vm .tkt-h{font-size:23px;font-weight:700;letter-spacing:-.5px}
-.vm .tkt-top span{font-size:15px;color:#6B5200}
-.vm .tkt-big{font-family:"Roboto Flex","Inter",sans-serif;font-stretch:118%;font-variation-settings:"wdth" 118;font-weight:850;font-size:62px;letter-spacing:-2.4px;line-height:1;animation:cam-in .55s cubic-bezier(.3,1.6,.5,1) both}
-.vm .tkt-top em{margin-top:10px;display:flex;align-items:center;gap:6px;height:34px;padding:0 14px 0 11px;border-radius:17px;background:#0D0D0F;color:#FFD12E;font-style:normal;font-size:14px;font-weight:700;animation:cam-in .55s cubic-bezier(.3,1.6,.5,1) .15s both}
+.vm .tkt-top>span{font-size:15px;color:#6B5200}
+.vm .tkt-big{font-family:"Roboto Flex","Inter",sans-serif;font-stretch:118%;font-variation-settings:"wdth" 118;font-weight:850;font-size:62px;letter-spacing:-2.4px;line-height:1;font-variant-numeric:tabular-nums}
+.vm .tkt-top em{margin-top:10px;display:flex;align-items:center;gap:6px;height:34px;padding:0 14px 0 11px;border-radius:17px;background:#0D0D0F;color:#FFD12E;font-style:normal;font-size:14px;font-weight:700}
 .vm .m-tkt.ok .tkt-top{background:linear-gradient(160deg,#FFE27A,#FFC421)}
+.vm .tkt-top>*{position:relative;z-index:1}
+
+/* Промокод срабатывает. 1) «Проверка»: в кнопке крутится кружок, подписи на билете притихают, солнце чуть приседает.
+   2) Билет оживает: прежний бледный фон растворяется в насыщенный, по нему проходит блик, солнце поднимается,
+      «−25 %» проявляется из размытия и набирает число, следом — подписи; от числа разлетаются искры.
+   3) Кнопка превращается в зелёную галочку. Всё на ease-out, без отскоков. Ошибка — поле мягко качает головой. */
+.vm .m-tkt.busy .m-coupon button{color:transparent;position:relative;pointer-events:none}
+.vm .m-tkt.busy .m-coupon button::after{content:'';position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:2.4px solid rgba(255,255,255,.3);border-top-color:#fff;animation:tkt-spin .7s linear infinite}
+.vm .m-tkt.busy .tkt-h,.vm .m-tkt.busy .tkt-top>span{opacity:.45;transition:opacity .3s ease}
+.vm .m-tkt.busy .tkt-sun{transform:translateY(4px) scale(.94);transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.vm .m-tkt.busy .m-coupon input{opacity:.6;transition:opacity .3s}
+.vm .m-tkt.just .tkt-top::before{content:'';position:absolute;inset:0;z-index:0;background:linear-gradient(160deg,#FFF3C7,#FFDB63);animation:tkt-fade .7s cubic-bezier(.2,.8,.2,1) forwards}
+.vm .m-tkt.just .tkt-sun{animation:tkt-sun .8s cubic-bezier(.2,.8,.2,1) both}
+.vm .m-tkt.just .tkt-big{animation:tkt-rise .6s cubic-bezier(.2,.8,.2,1) .1s both}
+.vm .m-tkt.just .tkt-top>span{animation:tkt-rise .5s cubic-bezier(.2,.8,.2,1) .3s both}
+.vm .m-tkt.just .tkt-top em{animation:tkt-rise .5s cubic-bezier(.2,.8,.2,1) .45s both}
+.vm .tkt-shine{position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.7) 48%,rgba(255,255,255,.15) 56%,transparent 70%);transform:translateX(-110%);animation:tkt-shine 1.1s cubic-bezier(.4,0,.2,1) .25s both}
+.vm .tkt-burst{position:absolute;left:50%;top:58%;width:0;height:0;z-index:1;pointer-events:none}
+.vm .tkt-burst u{position:absolute;left:calc(var(--w) / -2);top:calc(var(--w) / -2);width:var(--w);height:var(--w);border-radius:50%;background:#fff;opacity:0;animation:tkt-spark .9s cubic-bezier(.15,.7,.3,1) calc(.22s + var(--t)) both}
+.vm .tkt-burst u:nth-child(3n){background:#0D0D0F}
+.vm .tkt-burst u:nth-child(3n+1){background:#FFF6D6}
+.vm .m-tkt.just .m-coupon.ok{animation:tkt-okbg .5s ease-out .15s both}
+.vm .m-tkt.just .m-coupon em{animation:tkt-check .45s cubic-bezier(.2,.8,.2,1) .2s both}
+.vm .m-tkt.just .m-coupon em svg path,.vm .m-tkt.just .m-coupon em svg polyline{stroke-dasharray:30;stroke-dashoffset:30;animation:tkt-draw .4s cubic-bezier(.4,0,.2,1) .4s forwards}
+.vm .m-coupon.shake{animation:tkt-shake .45s cubic-bezier(.36,.07,.19,.97)}
+.vm .a-promo-msg.err{animation:tkt-rise .3s ease-out both}
+@keyframes tkt-spin{to{transform:rotate(360deg)}}
+@keyframes tkt-fade{to{opacity:0}}
+@keyframes tkt-sun{from{transform:translateY(10px) scale(.9);opacity:.6}to{transform:none;opacity:1}}
+@keyframes tkt-rise{from{opacity:0;transform:translateY(12px);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+@keyframes tkt-shine{to{transform:translateX(110%)}}
+@keyframes tkt-spark{0%{opacity:0;transform:rotate(var(--a)) translateY(0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:rotate(var(--a)) translateY(calc(var(--d) * -1)) scale(1)}}
+@keyframes tkt-okbg{from{background:#fff}}
+@keyframes tkt-check{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+@keyframes tkt-draw{to{stroke-dashoffset:0}}
+@keyframes tkt-shake{0%,100%{transform:none}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(2px)}}
+@media (prefers-reduced-motion:reduce){.vm .m-tkt.just *,.vm .m-tkt.just .tkt-top::before,.vm .m-coupon.shake{animation:none!important}.vm .tkt-shine,.vm .tkt-burst{display:none}}
 .vm .tkt-cut{position:relative;display:block;height:0;border-top:2px dashed #D9D9E0;margin:0 18px}
 .vm .tkt-cut::before,.vm .tkt-cut::after{content:"";position:absolute;top:-12px;width:22px;height:22px;border-radius:50%;background:#fff}
 .vm .tkt-cut::before{left:-29px}

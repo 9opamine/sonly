@@ -491,15 +491,30 @@
         <div class="ap-card ap-list">${CHECKS.map(([n, name, note]) => `<button class="ap-row ap-snd${note ? ' tall' : ''}${(e.check || 0) === n ? ' on' : ''}" data-act="ed-chk:${n}"><i class="ap-row-i">${Sonly.si(n ? 'eye' : 'eyeoff')}</i><span>${name}${note ? `<small>${note}</small>` : ''}</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></button>`).join('')}</div></div>`, `ap-sheet ${enter}`);
   }
 
-  /** Звуки по группам. Все доступны сразу: подарки за серию — пейзажи открыток, а не звуки. */
-  function soundRows(s, cur, act) {
-    const groups = SOUNDS.map(([g, list]) => [g, list.map((n) => ({ name: n, open: true }))]);
-    cur = Sonly.sound.resolve(cur);
-    /* Свои звуки (запись и файлы) — первыми: это то, что человек сделал сам. */
-    return (Sonly.mysnd ? Sonly.mysnd.rows(cur, act) : '') + groups.map(([g, list]) => `<h3>${g}</h3><div class="ap-card ap-list">${list.map((x) => (x.open
-      ? `<button class="ap-row ap-snd${cur === x.name ? ' on' : ''}" data-act="${act}:${x.name}"><i class="ap-row-i c" style="--c:${(SND_ICON[g] || SND_ICON['Мелодии'])[1]}">${ic((SND_ICON[g] || SND_ICON['Мелодии'])[0], 17, 2.3)}</i><span>${x.name}</span><b class="ap-radio">${ic('check', 13, 3.4)}</b></button>`
-      : `<div class="ap-row ap-snd locked"><i class="ap-row-i">${Sonly.si('lock')}</i><span>${x.name}</span><em>серия ${x.n}</em></div>`)).join('')}</div>`).join('');
+  /*
+   * Звуки по группам. Все доступны сразу: подарки за серию — пейзажи открыток, а не звуки.
+   * Избранное: сердечко у каждого звука, сверху переключатель «Все / Избранное» — в избранном только отмеченные, по порядку отметки.
+   */
+  const favs = (s) => (s.favSnd || []).filter((n) => SOUNDS.some(([, l]) => l.includes(n)));
+  const groupOf = (n) => (SOUNDS.find(([, l]) => l.includes(n)) || ['Мелодии'])[0];
+  function sndRow(s, cur, act, name, g) {
+    const [icon, col] = SND_ICON[g] || SND_ICON['Мелодии'], fav = (s.favSnd || []).includes(name);
+    return `<div class="ap-row ap-snd cat${cur === name ? ' on' : ''}"><button class="ms-pick" data-act="${act}:${name}" aria-label="${name}"></button><i class="ap-row-i c" style="--c:${col}">${ic(icon, 17, 2.3)}</i><span>${name}</span>
+      <button class="snd-heart${fav ? ' on' : ''}" data-act="snd-fav:${name}" aria-pressed="${fav}" aria-label="${fav ? 'Убрать из избранного' : 'В избранное'}">${ic('heart', 19, 2.2)}</button><b class="ap-radio">${ic('check', 13, 3.4)}</b></div>`;
   }
+  function soundRows(s, cur, act) {
+    cur = Sonly.sound.resolve(cur);
+    const view = s._sndView === 'fav' ? 'fav' : 'all', list = favs(s);
+    const seg = `<div class="ap-seg sm snd-seg" role="tablist" data-snd="${act}"><button class="${view === 'all' ? 'on' : ''}" data-act="snd-view:all" role="tab" aria-selected="${view === 'all'}">Все</button><button class="${view === 'fav' ? 'on' : ''}" data-act="snd-view:fav" role="tab" aria-selected="${view === 'fav'}">${ic('heart', 14, 2.4)}Избранное<em class="js-favn">${list.length || ''}</em></button></div>`;
+    if (view === 'fav') {
+      return seg + (list.length ? `<div class="ap-card ap-list snd-favs">${list.map((n) => sndRow(s, cur, act, n, groupOf(n))).join('')}</div>`
+        : `<div class="snd-empty"><i>${ic('heart', 30, 2.2)}</i><b>Здесь будут любимые звуки</b><p>Нажми на сердечко рядом со звуком — он появится здесь.</p></div>`);
+    }
+    /* Свои звуки (запись и файлы) — первыми: это то, что человек сделал сам. */
+    return seg + (Sonly.mysnd ? Sonly.mysnd.rows(cur, act) : '') + SOUNDS.map(([g, l]) => `<h3>${g}</h3><div class="ap-card ap-list">${l.map((n) => sndRow(s, cur, act, n, g)).join('')}</div>`).join('');
+  }
+  /** Перерисовать открытый список звуков — выбор звука будильника или «Звук по умолчанию» в настройках. */
+  const sndRedraw = (flow) => { const seg = flow.sheets.querySelector('.snd-seg'); if (seg && seg.dataset.snd === 'ed-snd') soundPicker(flow, ''); else openPage(flow, 'sound'); };
   function soundPicker(flow, enter = 'push') {
     const s = flow.state, e = s._ed, top = keepTop(flow, enter);
     flow.sheet(`${back('Звук')}<div class="ap-sh-body scroll">${soundRows(s, e.sound, 'ed-snd')}</div>`, `ap-sheet ${enter}`);
@@ -589,7 +604,7 @@
           <h3>Поддержка</h3>
           <div class="ap-card ap-list">${row(Sonly.si('message'), 'Написать в поддержку', '', 'page:msg:support', '#0A84FF')}${row(Sonly.si('idea'), 'Предложить идею', '', 'page:msg:idea', '#FFAA00')}${row(Sonly.si('bug'), 'Сообщить об ошибке', '', 'page:msg:bug', '#FF3B30')}</div>
           <h3>Документы</h3>
-          <div class="ap-card ap-list">${row(Sonly.si('doc'), 'Условия использования', '', 'page:doc:terms', '#8E8E93')}${row(Sonly.si('privacy'), 'Конфиденциальность', '', 'page:doc:privacy', '#8E8E93')}</div>
+          <div class="ap-card ap-list">${row(Sonly.si('doc'), 'Условия использования', '', 'page:doc:terms', '#8E8E93')}${row(Sonly.si('privacy'), 'Конфиденциальность', '', 'page:doc:privacy', '#8E8E93')}${row(Sonly.si('doc'), 'Условия партнёрской программы', '', 'page:doc:partner', '#8E8E93')}${row(Sonly.si('music'), 'Звуки и авторы', '', 'page:doc:credits', '#8E8E93')}</div>
           <p class="ap-ver"><span>Сделано с ${Sonly.mark()} и любовью к утру</span>sonly 1.0 · сборка 1</p>
         </div>`;
       },
@@ -605,7 +620,7 @@
   const MSG = { support: ['Написать в поддержку', 'Опиши, что случилось, — ответим на почту.'], idea: ['Предложить идею', 'Чего тебе не хватает в приложении?'], bug: ['Сообщить об ошибке', 'Что пошло не так и что было перед этим?'] };
   /* Темы обращения: одно касание вместо первой фразы. Журнал проверки (diag.js) прикладывается к поддержке и ошибкам. */
   const TOPICS = { support: ['Не зазвонил', 'Не засчиталось задание', 'Камера или микрофон', 'Подписка', 'Другое'], bug: ['Зависло', 'Не тот экран', 'Звук', 'Камера', 'Другое'], idea: ['Новое задание', 'Звуки', 'Статистика', 'Утро', 'Другое'] };
-  const DOCS = { terms: 'Условия использования', privacy: 'Политика конфиденциальности' };
+  const DOCS = { terms: 'Условия использования', privacy: 'Политика конфиденциальности', partner: 'Условия партнёрской программы', credits: 'Звуки и авторы' };
   const PROMO_MSG = { ok: '−25 % на следующий год', bad: 'Такого кода нет', own: 'Это твой код — его вводят твои зрители.' };
   const WIDGET_STEPS = ['Зажми пустое место на экране «Домой».', 'Нажми «Изменить» вверху и выбери «Добавить виджет».', 'Найди sonly и добавь виджет.'];
 
@@ -672,7 +687,8 @@
             <textarea class="ap-area js-msg" rows="6" placeholder="Текст сообщения" aria-label="${title}"></textarea>
             ${arg === 'idea' ? '' : `<div class="ap-card ap-list gap">${tgRow(Sonly.si('doc'), 'Приложить журнал', '', s.msgLog !== false, 'msg-log')}</div>`}`, `<button class="ap-btn" data-act="msg-send:${arg}">Отправить</button>`];
       }
-      default: return [DOCS[arg] || 'Документ', `<div class="ap-doc"><p>Здесь будет полный текст документа «${DOCS[arg] || 'Документ'}». В прототипе он не подключён.</p></div>`, ''];
+      /* Документы целиком: условия, политика, условия партнёрской программы, звуки и авторы (js/legal.js). */
+      default: return [Sonly.legal ? Sonly.legal.short(arg) : DOCS[arg] || 'Документ', Sonly.legal ? `<div class="ap-doc legal-doc">${Sonly.legal.html(arg)}</div>` : `<div class="ap-doc"><p>${DOCS[arg] || 'Документ'}</p></div>`, ''];
     }
   }
   /** enter — въезд при переходе между страницами (push/back); та же страница перерисовывается на месте. */
@@ -763,7 +779,7 @@
     a.check = 0;
     if (a.task === 'random') a.task = 'math';
     const secs = 25 + Math.floor(Math.random() * 30);
-    s._ring = { a, test: false, random: false, direct: false, t0: Date.now() - (secs + 8) * 1000, t1: Date.now() - secs * 1000, mute: false, from: ['ring', 'task', 'woke', 'streak', 'check'].includes(flow.id) ? 'home' : flow.id };
+    s._ring = { a, test: false, demo: true, random: false, direct: false, t0: Date.now() - (secs + 8) * 1000, t1: Date.now() - secs * 1000, mute: false, from: ['ring', 'task', 'woke', 'streak', 'check'].includes(flow.id) ? 'home' : flow.id };
     s._check = null;
     flow.closeSheet(true);
     Sonly.ringer.finish(flow);
@@ -807,7 +823,7 @@
       /* Расписание идёт и при «Уменьшении движения» (там flow.still тоже включён); выключено только для снимков экрана. */
       if (!flow._tick && !flow.shot) { flow._since = Date.now() - (Date.now() % 60000); flow._tick = setInterval(() => autoRing(flow), 5000); }
       /* Звуки включённых будильников скачиваются заранее: утром без интернета они уже в кэше сайта. */
-      if (!flow.shot) setTimeout(() => Sonly.sound.preload([flow.state.sndDef, ...flow.state.alarms.filter((a) => a.on).map((a) => a.sound)]), 2000);
+      if (!flow.shot) setTimeout(() => { Sonly.sound.preload([flow.state.sndDef, ...flow.state.alarms.filter((a) => a.on).map((a) => a.sound)]); if (Sonly.sound.preloadFx) Sonly.sound.preloadFx(); }, 2000);
       if (!flow._mq) { flow._mq = matchMedia('(prefers-color-scheme: dark)'); flow._mq.addEventListener('change', () => paint(flow)); }
       if (Sonly.news) { Sonly.news.init(flow.state); Sonly.news.paint(flow); }
     },
@@ -960,6 +976,23 @@
         case 'sheet-close': if (s._page) { s._page = null; Sonly.sound.stop(); flow.rerender(true); } return false;
         case 'set-flag': s[arg] = !s[arg]; openPage(flow, s._page[0], s._page[1]); return true;
         case 'set-snd': s.sndDef = arg; Sonly.sound.setVolume(s.volume); Sonly.sound.play(arg); openPage(flow, 'sound'); return true;
+        /* Избранные звуки: «Все / Избранное» перерисовывает список, сердечко меняется на месте (в избранном — строка уходит). */
+        case 'snd-view': {
+          s._sndView = arg === 'fav' ? 'fav' : 'all';
+          sndRedraw(flow);
+          return true;
+        }
+        case 'snd-fav': {
+          const list = (s.favSnd || []).slice(), i = list.indexOf(arg), on = i < 0;
+          if (on) list.push(arg); else list.splice(i, 1);
+          s.favSnd = list;
+          if (navigator.vibrate) try { navigator.vibrate(10); } catch (er) { /* нет вибрации */ }
+          if (s._sndView === 'fav' && !on) { sndRedraw(flow); return true; }
+          if (el) { el.classList.toggle('on', on); el.setAttribute('aria-pressed', String(on)); el.setAttribute('aria-label', on ? 'Убрать из избранного' : 'В избранное'); }
+          const n = flow.sheets.querySelector('.js-favn');
+          if (n) n.textContent = (s.favSnd || []).length || '';
+          return true;
+        }
         case 'vol-test': Sonly.sound.setVolume(s.volume); Sonly.sound.play(s.sndDef); return true;
         case 'promo-go': {
           const field = flow.sheets.querySelector('.js-promo'), v = (field.value || '').trim().toUpperCase();

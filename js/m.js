@@ -534,13 +534,16 @@
     promo: {
       render: (c) => {
         const ok = c.s.discount === 'code', err = c.s._promoErr && !ok;
-        return `${head('Есть промокод?', ok ? '' : 'Нет кода — пропусти шаг.')}
+        /* Только что сработал (или только что ошибка) — проигрываем переход; вернулся на экран позже — всё стоит как есть. */
+        const just = ok && Date.now() - (c.s._promoJust || 0) < 1500, shake = err && Date.now() - (c.s._promoShake || 0) < 1500;
+        const burst = just ? `<i class="tkt-burst" aria-hidden="true">${Array.from({ length: 14 }, (_, i) => `<u style="--a:${Math.round((360 / 14) * i + (i % 2) * 9)}deg;--d:${70 + (i % 3) * 18}px;--w:${5 + (i % 3) * 2}px;--t:${(i % 4) * 40}ms"></u>`).join('')}</i><i class="tkt-shine" aria-hidden="true"></i>` : '';
+        return `${head('Есть промокод?', ok ? 'Код применён — скидка уже в цене.' : 'Нет кода — пропусти шаг.')}
           <div class="m-promo">
-            <div class="m-tkt${ok ? ' ok' : ''}" data-in style="--i:2">
-              <div class="tkt-top"><i class="tkt-sun">${Sonly.mark()}</i>
-                ${ok ? `<b class="tkt-big">−25 %</b><span>на первый год</span><em>${ic('gift', 15, 2.3)}и ${PRICE.trial} дня бесплатно</em>` : '<b class="tkt-h">Код из видео</b><span>или поста любимого автора</span>'}</div>
+            <div class="m-tkt${ok ? ' ok' : ''}${just ? ' just' : ''}" data-in style="--i:2">
+              <div class="tkt-top">${burst}<i class="tkt-sun">${Sonly.mark()}</i>
+                ${ok ? `<b class="tkt-big">−<span class="js-pct">${just ? 0 : 25}</span> %</b><span>на первый год</span><em>${ic('gift', 15, 2.3)}и ${PRICE.trial} дня бесплатно</em>` : '<b class="tkt-h">Код из видео</b><span>или поста любимого автора</span>'}</div>
               <i class="tkt-cut"></i>
-              <div class="tkt-bot"><div class="m-coupon${ok ? ' ok' : ''}${err ? ' err' : ''}"><span class="m-coupon-i">${ic('ticket', 22, 1.9)}</span>
+              <div class="tkt-bot"><div class="m-coupon${ok ? ' ok' : ''}${err ? ' err' : ''}${shake ? ' shake' : ''}"><span class="m-coupon-i">${ic('ticket', 22, 1.9)}</span>
                 <input class="js-code" id="m-code" maxlength="7" value="${esc(c.s._code || '')}" placeholder="Промокод" aria-label="Промокод" autocomplete="off" spellcheck="false"${ok ? ' disabled' : ''}>
                 ${ok ? `<em>${ic('check', 18, 3)}</em>` : '<button data-act="promo-apply">Применить</button>'}</div></div>
             </div>
@@ -552,6 +555,14 @@
           const b = e.key === 'Enter' && c.q('[data-act="promo-apply"]');
           if (b) b.click();
         });
+        /* Скидка набирается от 0 до 25 — плавно, с замедлением к концу; лёгкая отдача в руку. */
+        const pct = c.q('.js-pct');
+        if (pct && c.q('.m-tkt.just') && !c.shot) {
+          const t0 = performance.now(), D = 820;
+          const step = (t) => { const p = Math.min(1, (t - t0 - 140) / D); if (p < 0) { requestAnimationFrame(step); return; } pct.textContent = Math.round(25 * (1 - Math.pow(1 - p, 3))); if (p < 1 && pct.isConnected) requestAnimationFrame(step); };
+          requestAnimationFrame(step);
+          try { if (navigator.vibrate) navigator.vibrate([14, 60, 22]); } catch (e) { /* нет вибрации */ }
+        }
       },
     },
 

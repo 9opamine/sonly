@@ -140,3 +140,4 @@
 
 /* Знак на жёлтой карточке-приглашении. */
 .ap-gift>i .mark{width:28px;height:auto;display:block}
+.pt-terms{display:block;margin:14px auto 0;padding:8px 12px;font-size:14px;font-weight:600;color:var(--mut);text-decoration:underline;text-underline-offset:3px}

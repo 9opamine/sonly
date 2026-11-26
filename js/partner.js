@@ -119,7 +119,8 @@
     ['clapperboard', 'Что снять', IDEAS]], 'one')}
       <div class="ap-card ap-list pt-link">${K.row(ic('megaphone', 17, 2.1), 'Для блогеров', s.blogApp ? 'на проверке' : `до ${BLOG.pct}${NB}%`, 'page:blog')}</div>
       <h3>Вопросы</h3>
-      ${fold(FAQ)}`;
+      ${fold(FAQ)}
+      <button class="pt-terms" data-act="page:doc:partner">Условия партнёрской программы</button>`;
   }
 
   /** Выплаты: каждая раскрывается в расчёт; ниже — куда платить. */

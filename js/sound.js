@@ -5,20 +5,16 @@
   'use strict';
   let ctx = null, master = null, meter = null, timer = null, live = [], volume = 0.8, gen = 0;
 
-  /* [группа, название, файл в snd/, множитель громкости — все звуки доведены до одной громкости на слух (с поправкой на частоты,
-     как в LUFS), без перегруза на пиках]. Сирены и будильники — чистые записи без улицы и комнаты; «Забавные» — для смеха. */
+  /* [группа, название, файл в snd/, множитель громкости, пауза между повторами (с)]. Громкость выровнена на слух (поправка на частоты,
+     как в LUFS), без перегруза на пиках. Сирены и будильники — чистые записи без улицы и комнаты; «Забавные» — мемы и смешное,
+     короткие повторяются с паузой (брух… брух…), а не пулемётом. */
   const SND = [
     ['Мелодии', 'Маримба', 'marimba', 1.01],
     ['Мелодии', 'Вибрафон', 'vibraphone', 1.81],
     ['Мелодии', 'Арпеджио', 'arpeggio', 5.33],
     ['Мелодии', 'Марш', 'march', 1.42],
     ['Мелодии', 'Мобильный', 'mobile', 2.38],
-    ['Мелодии', 'Утро Грига', 'grieg', 1.0],
-    ['Мелодии', 'Сказка', 'tale', 1.22],
-    ['Мелодии', 'Мелодия', 'tune', 1.34],
-    ['Мелодии', 'Побудка', 'bugle', 1.82],
     ['Будильники', 'Два колокольчика', 'twinbell', 1.09],
-    ['Будильники', 'Механический', 'mechanical', 0.69],
     ['Будильники', 'Старинный', 'antique', 1.05],
     ['Будильники', 'Электронный', 'digital', 3.2],
     ['Будильники', 'Пищалка', 'beeper', 0.74],
@@ -26,8 +22,6 @@
     ['Будильники', 'Старый телефон', 'oldphone', 1.16],
     ['Будильники', 'Кукушка', 'cuckoo', 1.25],
     ['Будильники', 'Колокол', 'churchbell', 1.29],
-    ['Будильники', 'Гонг', 'gong', 1.09],
-    ['Сирены', 'Полиция', 'police', 0.93],
     ['Сирены', 'Скорая', 'ambulance', 1.04],
     ['Сирены', 'Пожарные', 'firetruck', 1.15],
     ['Сирены', 'Торнадо', 'tornado', 4.53],
@@ -36,31 +30,37 @@
     ['Сирены', 'Штормовое предупреждение', 'storm', 1.16],
     ['Сирены', 'Тревога', 'alarm', 1.0],
     ['Сирены', 'Красная тревога', 'redalert', 0.99],
-    ['Забавные', 'Рингтон', 'ringtone', 1.9],
-    ['Забавные', 'Фанфары', 'fanfare', 1.17],
+    ['Забавные', 'Металлическая труба', 'pipe', 1.22, 0.8],
+    ['Забавные', 'Бум', 'boom', 3.72, 0.5],
+    ['Забавные', 'Брух', 'bruh', 2.14, 1.0],
+    ['Забавные', 'Бонк', 'bonk', 1.57, 0.6],
+    ['Забавные', 'Дун-дун-дуун', 'dundun', 1.43, 0.5],
+    ['Забавные', 'Грустная скрипка', 'sadviolin', 1.45, 0.6],
+    ['Забавные', 'Барабанная дробь', 'drumroll', 1.31, 0.4],
+    ['Забавные', 'Ба-дум-тсс', 'rimshot', 1.55, 0.6],
+    ['Забавные', 'Крик', 'scream', 0.86, 1.2],
+    ['Забавные', 'Гуси', 'geese', 1.19],
+    ['Забавные', 'Коза', 'goat', 1.05, 0.8],
+    ['Забавные', 'Голодный кот', 'cat', 1.0, 0.6],
+    ['Забавные', 'Вувузела', 'vuvuzela', 0.98, 0.6],
+    ['Забавные', 'Фанфары', 'fanfare', 1.17, 0.6],
+    ['Забавные', 'Побудка', 'bugle', 1.82],
     ['Забавные', 'Погружение', 'dive', 1.31],
     ['Забавные', 'Автосигнализация', 'caralarm', 1.0],
-    ['Забавные', 'Клоунский гудок', 'clown', 5.77],
-    ['Забавные', 'Свистулька', 'slide', 6],
-    ['Забавные', 'Грустный тромбон', 'trombone', 1.55],
-    ['Забавные', 'Коза', 'goat', 1.05],
-    ['Забавные', 'Резиновая уточка', 'duck', 2.0],
-    ['Забавные', 'Голодный кот', 'cat', 1.0],
-    ['Забавные', 'Мультяшная сирена', 'toon', 1.36],
-    ['Забавные', 'Дуделка', 'party', 1.68],
-    ['Забавные', 'Вувузела', 'vuvuzela', 0.98],
     ['Природа', 'Дрозд в саду', 'blackbird', 2.6],
     ['Природа', 'Соловей', 'nightingale', 2.46],
   ];
   const DEF = 'Маримба';
   const BY = {};
-  SND.forEach(([g, name, file, k]) => { BY[name] = { g, file, k }; });
+  SND.forEach(([g, name, file, k, gap]) => { BY[name] = { g, file, k, gap: gap || 0 }; });
   /* Прежние звуки (собранные из тонов) у тех, кто уже ставил будильник: какой настоящий звук играет вместо них. */
   const OLD = { 'Рассвет': 'Маримба', 'Капель': 'Мелодия', 'Птицы за окном': 'Дрозд в саду', 'Будильник': 'Механический', 'Радио': 'Рингтон', 'Сирена': 'Тревога', 'Гудок': 'Автосигнализация',
     'Солнечный зайчик': 'Сказка', 'Утренний бриз': 'Вибрафон', 'Жаворонок': 'Соловей', 'Звонкий ручей': 'Мелодия', 'Золотой рассвет': 'Арпеджио',
     /* Убранные записи (плохое качество): что играет вместо них у тех, кто их уже выбрал. */
-    'Калимба': 'Мелодия', 'Шкатулка': 'Сказка', 'Укулеле': 'Мелодия', 'Переливы': 'Мобильный', 'Горн': 'Побудка', 'Сонар': 'Электронный',
-    'Воздушная тревога': 'Торнадо', 'Петух': 'Соловей' };
+    'Калимба': 'Маримба', 'Шкатулка': 'Вибрафон', 'Укулеле': 'Маримба', 'Переливы': 'Мобильный', 'Горн': 'Побудка', 'Сонар': 'Электронный',
+    'Воздушная тревога': 'Торнадо', 'Петух': 'Соловей', 'Сказка': 'Арпеджио', 'Мелодия': 'Маримба', 'Утро Грига': 'Марш', 'Механический': 'Два колокольчика',
+    'Гонг': 'Колокол', 'Полиция': 'Скорая', 'Рингтон': 'Мобильный', 'Клоунский гудок': 'Вувузела', 'Свистулька': 'Бонк', 'Грустный тромбон': 'Грустная скрипка',
+    'Резиновая уточка': 'Гуси', 'Мультяшная сирена': 'Автосигнализация', 'Дуделка': 'Вувузела' };
   /** Название звука, который правда сыграет: свой (my:…) как есть, старое — его замена, неизвестное — звук по умолчанию. */
   const resolve = (name) => (/^my:/.test(name || '') ? name : BY[name] ? name : OLD[name] || DEF);
 
@@ -141,7 +141,7 @@
     if (/^my:/.test(name) || !BY[name]) name = DEF;
     load(name).then((buf) => {
       if (g !== gen) return;
-      if (buf) clip(buf, BY[name].k, o); else spare(o);
+      if (buf) clip(buf, BY[name].k, { ...o, gap: BY[name].gap }); else spare(o);
     });
   }
   /*
@@ -162,6 +162,15 @@
     amp.gain.value = k;
     src.connect(amp);
     amp.connect(master);
+    if (o.loop && o.gap) {
+      /* Короткий звук с паузой: каждый повтор — новый запуск по часам звука, ровно через длину звука и паузу. */
+      const per = le - ls + o.gap, g = gen;
+      let next = t;
+      const one = (at) => { const s2 = ctx.createBufferSource(), a2 = ctx.createGain(); s2.buffer = buf; a2.gain.value = k; s2.connect(a2); a2.connect(master); s2.start(at, ls, le - ls); live.push(s2); live = live.slice(-12); };
+      one(next);
+      timer = setInterval(() => { if (g !== gen) return; while (next + per < ctx.currentTime + 0.5) { next += per; one(next); } }, 200);
+      return src;
+    }
     if (o.loop) {
       src.loop = true;
       src.loopStart = ls;
@@ -182,12 +191,18 @@
     bar();
     if (o.loop) timer = setInterval(bar, SPARE.len * 1000);
   }
-  /** Запись целиком или кусок: offset и dur в секундах, gain — множитель «Сделать громче», onend — когда кусок доиграл. */
+  /** Запись целиком или кусок: offset и dur в секундах, gain — множитель «Сделать громче», onend — когда кусок доиграл;
+      fade — мягко войти и плавно стихнуть в конце куска (оригинал мелодии в задании). */
   function source(buf, o = {}) {
     const src = ctx.createBufferSource(), t = ctx.currentTime + 0.02;
     src.buffer = buf;
     let out = src;
-    if (o.gain && o.gain !== 1) { const g = ctx.createGain(); g.gain.value = o.gain; src.connect(g); out = g; }
+    if ((o.gain && o.gain !== 1) || o.fade) {
+      const g = ctx.createGain(), k = o.gain || 1, len = o.dur || buf.duration - (o.offset || 0);
+      g.gain.value = k;
+      if (o.fade) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(k, t + 0.15); g.gain.setValueAtTime(k, t + Math.max(0.2, len - 0.8)); g.gain.linearRampToValueAtTime(0.0001, t + len); }
+      src.connect(g); out = g;
+    }
     out.connect(master);
     if (o.loop) { src.loop = true; src.start(t); } else src.start(t, o.offset || 0, o.dur || buf.duration);
     if (o.onend) src.onended = o.onend;
@@ -287,12 +302,40 @@
       live.push(osc);
     });
   }
+  /* Звуки наград и праздников — найденные записи (CC0) в snd/fx/: значок, редкий значок, открытка, искры, пейзаж, «вжух»
+     полёта, «пуф» прилёта, огонь серии, победа. Скачиваются заранее (preloadFx), разбираются при первом звуке. */
+  const FX = { badge: 2.95, rare: 1.93, card: 2.86, twinkle: 2.34, scene: 2.04, whoosh: 2.49, pop: 1.1, fire: 0.4, win: 2.48 };
+  const fxRaw = {}, fxBuf = {};
+  const fxFetch = (name) => fxRaw[name] || (fxRaw[name] = fetch(`snd/fx/${name}.mp3`).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => { delete fxRaw[name]; return null; }));
+  function fxLoad(name) {
+    if (!FX[name] || !ready()) return Promise.resolve(null);
+    if (!fxBuf[name]) {
+      fxBuf[name] = fxFetch(name).then((a) => (a ? new Promise((ok, no) => { const q = ctx.decodeAudioData(a.slice(0), ok, no); if (q && q.then) q.then(ok, no); }) : null))
+        .catch(() => null).then((b) => { if (!b) delete fxBuf[name]; return b; });
+    }
+    return fxBuf[name];
+  }
+  /** Звук награды поверх всего, не останавливая звонок и мелодии: at — через сколько секунд, vol — тише/громче. */
+  function sfx(name, at = 0, vol = 1) {
+    if (!FX[name] || !ready()) return;
+    session('playback');
+    if (!timer && !live.length) { master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(volume, ctx.currentTime); }
+    fxLoad(name).then((buf) => {
+      if (!buf) return;
+      const s = ctx.createBufferSource(), g = ctx.createGain();
+      s.buffer = buf; g.gain.value = FX[name] * vol; s.connect(g); g.connect(master);
+      s.start(ctx.currentTime + 0.01 + Math.max(0, at));
+    });
+  }
+  /* Экран серии: огонь вспыхнул, число перещёлкнулось, сегодняшний день залился огнём — теперь это записи, а не тоны. */
+  const FX_OF = { flare: 'fire', win: 'win', pop: 'pop' };
   function fx(name) {
     if (!ready()) return;
     session('playback');
     const now = ctx.currentTime, t = now + 0.02;
     master.gain.cancelScheduledValues(now);
     master.gain.setValueAtTime(volume, now);
+    if (FX_OF[name]) { sfx(FX_OF[name]); return; }
     if (name === 'flare') {
       /* Шум через полосовой фильтр, который за полсекунды уходит вверх: «фух» вспыхнувшего огня. */
       const n = Math.floor(ctx.sampleRate * 0.7), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
@@ -322,7 +365,9 @@
   }
 
   Sonly.sound = {
-    melody, song, buffer, fx,
+    melody, song, buffer, fx, sfx,
+    /** Заранее скачать звуки наград (маленькие): праздник звучит сразу, и без сети потом тоже. */
+    preloadFx() { Object.keys(FX).forEach(fxFetch); },
     /** Звуковой контекст — для записи с микрофона и разбора файлов (свои звуки); null — браузер не умеет звук. */
     ctx: () => (ready() ? ctx : null),
     /** Слушатель того, что звучит сейчас (AnalyserNode), или null — звука ещё не было. Не создаёт звуковой контекст. */
