@@ -48,8 +48,4 @@ snd/fx/badge.mp3: Short Success Sound Glockenspiel Treasure Video Game.mp3 — F
 snd/fx/rare.mp3: Shine Chime — Qvantor — https://freesound.org/people/Qvantor/sounds/879797/ — CC0
 snd/fx/card.mp3: flipCard.wav — Splashdust — https://freesound.org/people/Splashdust/sounds/84322/ — CC0
 snd/fx/twinkle.mp3: Crystal Twinkle — LaurenPonder — https://freesound.org/people/LaurenPonder/sounds/639429/ — CC0
-snd/fx/scene.mp3: Mysterious Magical Bell Flourish — SkySpeira — https://freesound.org/people/SkySpeira/sounds/848847/ — CC0
-snd/fx/whoosh.mp3: quick woosh — florianreichelt — https://freesound.org/people/florianreichelt/sounds/683101/ — CC0
-snd/fx/pop.mp3: Pop Sound — ConarB13 — https://freesound.org/people/ConarB13/sounds/401542/ — CC0
 snd/fx/fire.mp3: fire-whoosh.wav — hnhnh — https://freesound.org/people/hnhnh/sounds/244926/ — CC0
-snd/fx/win.mp3: 3 - Unlock achievement for games — TheZero — https://freesound.org/people/TheZero/sounds/331362/ — CC0
