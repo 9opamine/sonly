@@ -259,7 +259,13 @@
      Каталог — открытый поиск iTunes: десятки миллионов песен, без ключа и без скачивания. Каждая песня даёт отрывок
      в 30 секунд (обычно это припев); его режут, как в «Историях»: окно 10, 15 или 30 секунд двигается по волне.
      В настоящем приложении — Apple Music через MusicKit: целые песни у тех, у кого есть подписка. */
-  const SUGG = ['Here Comes the Sun', 'Good Morning', 'Wake Me Up', 'Walking on Sunshine', 'Beautiful Day', 'Lovely Day', 'Mr. Blue Sky', 'Утро'];
+  const SUGG = ['Here Comes the Sun', 'Good Morning', 'Wake Me Up', 'Walking on Sunshine', 'Beautiful Day', 'Lovely Day', 'Mr. Blue Sky'];
+  /* Последняя подсказка — слово «утро» на языке интерфейса: и поиск, и найденные песни — на нём, а не по-русски. */
+  const MORNING = { ru: 'Утро', uk: 'Ранок', en: 'Morning', pl: 'Poranek', de: 'Morgen', es: 'Mañana', fr: 'Matin' };
+  const sugg = () => SUGG.concat(MORNING[(Sonly.i18n && Sonly.i18n.lang) || 'ru'] || 'Morning');
+  /* Названия песен и исполнителей приходят от Apple на своём языке — их движок перевода не трогает (data-i18n="off"),
+     а подписи кнопок для экранного диктора переводятся здесь. */
+  const tt = (k) => (Sonly.i18n && Sonly.i18n.t ? Sonly.i18n.t(k) : k);
   const LENS = [10, 15, 30];
   let found = { q: '', list: [], st: 'idle' };
   let qTimer = 0;
@@ -317,16 +323,16 @@
     const whole = `<button class="ap-card ap-row tall ms-whole" data-act="ms-file"><i class="ap-row-i c" style="--c:${COLOR.file}">${Sonly.si('folder')}</i><span>Вся песня с телефона<small>Любые 30 секунд из файла</small></span>${K().chev()}</button>`;
     const src = inFrame() ? `<p class="ap-note ms-src">${ic('info', 14, 2.4)} Внутри Claude каталог Apple закрыт — песни ищутся на сайте sonly. Файл с телефона работает и здесь.</p>`
       : `<p class="ap-note ms-src">${ic('music', 14, 2.4)} Каталог Apple Music. Apple даёт открыто только 30 секунд каждой песни — из них выбираешь кусок.</p>`;
-    if (!q) return `<h3>Для утра</h3><div class="ms-sugg">${SUGG.map((x) => `<button data-act="ms-qset:${esc(x)}">${esc(x)}</button>`).join('')}</div>
+    if (!q) return `<h3>Для утра</h3><div class="ms-sugg" data-i18n="off">${sugg().map((x) => `<button data-act="ms-qset:${esc(x)}">${esc(x)}</button>`).join('')}</div>
       ${src}${whole}`;
     if (found.st === 'frame' && found.q === q) return `<div class="ms-empty"><i class="ms-big" style="--c:#FA2D48">${ic('lock', 38, 2.2)}</i><b>Внутри Claude поиск закрыт</b><p>Claude не пускает страницу к каталогу Apple. На сайте sonly поиск работает — открой его на телефоне.</p><a class="ms-retry" href="${SITE}" target="_blank" rel="noopener">Открыть сайт</a></div>${whole}`;
     if (found.st === 'slow') return `<div class="ms-empty"><i class="ms-big" style="--c:#FA2D48">${ic('hourglass', 38, 2.2)}</i><b>Apple просит подождать</b><p>Слишком много поисков подряд. Попробуй через минуту.</p><button class="ms-retry" data-act="ms-qset:${esc(q)}">Повторить</button></div>`;
     if (found.q !== q || found.st === 'load') return `<div class="ap-card ap-list ms-songs wait">${Array.from({ length: 6 }, () => '<div class="ap-row ms-song"><i class="ms-cover"></i><span><i class="ms-sk"></i><i class="ms-sk s"></i></span></div>').join('')}</div>`;
     if (found.st === 'err') return `<div class="ms-empty"><i class="ms-big" style="--c:#FA2D48">${ic('wifi-off', 38, 2.2)}</i><b>Поиск не открылся</b><p>Проверь интернет и попробуй ещё раз.</p><button class="ms-retry" data-act="ms-qset:${esc(q)}">Повторить</button></div>`;
     if (!found.list.length) return `<div class="ms-empty"><i class="ms-big" style="--c:#FA2D48">${ic('search-x', 38, 2.2)}</i><b>Ничего не нашли</b><p>Попробуй название песни или исполнителя по-другому. Если песни нет в Apple Music — выбери её файлом.</p></div>${whole}`;
-    return `<div class="ap-card ap-list ms-songs">${found.list.map((x, i) => `<div class="ap-row ms-song"><button class="ms-pick" data-act="ms-song:${i}" aria-label="Выбрать: ${esc(x.title)} — ${esc(x.artist)}"></button>
+    return `<div class="ap-card ap-list ms-songs" data-i18n="off">${found.list.map((x, i) => `<div class="ap-row ms-song"><button class="ms-pick" data-act="ms-song:${i}" aria-label="${esc(tt('Выбрать'))}: ${esc(x.title)} — ${esc(x.artist)}"></button>
       <img class="ms-cover" src="${esc(x.art)}" alt="" loading="lazy"><span><b>${esc(x.title)}</b><small>${esc(x.artist)}</small></span>
-      <button class="ms-pv${pv && pv.i === i ? ' on' : ''}" data-act="ms-pv:${i}" aria-label="${pv && pv.i === i ? 'Остановить' : `Послушать: ${esc(x.title)}`}">${Sonly.si(pv && pv.i === i ? 'pause' : 'play', 16)}</button></div>`).join('')}</div>
+      <button class="ms-pv${pv && pv.i === i ? ' on' : ''}" data-act="ms-pv:${i}" aria-label="${pv && pv.i === i ? esc(tt('Остановить')) : `${esc(tt('Послушать'))}: ${esc(x.title)}`}">${Sonly.si(pv && pv.i === i ? 'pause' : 'play', 16)}</button></div>`).join('')}</div>
       <p class="ap-note ms-src">Нажми на песню, чтобы выбрать кусок.</p>${whole}`;
   }
   /** Песня выбрана: отрывок с серверов Apple → волна; окно сразу ставим на самое громкое место (обычно припев). */
@@ -448,7 +454,7 @@
     if (!d) return ['Свой звук', empty('mic', 'Звук не найден', 'Вернись к списку и выбери снова.'), '', back];
     const total = d.data.length / d.rate;
     const song = d.kind === 'song', len = Math.round((d.b - d.a) * total);
-    const head = song ? `<div class="ms-songhead"><img class="ms-cover lg" src="${esc(d.art)}" alt=""><span><b>${esc(d.title)}</b><small>${esc(d.artist)}</small></span></div>` : '';
+    const head = song ? `<div class="ms-songhead" data-i18n="off"><img class="ms-cover lg" src="${esc(d.art)}" alt=""><span><b>${esc(d.title)}</b><small>${esc(d.artist)}</small></span></div>` : '';
     const lens = song ? `<div class="ap-seg sm ms-lens" role="radiogroup" aria-label="Длина куска">${LENS.filter((n) => n <= Math.round(total)).map((n) => `<button class="${len === n ? 'on' : ''}" data-act="ms-len:${n}" role="radio" aria-checked="${len === n}">${n} с</button>`).join('')}</div>` : '';
     return [song ? 'Кусок песни' : 'Свой звук', `${head}<div class="ap-card ms-stage edit"><div class="ms-time"><b class="js-msl">${fmt((d.b - d.a) * total)}</b><span class="js-msr">${fmt(d.a * total)} – ${fmt(d.b * total)}</span></div>
         <div class="ms-wave js-wave" style="--a:${d.a};--b:${d.b};--p:${d.a}">${bars(peaks(d.data, BARS))}<i class="ms-dim l"></i><i class="ms-dim r"></i>
