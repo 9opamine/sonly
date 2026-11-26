@@ -335,7 +335,10 @@
     if (!chip) return;
     /* Пока огонь летит, в значке ещё вчерашнее число. */
     if (num && real && to > 1) num.textContent = to - 1;
-    const at = posIn(chip, host), tx = at.x + 19, ty = at.y + at.h / 2;
+    /* Цель — центр значка огня в плашке, а не угадываемая точка: огонь садится ровно в него. */
+    const icon = chip.querySelector('svg'), at = posIn(chip, host);
+    const ix = icon ? icon.offsetLeft + icon.offsetWidth / 2 : 19, iy = icon ? icon.offsetTop + icon.offsetHeight / 2 : at.h / 2;
+    const tx = at.x + ix, ty = at.y + iy;
     const fly = document.createElement('i'), inner = document.createElement('i');
     fly.className = 'sk-fly';
     inner.className = 'sk-fly-in';
@@ -346,13 +349,16 @@
     /* Дуга: по горизонтали — быстро в начале, по вертикали — разгоняется; огонь уменьшается до значка. */
     const dx = tx - (box.x + box.w / 2), dy = ty - (box.y + box.h * 0.6), sc = 17 / box.w;
     fly.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${dx.toFixed(1)}px)` }], { duration: ms, easing: 'cubic-bezier(.3,.1,.25,1)', fill: 'forwards' });
-    inner.animate([{ transform: 'translateY(0) scale(1)' }, { transform: `translateY(${(dy * 0.18).toFixed(1)}px) scale(${Math.max(sc * 2.2, 0.3).toFixed(3)})`, offset: 0.35 }, { transform: `translateY(${dy.toFixed(1)}px) scale(${sc.toFixed(4)})` }], { duration: ms, easing: 'cubic-bezier(.55,0,.35,1)', fill: 'forwards' });
-    flow.at(ms, () => {
+    /* Под конец огонь растворяется в значке (последние 15 % пути), а не пропадает рывком. */
+    inner.animate([{ transform: 'translateY(0) scale(1)', opacity: 1 }, { transform: `translateY(${(dy * 0.18).toFixed(1)}px) scale(${Math.max(sc * 2.2, 0.3).toFixed(3)})`, opacity: 1, offset: 0.35 }, { opacity: 1, offset: 0.85 }, { transform: `translateY(${dy.toFixed(1)}px) scale(${sc.toFixed(4)})`, opacity: 0 }], { duration: ms, easing: 'cubic-bezier(.55,0,.35,1)', fill: 'forwards' });
+    flow.at(ms - 60, () => {
       fly.remove();
       chip.classList.remove('pop');
       void chip.offsetWidth;
       chip.classList.add('pop');
-      chip.insertAdjacentHTML('beforeend', `<span class="ap-chip-sp" aria-hidden="true">${'<i></i>'.repeat(8)}</span>`);
+      /* Искры — круглые, разного размера и дальности, из центра значка огня; появляются и гаснут плавно. */
+      const sparks = Array.from({ length: 10 }, (_, i) => `<i style="--r:${Math.round(i * 36 + (i % 2) * 14)}deg;--d:${15 + (i % 3) * 5}px;--s:${(3 + (i % 3)).toFixed(0)}px;--w:${(i % 4) * 25}ms"></i>`).join('');
+      chip.insertAdjacentHTML('beforeend', `<span class="ap-chip-sp" aria-hidden="true" style="left:${ix.toFixed(1)}px;top:${iy.toFixed(1)}px">${sparks}</span>`);
       if (num && real && to > 1) num.innerHTML = `<span class="ap-chip-r"><i>${to - 1}</i><i>${to}</i></span>`;
       sound.fx('pop');
       if (navigator.vibrate) navigator.vibrate(20);
@@ -362,31 +368,110 @@
     setTimeout(() => fly.remove(), ms + 200);
   }
   /*
-   * Солнце звонка бьётся в такт звуку. Удары ищем по слушателю звука: резкий рост спектра — так слышен и удар барабана в песне,
-   * и каждый «дзинь» звонка. На ударе солнце из логотипа подпрыгивает, свет вспыхивает и расходится дуга; между ударами солнце
-   * дышит по громкости, полоски у названия звука показывают настоящие басы, середину и верха.
-   * Пока звука нет (браузер ещё не дал играть, файл грузится) — обычное покачивание из CSS.
+   * Ритм звука для солнца звонка. Каждые 20 мс — «сила удара»: рост спектра, басы и низкая середина с большим весом (так слышны
+   * бочка и сильные доли). По последним 8 секундам ищем темп — автокорреляцией, 60–180 ударов в минуту, около 120 предпочтительнее, —
+   * и фазу: где на сетке пришёлся последний удар. Дальше удары идут ровно по сетке и мягко подправляются раз в секунду,
+   * поэтому пульс держит долю, а не дёргается от каждой ноты. Ритма нет (сирена, колокол, птицы) — conf низкий, пульса нет.
+   */
+  /* Ниже этой уверенности ритма нет: музыка без ровной доли (рубато, короткие петли) — солнце дышит, а не изображает такт. */
+  const CONF = 0.42;
+  function tracker() {
+    const BIN = 0.02, N = 400;
+    const env = new Float32Array(N);
+    let filled = 0, bin = -1, acc = 0, period = 0, conf = 0, next = 0, lastEst = 0, stable = 0;
+    const push = (v) => { env.copyWithin(0, 1); env[N - 1] = v; filled = Math.min(N, filled + 1); };
+    function estimate() {
+      const n = filled;
+      if (n < 200) return;
+      const x = env.subarray(N - n);
+      let m = 0;
+      for (let i = 0; i < n; i++) m += x[i];
+      m /= n;
+      const y = new Float32Array(n);
+      let e0 = 0;
+      for (let i = 0; i < n; i++) { y[i] = Math.max(0, x[i] - m); e0 += y[i] * y[i]; }
+      if (e0 < 1e-9) { conf = 0; return; }
+      const r = (L) => { let s = 0; for (let i = L; i < n; i++) s += y[i] * y[i - L]; return s / e0; };
+      let bl = 0, best = 0, br = 0;
+      for (let L = 17; L <= 50; L++) {
+        const v = r(L), w = Math.exp(-0.5 * Math.pow(Math.log2((L * BIN) / 0.5) / 0.7, 2)), s = v * (0.55 + 0.45 * w);
+        if (s > best) { best = s; bl = L; br = v; }
+      }
+      if (!bl) { conf = 0; return; }
+      /* Темп вдвое быстрее, если он тоже явно есть в звуке: пульс — на каждую долю, а не через одну. */
+      const half = Math.round(bl / 2);
+      if (half >= 17) { const rh = r(half); if (rh >= br * 0.55) { bl = half; br = rh; } }
+      /* Точнее целого бина: вершина параболы по трём соседним значениям. */
+      const a = r(bl - 1), b = br, c2 = r(bl + 1), den = a - 2 * b + c2, off = den < 0 ? Math.max(-0.5, Math.min(0.5, (0.5 * (a - c2)) / den)) : 0;
+      let P = (bl + off) * BIN;
+      /* Оценка вдвое длиннее или короче текущей — та же музыка, посчитанная через долю: темп не сбиваем, фазу ищем по своему. */
+      const ratio = period ? P / period : 1;
+      if (period && (Math.abs(ratio - 2) < 0.16 || Math.abs(ratio - 0.5) < 0.04)) P = period;
+      const pl = Math.max(1, Math.round(P / BIN));
+      /* Фаза: на каком смещении от «сейчас» назад сетка с шагом P собирает больше всего ударов. */
+      let bo = 0, bs = -1;
+      for (let o = 0; o < pl; o++) { let s = 0; for (let k = n - 1 - o; k >= 0; k -= P / BIN) s += y[Math.round(k)] || 0; if (s > bs) { bs = s; bo = o; } }
+      const lastBeat = (bin - 1 - bo) * BIN;
+      /* Темп и фаза меняются плавно: сетка держится, пока звук не говорит другое несколько секунд подряд. */
+      if (!period || Math.abs(P - period) / period > 0.08) { period = P; stable = 0; } else { period += (P - period) * 0.2; stable++; }
+      conf = conf ? conf * 0.6 + br * 0.4 : br;
+      let cand = lastBeat;
+      while (cand < next - period / 2) cand += period;
+      const gap = cand - next;
+      if (!next || (Math.abs(gap) > period * 0.35 && stable < 2)) { next = cand; while (next < bin * BIN) next += period; } else if (Math.abs(gap) > 0.02) next += gap * (stable >= 2 ? 0.15 : 0.4);
+    }
+    return {
+      /** Кадр: now — время по часам звука (с), flux — сила удара в этом кадре. */
+      feed(now, flux) {
+        const b = Math.floor(now / BIN);
+        if (bin < 0) bin = b;
+        while (bin < b) { push(acc); acc = 0; bin++; }
+        acc += flux;
+        if (now - lastEst >= 1) { lastEst = now; estimate(); }
+      },
+      /** Удар, который уже наступил к моменту t (с); null — его нет или ритм не найден. Каждый удар отдаётся один раз. */
+      take(t) {
+        if (!period || !next || t < next) return null;
+        const at = next;
+        while (next <= t) next += period;
+        /* Сетка идёт всегда; показываем удар, только если ритм уверенный и удар свежий (не догоняем пропущенные). */
+        return conf >= CONF && t - at < 0.1 ? at : null;
+      },
+      get period() { return period; },
+      get conf() { return conf; },
+    };
+  }
+  /*
+   * Солнце звонка дышит в такт. Есть ритм (песня, мелодия, марш) — на каждой доле мягкий «вдох»: за 70 мс солнце чуть растёт,
+   * свет становится ярче, расходится дуга, и за треть секунды плавно возвращается. Удар показывается тогда, когда его слышно:
+   * с поправкой на задержку звука в телефоне. Ритма нет (сирены, звонки, птицы) — солнце спокойно дышит с громкостью.
+   * Надпись sonly сверху стоит на месте. Пока звука нет — обычное покачивание из CSS.
    */
   function beat(c) {
-    const rg = c.q('.rg'), bell = c.q('.rg-bell'), mark = bell && bell.querySelector('.mark'), halo = c.q('.rg-halo'), logo = c.q('.rg-logo');
+    const rg = c.q('.rg'), bell = c.q('.rg-bell'), mark = bell && bell.querySelector('.mark'), halo = c.q('.rg-halo');
     const bars = [...c.el.querySelectorAll('.rg-eq u')];
     if (!rg || !mark || c.shot || c.flow.still || REDUCE()) return;
     const BANDS = [[60, 250], [250, 1000], [1000, 4000], [4000, 10000]];
-    let freq = null, wave = null, prev = null, hist = [], last = 0, kick = 0, lvl = 0, peak = 0.02, t0 = 0, waves = 0;
+    const tr = tracker(), barV = bars.map(() => 0.18);
+    let freq = null, wave = null, prev = null, last = -9, breath = 0, peak = 0.02, t0 = 0, waves = 0, n = 0;
+    c.flow.beatLog = [];
+    c.flow.beatTr = tr;
     const hit = () => {
-      if (waves >= 3) return;
+      if (waves >= 2) return;
       const w = document.createElement('i');
       w.className = 'rg-wave hit';
       waves++;
       w.addEventListener('animationend', () => { w.remove(); waves--; }, { once: true });
       bell.insertBefore(w, mark);
     };
+    /* Форма вдоха: быстрый мягкий подъём и плавный спад, без рывка. */
+    const shape = (a) => (a < 0 ? 0 : a < 0.07 ? 1 - Math.pow(1 - a / 0.07, 3) : a < 0.42 ? 0.5 + 0.5 * Math.cos(Math.PI * (a - 0.07) / 0.35) : 0);
     const frame = (t) => {
       if (!rg.isConnected) return;
       requestAnimationFrame(frame);
       const m = Sonly.sound.meter();
       if (!m) return;
-      const dt = t0 ? Math.min(64, t - t0) : 16.7;
+      const dt = t0 ? Math.min(0.064, (t - t0) / 1000) : 0.0167;
       t0 = t;
       if (!freq) { freq = new Uint8Array(m.frequencyBinCount); wave = new Uint8Array(m.fftSize); prev = new Uint8Array(m.frequencyBinCount); }
       m.getByteFrequencyData(freq);
@@ -394,28 +479,32 @@
       let e = 0;
       for (let i = 0; i < wave.length; i += 2) { const v = (wave[i] - 128) / 128; e += v * v; }
       e = Math.sqrt(e / (wave.length / 2));
-      const hz = m.context.sampleRate / 2 / freq.length, top = Math.min(freq.length, Math.round(10000 / hz));
-      let flux = 0;
-      for (let i = 2; i < top; i++) { const d = freq[i] - prev[i]; if (d > 0) flux += d; }
+      const ac = m.context, hz = ac.sampleRate / 2 / freq.length, top = Math.min(freq.length, Math.round(8000 / hz));
+      let flux = 0, wsum = 0;
+      for (let i = 1; i < top; i++) { const f = i * hz, w = f < 160 ? 2.2 : f < 500 ? 1.4 : 1, d = freq[i] - prev[i]; if (d > 0) flux += d * w; wsum += w; }
       prev.set(freq);
-      flux /= top;
-      hist.push(flux);
-      if (hist.length > 45) hist.shift();
-      const mean = hist.reduce((a, x) => a + x, 0) / hist.length;
-      peak = Math.max(e, peak * Math.pow(0.996, dt / 16.7));
+      const now = ac.currentTime;
+      if (e > 0.003) tr.feed(now, flux / wsum);
       if (e > 0.004 && !rg.classList.contains('beat')) rg.classList.add('beat');
-      if (e > 0.006 && hist.length > 8 && flux > mean * 1.55 + 1.1 && t - last > 170) { last = t; kick = 1; hit(); }
+      /* Удар, который сейчас слышно: часы звука минус задержка вывода. */
+      const heard = now - (ac.outputLatency || ac.baseLatency || 0.03);
+      const b = tr.take(heard);
+      if (b != null) { last = b; n++; if (tr.period > 0.36 || n % 2) hit(); c.flow.beatLog.push(+b.toFixed(3)); if (c.flow.beatLog.length > 64) c.flow.beatLog.shift(); }
+      const pulse = shape(heard - last);
+      peak = Math.max(e, peak * Math.pow(0.6, dt));
       const to = Math.min(1, e / peak);
-      lvl += (to - lvl) * (to > lvl ? 0.45 : 0.1);
-      kick *= Math.pow(0.86, dt / 16.7);
-      mark.style.transform = `scale(${(1 + kick * 0.12 + lvl * 0.04).toFixed(4)})`;
-      if (halo) { halo.style.opacity = (0.5 + kick * 0.5 + lvl * 0.15).toFixed(3); halo.style.transform = `scale(${(0.92 + kick * 0.2 + lvl * 0.08).toFixed(4)})`; }
-      if (logo) logo.style.transform = `scale(${(1 + kick * 0.07).toFixed(4)})`;
-      bars.forEach((b, i) => {
+      breath += (to - breath) * Math.min(1, dt / 0.35);
+      const rhythm = tr.conf >= CONF && tr.period;
+      const k = rhythm ? 1 + pulse * 0.085 + breath * 0.015 : 1 + breath * 0.045;
+      mark.style.transform = `scale(${k.toFixed(4)})`;
+      if (halo) { const g = rhythm ? pulse : breath * 0.6; halo.style.opacity = (0.55 + g * 0.4).toFixed(3); halo.style.transform = `scale(${(0.95 + g * 0.12).toFixed(4)})`; }
+      bars.forEach((el, i) => {
         const [lo, hi] = BANDS[i] || BANDS[0];
-        let sum = 0, n = 0;
-        for (let j = Math.max(1, Math.floor(lo / hz)); j <= Math.min(freq.length - 1, Math.ceil(hi / hz)); j++) { sum += freq[j]; n++; }
-        b.style.transform = `scaleY(${Math.max(0.18, Math.min(1, (n ? sum / n / 255 : 0) * 1.5)).toFixed(3)})`;
+        let sum = 0, cnt = 0;
+        for (let j = Math.max(1, Math.floor(lo / hz)); j <= Math.min(freq.length - 1, Math.ceil(hi / hz)); j++) { sum += freq[j]; cnt++; }
+        const target = Math.max(0.18, Math.min(1, (cnt ? sum / cnt / 255 : 0) * 1.5));
+        barV[i] += (target - barV[i]) * Math.min(1, dt / (target > barV[i] ? 0.05 : 0.16));
+        el.style.transform = `scaleY(${barV[i].toFixed(3)})`;
       });
     };
     requestAnimationFrame(frame);

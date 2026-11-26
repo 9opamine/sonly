@@ -136,7 +136,8 @@
     /* Звук — в момент, когда вещь выскакивает: значок звенит (редкий — кристальной трелью), открытка переворачивается и искрится. */
     if (snd()) {
       if (it.kind === 'b') snd().sfx(/epic|legend|myth/.test(v.tier) ? 'rare' : 'badge', 0.22);
-      else if (it.kind === 'c') { snd().sfx('card', 0.2); snd().sfx('twinkle', 0.6, 0.7); } else snd().sfx('rare', 0.2);
+      /* Пейзаж переворачивается так же, как открытка, — тот же звук, и сверху светлая трель: событие реже, чуть торжественнее. */
+      else { snd().sfx('card', 0.2); snd().sfx('twinkle', 0.6, 0.75); if (it.kind === 'l') snd().sfx('rare', 1.05, 0.55); }
     }
   }
   const snd = () => (Sonly.sound && Sonly.sound.sfx ? Sonly.sound : null);

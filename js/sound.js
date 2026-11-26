@@ -304,7 +304,7 @@
   }
   /* Звуки наград и праздников — найденные записи (CC0) в snd/fx/: значок, редкий значок, открытка, искры, пейзаж, «вжух»
      полёта, «пуф» прилёта, огонь серии, победа. Скачиваются заранее (preloadFx), разбираются при первом звуке. */
-  const FX = { badge: 2.95, rare: 1.93, card: 2.86, twinkle: 2.34, fire: 0.4 };
+  const FX = { badge: 2.95, rare: 1.93, card: 2.86, twinkle: 2.34 };
   const fxRaw = {}, fxBuf = {};
   const fxFetch = (name) => fxRaw[name] || (fxRaw[name] = fetch(`snd/fx/${name}.mp3`).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => { delete fxRaw[name]; return null; }));
   function fxLoad(name) {
@@ -327,7 +327,7 @@
       s.start(ctx.currentTime + 0.01 + Math.max(0, at));
     });
   }
-  /* Экран серии — прежние звуки (вспышка, колокольчики числа, «поп» дня); к вспышке добавлен звук самого огня — запись. */
+  /* Экран серии — прежние звуки: вспышка, колокольчики числа, «поп» дня. */
   function fx(name) {
     if (!ready()) return;
     session('playback');
@@ -335,7 +335,6 @@
     master.gain.cancelScheduledValues(now);
     master.gain.setValueAtTime(volume, now);
     if (name === 'flare') {
-      sfx('fire', 0.02, 0.75);
       /* Шум через полосовой фильтр, который за полсекунды уходит вверх: «фух» вспыхнувшего огня. */
       const n = Math.floor(ctx.sampleRate * 0.7), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
       for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
