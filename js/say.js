@@ -59,8 +59,18 @@
   /* На claude.ai страница живёт во фрейме без микрофона — там слушает сам claude.ai (диктовка). */
   if (win && win.claude && typeof win.claude.use === 'function') win.claude.use('dictation').then((d) => { dict = d; }, () => {});
   const inFrame = () => { try { return !!win && win.self !== win.top; } catch (e) { return true; } };
-  /** Чем слушать: 'native' — распознавание браузера, 'claude' — диктовка claude.ai, null — нечем. */
-  const engine = () => (dict && (inFrame() || !SR) ? 'claude' : SR ? 'native' : null);
+  /* В приложении для Android (WebView) распознавания браузера нет — слушает телефон через приложение (js/native.js). */
+  const appBridge = () => win && win.Sonly && win.Sonly.native && win.Sonly.native.on ? win.Sonly.native : null;
+  /** Чем слушать: 'app' — распознавание телефона через приложение, 'native' — браузера, 'claude' — диктовка claude.ai, null — нечем. */
+  const engine = () => (appBridge() ? 'app' : dict && (inFrame() || !SR) ? 'claude' : SR ? 'native' : null);
+  let cur = null, wired = false;
+  function wire(N) {
+    if (wired) return;
+    wired = true;
+    N.when('speech-partial', (m) => { if (cur) cur.onText([((cur.text || '') + ' ' + (m.text || '')).trim()]); });
+    N.when('speech-final', (m) => { if (cur) { cur.text = ((cur.text || '') + ' ' + (m.text || '')).trim(); cur.onText([cur.text]); } });
+    N.when('speech-end', (m) => { const c = cur; cur = null; if (c) c.end(m.reason || 'end'); });
+  }
   const REASON = { 'not-allowed': 'denied', 'service-not-allowed': 'denied', 'audio-capture': 'nomic', 'no-speech': 'silence', network: 'network', aborted: 'stopped' };
 
   /**
@@ -72,6 +82,15 @@
     const how = engine();
     let ended = false, timer = 0;
     const end = (r) => { if (ended) return; ended = true; clearTimeout(timer); onEnd(r); };
+    if (how === 'app') {
+      const N = appBridge(), id = Date.now();
+      wire(N);
+      if (cur) cur.end('stopped');
+      cur = { id, text: '', onText, end };
+      N.post({ type: 'speech-start', id, lang, max });
+      timer = setTimeout(() => N.post({ type: 'speech-stop', id }), max + 400);
+      return { how, stop: () => N.post({ type: 'speech-stop', id }) };
+    }
     if (how === 'claude') {
       let text = '', partial = '';
       const offs = [

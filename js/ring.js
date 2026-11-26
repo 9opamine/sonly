@@ -153,8 +153,11 @@
   }
   /* Экран не гаснет, пока звонит будильник, идёт задание или проверка «Ты не спишь?» (Android, свежий iPhone). */
   let lock = null, keep = false;
+  /* В приложении для Android страница сообщает о звонке нативной части (js/native.js). */
+  const toApp = (msg) => { if (Sonly.native && Sonly.native.on) Sonly.native.post(msg); };
   async function awake(on) {
     keep = on;
+    toApp({ type: 'keep-awake', on: !!on });
     try {
       if (on && !lock && navigator.wakeLock && document.visibilityState === 'visible') {
         lock = await navigator.wakeLock.request('screen');
@@ -203,6 +206,8 @@
     if (o.direct) { begin(s._ring); askMotion(s._ring.k); sound.unlock(); s._ring.t1 = Date.now(); flow.go('task', 1); return; }
     flow.go('ring', 1);
     if (!flow.shot) { sound.setVolume(s.volume); sound.play(alarm.sound, { loop: true, rise: alarm.rise }); }
+    /* Звонок на экране и звук играет страница — приложение глушит свой нативный звонок (будильник не отменяется). */
+    toApp({ type: 'ring-shown', id: alarm.id, test: !!test });
   }
   /** Выход со звонка или проверки: туда, откуда пришли. Из редактора и выбора задания — обратно в них. */
   function exit(flow) {
@@ -223,7 +228,7 @@
   /** Проверка «Ты не спишь?». force — показать в любом случае (панель прототипа, проверки). */
   function checkNow(flow, alarm, force) {
     const s = flow.state;
-    if (!force && Date.now() - touchedAt < AWAKE_MS) { clearTimeout(flow._chk); return; }
+    if (!force && Date.now() - touchedAt < AWAKE_MS) { clearTimeout(flow._chk); toApp({ type: 'check-skip' }); return; }
     /* Пока звонит будильник или решается задание — проверка ждёт и приходит, как только они закончатся. С «Доброе утро»
        и экрана серии она открывается поверх них (после первой минуты на них): подъём уже засчитан. */
     if (busy(flow)) { clearTimeout(flow._chk); flow._chk = setTimeout(() => checkNow(flow, alarm, force), 3000); return; }
@@ -243,7 +248,9 @@
   /** Задание выполнено: звонок замолкает, настоящий подъём попадает в историю. */
   function finish(flow) {
     const s = flow.state, r = s._ring, now = new Date();
-    r.secs = Math.max(1, Math.round((Date.now() - (r.t1 || Date.now())) / 1000));
+    /* Задание засчитывается один раз: повторная перерисовка экрана «готово» не должна записать подъём дважды. */
+    if (!r || r.doneAt) return;
+    r.secs =Math.max(1, Math.round((Date.now() - (r.t1 || Date.now())) / 1000));
     r.doneAt = Date.now();
     r.at = nowHM();
     sound.stop();
@@ -258,8 +265,10 @@
       const a = s.alarms.find((x) => x.id === r.a.id);
       if (a && a.once) a.on = false;
       /* Подъём из панели прототипа («проснуться +1 день») — показ анимаций, проверку после него не ставим. */
-      if (r.a.check && !flow.shot && !r.demo) { const again = K.copy(r.a); clearTimeout(flow._chk); flow._chk = setTimeout(() => checkNow(flow, again), r.a.check * 60000); }
-    }
+      /* В приложении проверку ставит нативная часть (страница в фоне спит) — она и пришлёт «check». */
+      if (r.a.check && !flow.shot && !r.demo && !(Sonly.native && Sonly.native.on)) { const again = K.copy(r.a); clearTimeout(flow._chk); flow._chk = setTimeout(() => checkNow(flow, again), r.a.check * 60000); }
+      toApp({ type: 'solved', id: r.a.id, check: r.demo ? 0 : r.a.check || 0, test: false });
+    } else toApp({ type: 'solved', id: r.a.id, check: 0, test: true });
     if (!flow.shot) { sound.tick(784); setTimeout(() => sound.tick(1175), 140); }
     sunrise(flow);
   }
@@ -302,6 +311,7 @@
   function checkOk(flow) {
     const k = flow.state._check, root = flow.cur && flow.cur.querySelector('.ck');
     if (k) k.ok = true;
+    toApp({ type: 'check-ok' });
     awake(false);
     const go = () => {
       flow.state._check = null;
@@ -1304,6 +1314,8 @@
     start,
     anim,
     check: (flow, alarm) => checkNow(flow, alarm, true),
+    /** Проверка подъёма по сигналу приложения: пропускается, если человек только что трогал экран. */
+    checkAuto: (flow, alarm) => checkNow(flow, alarm, false),
     checkOk,
     busy,
     /** Утро засчитано (для панели «+1 день»): восход, «Доброе утро», экран серии — как после настоящего задания. */

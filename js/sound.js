@@ -376,6 +376,8 @@
     /** Звуки по группам для списка: [['Мелодии', ['Маримба', …]], …]. */
     groups: () => SND.reduce((out, [g, name]) => { const last = out[out.length - 1]; if (last && last[0] === g) last[1].push(name); else out.push([g, [name]]); return out; }, []),
     def: DEF, resolve,
+    /** Файл звука в snd/ (без .mp3) по названию — для приложения, которое звонит этим же звуком до открытия страницы. */
+    fileOf: (name) => (BY[resolve(name)] || BY[DEF]).file,
     /** Заранее скачать звуки будильников: утром без интернета они уже будут в памяти и в кэше сайта. */
     preload(names) { [...new Set((names || []).map(resolve))].forEach((n) => { if (BY[n]) raw(n); }); },
     /** Разрешает звук: браузер включает его только после нажатия. */

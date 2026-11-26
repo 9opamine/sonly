@@ -77,6 +77,8 @@
       const j = JSON.stringify(out);
       if (j !== saved) { localStorage.setItem(SAVE, j); saved = j; }
     } catch (e) { /* хранилище недоступно или переполнено — работаем без сохранения */ }
+    /* Приложению — свежий список будильников (шлётся, только если он изменился). */
+    if (Sonly.native && Sonly.native.on) Sonly.native.syncAlarms(f.state);
   };
   /*
    * Где человек был: раздел, экран, открытая страница. Android выгружает свёрнутую страницу из памяти, и после возвращения
@@ -102,6 +104,17 @@
     } catch (e) { /* без хранилища — начнём с начала */ }
   };
   const saveAll = () => { saveApp(); saveView(); };
+  /*
+   * Сигналы приложения для Android: сработал будильник — открыть приложение (если открыт онбординг, будильники уже есть
+   * только после него) и показать звонок; пришло время проверки подъёма — «Ты не спишь?».
+   */
+  if (Sonly.native && Sonly.native.on) {
+    const appFlow = () => { if (tab !== 'app') { location.hash = 'app'; show('app'); } return flows.app; };
+    const alarmOf = (f, id) => f.state.alarms.find((a) => a.id === id) || f.state.alarms.find((a) => a.on) || f.state.alarms[0];
+    Sonly.native.when('ring', (m) => { const f = appFlow(); if (f && f.state.alarms.length) Sonly.ringer.start(f, alarmOf(f, m.id), !!m.test); });
+    Sonly.native.when('check', (m) => { const f = appFlow(); if (f && f.state.alarms.length) Sonly.ringer.checkAuto(f, alarmOf(f, m.id)); });
+    setTimeout(saveApp, 800);
+  }
   setInterval(saveAll, 3000);
   addEventListener('pagehide', saveAll);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveAll(); });
@@ -162,7 +175,8 @@
    * Установлено на главный экран (Android: «Установить приложение»): без панели прототипа, на весь экран, как настоящее
    * приложение. Кто уже прошёл онбординг, сразу попадает в приложение.
    */
-  const PWA = matchMedia('(display-mode: standalone)').matches || qs.get('pwa') === '1';
+  /* В приложении для Android (WebView, js/native.js) — тот же режим: прототип и есть приложение. */
+  const PWA = matchMedia('(display-mode: standalone)').matches || qs.get('pwa') === '1' || !!(Sonly.native && Sonly.native.on);
   const onboarded = () => { try { return localStorage.getItem('sonly-onboarded') === '1'; } catch (e) { return false; } };
   if (PWA) document.body.classList.add('fs', 'full', 'pwa');
   /* Без раздела в адресе (значок на главном экране телефона) — тот раздел, где человек был последним, если недавно. */
